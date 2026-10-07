@@ -646,6 +646,14 @@ function renderSkill() {
   const skillEl = tabEl('skill');
   if (!skillEl) return;
 
+  // Tự động bảo hiểm hồi phục điểm kỹ năng nếu bị thiếu hụt do đổi phái / lỗi dữ liệu
+  let spentSk = 0;
+  for (const id in S.sk) spentSk += (S.sk[id] || 0);
+  const minExpectedSk = 1 + (Math.max(1, S.lvl) - 1) * 1;
+  if (spentSk + (S.skPts || 0) < minExpectedSk) {
+    S.skPts = minExpectedSk - spentSk;
+  }
+
   skillEl.innerHTML = `
     <div class="sk-grid-wrap">
       <div class="sk-subbar">
@@ -664,9 +672,13 @@ function renderSkill() {
 
       <div class="sk-footer">
         <span style="font-size:10px;color:#a39276;">💡 Rê chuột xem thuộc tính · Chuột phải rút điểm</span>
-        <div class="sk-pts-wrap" style="display:flex;align-items:center;gap:4px;">
-          <span class="sk-pts-lbl">Điểm kỹ năng:</span>
-          <span class="sk-pts-val">${S.skPts || 0}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button class="jx-action-btn gold" id="bAutoSpendSk" style="padding:2px 8px;font-size:10.5px;" title="Tự động cộng điểm vào các kỹ năng tốt nhất">⚡ Tự cộng điểm</button>
+          <button class="jx-action-btn" id="bResetSk" style="padding:2px 8px;font-size:10.5px;color:#f87171;" title="Hoàn trả lại toàn bộ điểm kỹ năng">🔄 Tẩy điểm</button>
+          <div class="sk-pts-wrap" style="display:flex;align-items:center;gap:4px;">
+            <span class="sk-pts-lbl">Điểm kỹ năng:</span>
+            <span class="sk-pts-val">${S.skPts || 0}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -713,6 +725,51 @@ function renderSkill() {
   if (bSugSk) bSugSk.onclick = suggestModal;
   const cRot = skillEl.querySelector('#cRot');
   if (cRot) cRot.onchange = () => toggleRot();
+
+  const bAutoSpendSk = skillEl.querySelector('#bAutoSpendSk');
+  if (bAutoSpendSk) {
+    bAutoSpendSk.onclick = () => {
+      if (typeof autoSpendSkills === 'function') {
+        const spent = autoSpendSkills();
+        if (typeof fillSlots === 'function') fillSlots();
+        const atks = (typeof learnedAttacks === 'function') ? learnedAttacks().sort((a, b) => ((SK[b] && SK[b].req) || 0) - ((SK[a] && SK[a].req) || 0)) : [];
+        if (atks[0]) S.main = atks[0];
+        R.dirty = true;
+        recalc();
+        renderSkill();
+        save();
+        toast(spent ? `Đã tự cộng ${spent} điểm kỹ năng!` : 'Đã cộng tối đa kỹ năng hiện có');
+      }
+    };
+  }
+
+  const bResetSk = skillEl.querySelector('#bResetSk');
+  if (bResetSk) {
+    bResetSk.onclick = () => {
+      let refund = 0;
+      for (const id in S.sk) {
+        refund += (S.sk[id] || 0);
+      }
+      if (!refund) {
+        toast('Chưa cộng điểm kỹ năng nào để tẩy!');
+        return;
+      }
+      S.sk = {};
+      const f = FAC[S.fac];
+      if (f && f.starter) {
+        S.sk[f.starter] = 1;
+        refund = Math.max(0, refund - 1);
+        S.main = f.starter;
+        S.slots = [f.starter, 0, 0, 0];
+      }
+      S.skPts = (S.skPts || 0) + refund;
+      R.dirty = true;
+      recalc();
+      renderSkill();
+      save();
+      toast(`Đã tẩy điểm kỹ năng! Hoàn lại ${refund} điểm.`);
+    };
+  }
 
   if (window.SKILL_TOOLTIP && typeof window.SKILL_TOOLTIP.bind === 'function') {
     window.SKILL_TOOLTIP.bind();

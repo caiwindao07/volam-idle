@@ -130,6 +130,11 @@ function migrate(o) {
     s.skPts += SKILL_PTS_PER_LEVEL;
   }
   s.gold = Number.isFinite(+s.gold) ? Math.max(0, +s.gold) : 0; s.skPts = Math.max(0, Math.floor(+s.skPts) || 0); s.attrPts = Math.max(0, Math.floor(+s.attrPts) || 0);
+  let spentMigrateSk = 0; for (const id in s.sk) spentMigrateSk += (s.sk[id] || 0);
+  const minExpectedMigrateSk = 1 + (Math.max(1, s.lvl) - 1) * 1;
+  if (spentMigrateSk + s.skPts < minExpectedMigrateSk) {
+    s.skPts = minExpectedMigrateSk - spentMigrateSk;
+  }
   s.inv = (Array.isArray(s.inv) ? s.inv : []).filter(it => it && typeof it === 'object' && Array.isArray(it.base) && Array.isArray(it.mag)).slice(0, INV_MAX);
   // Chuan hoa req cho tat ca do (neu tung luu dang {id, v} hoac loi)
   for (const it of s.inv.concat(Object.values(s.eq || {}))) {

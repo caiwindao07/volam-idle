@@ -868,19 +868,26 @@ function pvkSelectFaction(key) {
   if (f.starter) {
     S.sk[f.starter] = 1;
     S.skPts = Math.max(0, S.skPts - 1);
-    S.slots = [f.starter, 0, 0, 0];
-    S.main = f.starter;
-  } else {
-    S.slots = [0, 0, 0, 0];
-    S.main = 0;
   }
+
+  // Tự động phân bổ lại toàn bộ điểm kỹ năng vào các chiêu môn phái mới
+  if (typeof autoSpendSkills === 'function') {
+    autoSpendSkills();
+  }
+
+  // Tự động trang bị các chiêu thức tấn công tốt nhất vào ô phím tắt & chiêu chính
+  if (typeof fillSlots === 'function') fillSlots();
+  const atks = (typeof learnedAttacks === 'function') ? learnedAttacks().sort((a, b) => ((SK[b] && SK[b].req) || 0) - ((SK[a] && SK[a].req) || 0)) : [];
+  const bestAtk = atks[0] || f.starter || 0;
+  S.main = bestAtk;
   S.mainLock = false;
 
   // 4. Thiết lập lại cấu hình auto skill phù hợp phái mới
   if (S.auto) {
-    S.auto.mainSkillId = f.starter || 0;
-    S.auto.buffSkill1 = 0;
-    S.auto.buffSkill2 = 0;
+    S.auto.mainSkillId = bestAtk;
+    const buffSkills = (f.skills || []).filter(id => SK[id] && !isAttack(SK[id]) && (S.sk[id] || 0) > 0);
+    S.auto.buffSkill1 = buffSkills[0] || 0;
+    S.auto.buffSkill2 = buffSkills[1] || 0;
   }
 
   // 5. Kiểm tra vũ khí và trang phục: Nếu không phù hợp với môn phái mới thì tháo về túi

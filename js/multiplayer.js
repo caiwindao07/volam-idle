@@ -327,7 +327,8 @@ function handleServerMessage(msg) {
         if (msg.skPts !== undefined) {
           let spentSk = 0;
           if (S.sk) { for (const k in S.sk) spentSk += (S.sk[k] || 0); }
-          const maxSk = 1 + (S.lvl - 1) * 1 + 10;
+          const rebornCount = ((S.rw && S.rw.stat && S.rw.stat.reborn) || 0);
+          const maxSk = 1 + (S.lvl - 1) * 1 + rebornCount * 50 + 200;
           S.skPts = Math.max(0, Math.min(msg.skPts, Math.max(0, maxSk - spentSk)));
         }
       } finally {

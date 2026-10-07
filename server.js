@@ -400,7 +400,7 @@ function sanitizeAndValidateState(serverState, incomingState, username) {
   for (const skId in incomingState.sk) {
     totalSkSpent += Number(incomingState.sk[skId]) || 0;
   }
-  const maxSkPossible = 1 + (incomingState.lvl - 1) * 1 + 10; // 1 ban đầu + 1 mỗi cấp + sách mật tịch
+  const maxSkPossible = 1 + (incomingState.lvl - 1) * 1 + rebornCount * 50 + 200; // 1 ban đầu + 1 mỗi cấp + chuyển sinh + mật tịch + quà
   let clientSkPts = Math.max(0, Math.floor(Number(incomingState.skPts) || 0));
   if (totalSkSpent + clientSkPts > maxSkPossible) {
     clientSkPts = Math.max(0, maxSkPossible - totalSkSpent);
