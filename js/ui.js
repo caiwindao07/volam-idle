@@ -659,7 +659,7 @@ function renderInv() {
         <div class="inv-page-bar" style="display:flex;gap:4px;margin-bottom:6px;">
           ${pageTabsHtml}
         </div>
-        <div class="jx-inv-grid-10" style="max-height:360px;overflow-y:auto;padding-right:2px;">
+        <div class="jx-inv-grid-10" style="flex:1;max-height:calc(100vh - 210px);min-height:360px;overflow-y:auto;padding-right:2px;">
           ${pageItems.map(itemCell).join('')}
           ${emptyCells}
         </div>
