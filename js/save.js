@@ -111,6 +111,8 @@ function migrate(o) {
   s.lootF = s.lootF || { minRar: 0, minLvl: 1, groups: [], series: [], auto: true };
   if (s.lootF.minRar === 1 && !s.lootF._custom) s.lootF.minRar = 0;
   if (s.lootF.auto === undefined) s.lootF.auto = true;
+  s.eq = (s.eq && typeof s.eq === 'object') ? s.eq : {};
+  s.inv = Array.isArray(s.inv) ? s.inv : [];
   // do sinh truoc khi co ngu hanh trang bi: khong co thu tu tien/hau to -> giu moi dong luon hieu luc
   for (const it of s.inv.concat(Object.values(s.eq), (s.ground || []).map(g => g && g.it))) if (it && (it.mag || []).some(m => m.pre === undefined)) it.leg = true;
   if (!o.autoPtsOff) { s.autoPts = false; s.autoPtsOff = 1; }     // tu cong diem tiem nang / ky nang nay mac dinh TAT (ca file luu cu: tat mot lan, bat lai o the Khac)
