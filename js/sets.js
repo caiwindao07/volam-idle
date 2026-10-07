@@ -24,8 +24,8 @@ function rollSetDrop(e) {
   const isDungeonFinal = typeof R !== 'undefined' && R.dungeon && (R.dungeonWave >= 5);
   const isFinalBoss = e.worldBoss || e.goldBoss || isTowerFinal || isDungeonFinal;
 
-  const baseChance = isFinalBoss ? 0.35 : 0.12;
-  const chance = baseChance + (typeof zoneIdx === 'function' ? zoneIdx(Math.min(S.stage || 1, STAGES)) * 0.005 : 0);
+  const baseChance = isFinalBoss ? 0.0175 : 0.006; // giam xuong 5% so voi cu (0.35 / 0.12)
+  const chance = baseChance + (typeof zoneIdx === 'function' ? zoneIdx(Math.min(S.stage || 1, STAGES)) * 0.00025 : 0);
   if (Math.random() >= chance) return null;
 
   const kind = (e.L >= 90 || isFinalBoss) && Math.random() < 0.35 ? 'platina' : 'gold';
