@@ -418,11 +418,18 @@ function syncCloudSave() {
     if (data && data.ok && data.state && typeof S !== 'undefined' && S) {
       // Đồng bộ lại các chỉ số chuẩn từ server nếu có sự chênh lệch do can thiệp F12
       const st = data.state;
-      if (st.gold !== undefined) S.gold = st.gold;
-      if (st.lvl !== undefined) S.lvl = st.lvl;
-      if (st.xp !== undefined) S.xp = st.xp;
-      if (st.attrPts !== undefined) S.attrPts = st.attrPts;
-      if (st.skPts !== undefined) S.skPts = st.skPts;
+      window._legitLevelTransition = true;
+      window._legitExpGain = true;
+      try {
+        if (st.gold !== undefined) S.gold = st.gold;
+        if (st.lvl !== undefined) S.lvl = st.lvl;
+        if (st.xp !== undefined) S.xp = st.xp;
+        if (st.attrPts !== undefined) S.attrPts = st.attrPts;
+        if (st.skPts !== undefined) S.skPts = st.skPts;
+      } finally {
+        window._legitLevelTransition = false;
+        window._legitExpGain = false;
+      }
       if (st.attr && typeof S.attr === 'object') Object.assign(S.attr, st.attr);
       if (st.sk && typeof S.sk === 'object') Object.assign(S.sk, st.sk);
       if (typeof _updateLastAuthoritativeState === 'function') {

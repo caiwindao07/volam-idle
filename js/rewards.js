@@ -184,7 +184,14 @@ function doReborn() {
   if (S.lvl < REBORN_LV || r.stat.reborn >= REBORN_MAX) return;
   if (!confirm('Chuyển sinh: về cấp 1, giữ trang bị và võ công. Tiếp tục?')) return;
   r.stat.reborn++;
-  S.lvl = 1; S.xp = 0; S.attr = { str: 0, dex: 0, vit: 0, eng: 0 }; S.attrPts = r.stat.reborn * 50;
+  window._legitLevelTransition = true;
+  window._legitExpGain = true;
+  try {
+    S.lvl = 1; S.xp = 0; S.attr = { str: 0, dex: 0, vit: 0, eng: 0 }; S.attrPts = r.stat.reborn * 50;
+  } finally {
+    window._legitLevelTransition = false;
+    window._legitExpGain = false;
+  }
   S.stage = 1; S.wave = 1; S.push = true; R.tower = null; R.enemies = []; R.dirty = true; R.zoneShown = null;
   log(`<b class="up">Chuyển sinh lần ${r.stat.reborn}!</b> +${r.stat.reborn * 20}% kinh nghiệm, +${r.stat.reborn * 10}% sát thương`);
   if (S.autoPts === true) autoSpendAttrs();

@@ -740,14 +740,21 @@ function gainXp(x) {
   const campMul = typeof campExpMul === 'function' ? campExpMul() : 1;
   const vipMul = typeof vipExpMul === 'function' ? vipExpMul() : 1;
   const partyMul = (typeof PARTY !== 'undefined' && PARTY.data && PARTY.data.members && PARTY.data.members.length > 1) ? (1 + (PARTY.data.members.length - 1) * 0.1) : 1;
-  S.xp += x * campMul * vipMul * partyMul * (1 + rebornBonus().xp) / xpSlow(S.lvl);    // chuyen sinh: +20% kinh nghiem moi lan; nhip len cap sau cap 30
-  while (S.lvl < MAX_LEVEL && S.xp >= J.exp[S.lvl - 1]) {
-    S.xp -= J.exp[S.lvl - 1]; S.lvl++;
-    S.attrPts += PTS_PER_LEVEL; S.skPts += SKILL_PTS_PER_LEVEL;
-    R.dirty = true; uiSfx('levelup'); log(`<b class="up">Lên cấp ${S.lvl}!</b> +${PTS_PER_LEVEL} tiềm năng, +${SKILL_PTS_PER_LEVEL} kỹ năng`);
-    if (typeof onLevelUp === 'function') onLevelUp();
-    if (typeof sendProfile === 'function') sendProfile();
-    checkAutoMap();
+  window._legitExpGain = true;
+  window._legitLevelTransition = true;
+  try {
+    S.xp += x * campMul * vipMul * partyMul * (1 + rebornBonus().xp) / xpSlow(S.lvl);    // chuyen sinh: +20% kinh nghiem moi lan; nhip len cap sau cap 30
+    while (S.lvl < MAX_LEVEL && S.xp >= J.exp[S.lvl - 1]) {
+      S.xp -= J.exp[S.lvl - 1]; S.lvl++;
+      S.attrPts += PTS_PER_LEVEL; S.skPts += SKILL_PTS_PER_LEVEL;
+      R.dirty = true; uiSfx('levelup'); log(`<b class="up">Lên cấp ${S.lvl}!</b> +${PTS_PER_LEVEL} tiềm năng, +${SKILL_PTS_PER_LEVEL} kỹ năng`);
+      if (typeof onLevelUp === 'function') onLevelUp();
+      if (typeof sendProfile === 'function') sendProfile();
+      checkAutoMap();
+    }
+  } finally {
+    window._legitExpGain = false;
+    window._legitLevelTransition = false;
   }
 }
 

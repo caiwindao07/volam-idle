@@ -356,9 +356,17 @@ function sanitizeAndValidateState(serverState, incomingState, username) {
   if (!serverState) return incomingState;
   if (!incomingState || typeof incomingState !== 'object') return serverState;
 
-  // 1. Cấp độ & Kinh nghiệm: Chấp nhận tiến trình của người chơi
-  incomingState.lvl = Math.max(1, Math.min(99, Number(incomingState.lvl) || Number(serverState.lvl) || 1));
-  incomingState.xp = Math.max(0, Number(incomingState.xp) || 0);
+  // 1. Cấp độ & Kinh nghiệm: Chấp nhận tiến trình hợp lệ từ server, chặn hoàn toàn hack F10/F12
+  const currentSrvLvl = Math.max(1, Math.min(150, Number(serverState.lvl) || 1));
+  const incLvl = Math.max(1, Math.min(150, Number(incomingState.lvl) || currentSrvLvl));
+  if (incLvl > currentSrvLvl) {
+    console.warn(`[Anti-Cheat] Tài khoản "${username}" cố tình lưu cấp độ nhảy vọt: Lv.${incLvl} (Server: Lv.${currentSrvLvl}). Đã khôi phục về Lv.${currentSrvLvl}.`);
+    incomingState.lvl = currentSrvLvl;
+    incomingState.xp = Number(serverState.xp) || 0;
+  } else {
+    incomingState.lvl = incLvl;
+    incomingState.xp = Math.max(0, Number(incomingState.xp) || 0);
+  }
 
   // 2. Điểm Tiềm Năng & Điểm Kỹ Năng
   const clientAttr = incomingState.attr || {};
@@ -699,25 +707,29 @@ function broadcastOnlineCount() {
 // Bot luyện công, trò chuyện, rao bán, nhắn tin trả giá & giao dịch
 // ==========================================
 const BOTS = [
-  { id: 901, name: 'Độc Cô Kiếm', fac: 'huashan', series: 2, lvl: 1, xp: 0, zoneId: 2, x: 820, y: 840, targetX: 820, targetY: 840, dir: 0, face: 1, act: 'st', vip: 3, chat: '', chatT: 0, initialized: true, isBot: true,
+  { id: 901, name: 'Độc Cô Kiếm', fac: 'huashan', series: 2, lvl: 1, xp: 0, zoneId: 2, x: 1470, y: 1490, targetX: 1470, targetY: 1490, dir: 0, face: 1, act: 'st', vip: 3, chat: '', chatT: 0, initialized: true, isBot: true,
+    eq: { weapon: { n: 'Thanh Phong Kiếm', d: 0, k: 0, lvl: 10, r: 2, enh: 4, s: 2, ic: 'img/i/0_0.png' }, armor: { n: 'Tử Hà Kiếm Y', lvl: 10, r: 2, s: 2 } },
     sellItems: [
       { uid: 90101, n: 'Thanh Phong Kiếm', k: 0, r: 3, lvl: 10, s: 2, price: 1500, minPrice: 1000, desc: 'Bảo kiếm Hoa Sơn phái, sắc bén vô cùng', ic: 'img/i/0_0.png' },
       { uid: 90102, n: 'Huyền Tinh Cấp 4', k: 4, r: 2, lvl: 10, s: -1, price: 800, minPrice: 500, desc: 'Khoáng thạch rèn trang bị', ic: 'img/i/4_0.png' }
     ]
   },
-  { id: 902, name: 'Tiểu Long Nữ', fac: 'cuiyan', series: 2, lvl: 1, xp: 0, zoneId: 2, x: 950, y: 780, targetX: 950, targetY: 780, dir: 0, face: -1, act: 'st', vip: 2, chat: '', chatT: 0, initialized: true, isBot: true,
+  { id: 902, name: 'Tiểu Long Nữ', fac: 'cuiyan', series: 2, lvl: 1, xp: 0, zoneId: 2, x: 1590, y: 1520, targetX: 1590, targetY: 1520, dir: 0, face: -1, act: 'st', vip: 2, chat: '', chatT: 0, initialized: true, isBot: true,
+    eq: { weapon: { n: 'Băng Tằm Song Đao', d: 0, k: 5, lvl: 10, r: 3, enh: 6, s: 2, ic: 'img/i/0_2.png' }, armor: { n: 'Băng Tằm Y', lvl: 10, r: 3, s: 2 } },
     sellItems: [
       { uid: 90201, n: 'Băng Tằm Y', k: 1, r: 3, lvl: 10, s: 2, price: 2000, minPrice: 1400, desc: 'Áo giáp tơ tằm băng giá, tăng mạnh kháng Thủy', ic: 'img/i/1_0.png' },
       { uid: 90202, n: 'Lam Thủy Tinh', k: 4, r: 3, lvl: 10, s: -1, price: 1200, minPrice: 900, desc: 'Đá quý khảm nạm trang bị', ic: 'img/i/4_1.png' }
     ]
   },
-  { id: 903, name: 'Kiều Phong', fac: 'gaibang', series: 3, lvl: 1, xp: 0, zoneId: 2, x: 700, y: 920, targetX: 700, targetY: 920, dir: 0, face: 1, act: 'st', vip: 4, chat: '', chatT: 0, initialized: true, isBot: true,
+  { id: 903, name: 'Kiều Phong', fac: 'gaibang', series: 3, lvl: 1, xp: 0, zoneId: 2, x: 1520, y: 1590, targetX: 1520, targetY: 1590, dir: 0, face: 1, act: 'st', vip: 4, chat: '', chatT: 0, initialized: true, isBot: true,
+    eq: { weapon: { n: 'Đả Cẩu Bổng', d: 0, k: 2, lvl: 10, r: 2, enh: 8, s: 3, ic: 'img/i/0_10.png' }, armor: { n: 'Hàng Long Bào', lvl: 10, r: 2, s: 3 } },
     sellItems: [
       { uid: 90301, n: 'Đả Cẩu Bổng', k: 0, r: 4, lvl: 10, s: 3, price: 5000, minPrice: 3800, desc: 'Trấn bang chi bảo Cái Bang', ic: 'img/i/0_10.png' },
       { uid: 90302, n: 'Tử Thủy Tinh', k: 4, r: 3, lvl: 10, s: -1, price: 1500, minPrice: 1100, desc: 'Bảo ngọc luyện thần binh', ic: 'img/i/4_2.png' }
     ]
   },
-  { id: 904, name: 'Vô Danh Tăng', fac: 'shaolin', series: 0, lvl: 1, xp: 0, zoneId: 37, x: 1720, y: 1750, targetX: 1720, targetY: 1750, dir: 0, face: 1, act: 'st', vip: 5, chat: '', chatT: 0, initialized: true, isBot: true,
+  { id: 904, name: 'Vô Danh Tăng', fac: 'shaolin', series: 0, lvl: 1, xp: 0, zoneId: 37, x: 1560, y: 1520, targetX: 1560, targetY: 1520, dir: 0, face: 1, act: 'st', vip: 5, chat: '', chatT: 0, initialized: true, isBot: true,
+    eq: { weapon: { n: 'Kim Cang Thiền Trượng', d: 0, k: 2, lvl: 10, r: 2, enh: 10, s: 0, ic: 'img/i/0_10.png' }, armor: { n: 'Cà Sa Đại Đức', lvl: 10, r: 2, s: 0 } },
     stall: {
       title: 'Tàng Kinh Các Tiệm',
       sellerName: 'Vô Danh Tăng',
@@ -731,7 +743,8 @@ const BOTS = [
       { uid: 90402, n: 'Kim Cang Quyển', k: 3, r: 3, lvl: 10, s: 0, price: 1800, minPrice: 1300, desc: 'Vòng tay hộ thân Phật môn', ic: 'img/i/3_0.png' }
     ]
   },
-  { id: 905, name: 'Đông Phương Bất Bại', fac: 'tangmen', series: 1, lvl: 1, xp: 0, zoneId: 2, x: 880, y: 890, targetX: 880, targetY: 890, dir: 0, face: -1, act: 'st', vip: 3, chat: '', chatT: 0, initialized: true, isBot: true,
+  { id: 905, name: 'Đông Phương Bất Bại', fac: 'tangmen', series: 1, lvl: 1, xp: 0, zoneId: 2, x: 1560, y: 1450, targetX: 1560, targetY: 1450, dir: 0, face: -1, act: 'st', vip: 3, chat: '', chatT: 0, initialized: true, isBot: true,
+    eq: { weapon: { n: 'Bạo Vũ Lê Hoa Châm', d: 1, k: 0, lvl: 10, r: 4, enh: 12, s: 1, ic: 'img/i/0_1.png' }, armor: { n: 'Hắc Mộc Bào', lvl: 10, r: 3, s: 1 } },
     stall: {
       title: 'Hắc Mộc Nhai Tiệm',
       sellerName: 'Đông Phương Bất Bại',
@@ -791,14 +804,54 @@ setInterval(() => {
       });
     }
 
-    // 1. Bot di chuyển quanh khu vực luyện công
-    if (Math.random() < 0.4) {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = 30 + Math.random() * 80;
-      bot.x = Math.round(bot.x + Math.cos(angle) * dist);
-      bot.y = Math.round(bot.y + Math.sin(angle) * dist);
-      bot.face = Math.cos(angle) >= 0 ? 1 : -1;
-      bot.act = Math.random() < 0.4 ? 'at' : 'run';
+    // 1. Bot di chuyển quanh khu vực luyện công & đồng hành cùng người chơi
+    if (Math.random() < 0.6) {
+      const humansInZone = Array.from(players.values()).filter(pl => pl.zoneId === bot.zoneId && pl.initialized);
+      if (humansInZone.length > 0) {
+        let nearest = null, minDist = 999999;
+        for (const pl of humansInZone) {
+          const d = Math.hypot(pl.x - bot.x, pl.y - bot.y);
+          if (d < minDist) { minDist = d; nearest = pl; }
+        }
+        if (nearest && minDist > 260) {
+          // Di chuyển lại gần người chơi để cùng luyện công (tầm 100-220px)
+          const angle = Math.atan2(nearest.y - bot.y, nearest.x - bot.x);
+          const step = Math.min(minDist - 120, 45 + Math.random() * 30);
+          bot.x = Math.round(bot.x + Math.cos(angle) * step);
+          bot.y = Math.round(bot.y + Math.sin(angle) * step);
+          bot.face = Math.cos(angle) >= 0 ? 1 : -1;
+          bot.act = 'run';
+        } else {
+          // Luyện công quanh người chơi
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 15 + Math.random() * 35;
+          bot.x = Math.round(bot.x + Math.cos(angle) * dist);
+          bot.y = Math.round(bot.y + Math.sin(angle) * dist);
+          bot.face = Math.cos(angle) >= 0 ? 1 : -1;
+          bot.act = Math.random() < 0.45 ? 'at' : 'run';
+        }
+      } else {
+        // Kiểm tra xem có người chơi ở khu vực khác không để đi theo hỗ trợ luyện công
+        const activeHumans = Array.from(players.values()).filter(pl => pl.initialized && pl.zoneId !== 37);
+        if (activeHumans.length > 0 && bot.id !== 904 && Math.random() < 0.3) {
+          const pickHuman = activeHumans[Math.floor(Math.random() * activeHumans.length)];
+          bot.zoneId = pickHuman.zoneId;
+          bot.x = Math.round(pickHuman.x + (Math.random() - 0.5) * 160);
+          bot.y = Math.round(pickHuman.y + (Math.random() - 0.5) * 160);
+          broadcastToZone(bot.zoneId, {
+            type: 'player_join',
+            player: bot
+          });
+        } else {
+          // Quanh quẩn vị trí hiện tại
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 20 + Math.random() * 50;
+          bot.x = Math.round(bot.x + Math.cos(angle) * dist);
+          bot.y = Math.round(bot.y + Math.sin(angle) * dist);
+          bot.face = Math.cos(angle) >= 0 ? 1 : -1;
+          bot.act = Math.random() < 0.4 ? 'at' : 'run';
+        }
+      }
       
       broadcastToZone(bot.zoneId, {
         type: 'player_move',
@@ -816,6 +869,7 @@ setInterval(() => {
         mountTier: 0,
         cloakTier: 0,
         pkMode: 'peace',
+        eq: bot.eq,
         hp: bot.hp,
         maxHp: bot.maxHp
       });
@@ -1614,8 +1668,13 @@ wss.on('connection', (ws) => {
           }
         }
         if (data.series != null) p.series = Number(data.series);
+        const authLvl = (p.uKey && db.users[p.uKey] && db.users[p.uKey].state)
+          ? (Number(db.users[p.uKey].state.lvl) || 1)
+          : (p.lvl || 1);
         if (data.lvl != null && !p.uKey) p.lvl = Number(data.lvl);
+        else p.lvl = authLvl;
         if (data.vip != null) p.vip = Number(data.vip);
+        if (data.eq) p.eq = data.eq;
         if (data.zoneId != null) {
           p.zoneId = Number(data.zoneId);
           ws.send(JSON.stringify({
@@ -1653,7 +1712,7 @@ wss.on('connection', (ws) => {
         if (data.mounted !== undefined) p.mounted = !!data.mounted;
         if (data.mountTier != null) p.mountTier = Number(data.mountTier) || 1;
         if (data.mount) p.mount = data.mount;
-        if (data.cloakTier != null) p.cloakTier = Number(data.cloakTier) || 1;
+        if (data.cloakTier != null) p.cloakTier = Number(data.cloakTier) || 0;
         if (data.cloak) p.cloak = data.cloak;
         if (data.pkMode) p.pkMode = String(data.pkMode);
         p.initialized = true;
@@ -1706,7 +1765,26 @@ wss.on('connection', (ws) => {
           }
         }
 
-        if (data.lvl != null) p.lvl = Number(data.lvl);
+        const authLvl = (p.uKey && db.users[p.uKey] && db.users[p.uKey].state)
+          ? (Number(db.users[p.uKey].state.lvl) || 1)
+          : (p.lvl || 1);
+        if (data.lvl != null) {
+          const clientLvl = Number(data.lvl);
+          if (clientLvl > authLvl) {
+            console.warn(`[Anti-Cheat] Phát hiện người chơi "${p.name}" gửi cấp độ ảo: Lv.${clientLvl} (Server: Lv.${authLvl}). Đã khôi phục về cấp chuẩn.`);
+            p.lvl = authLvl;
+            ws.send(JSON.stringify({
+              type: 'state_sync',
+              lvl: authLvl,
+              xp: (p.uKey && db.users[p.uKey]?.state) ? db.users[p.uKey].state.xp : 0
+            }));
+          } else {
+            p.lvl = authLvl;
+          }
+        } else {
+          p.lvl = authLvl;
+        }
+        if (data.eq) p.eq = data.eq;
         if (data.dir != null) p.dir = Number(data.dir);
         if (data.face != null) p.face = Number(data.face);
         if (data.act) p.act = String(data.act);
@@ -1714,7 +1792,7 @@ wss.on('connection', (ws) => {
         if (data.mounted !== undefined) p.mounted = !!data.mounted;
         if (data.mountTier != null) p.mountTier = Number(data.mountTier) || 1;
         if (data.mount) p.mount = data.mount;
-        if (data.cloakTier != null) p.cloakTier = Number(data.cloakTier) || 1;
+        if (data.cloakTier != null) p.cloakTier = Number(data.cloakTier) || 0;
         if (data.cloak) p.cloak = data.cloak;
         if (data.pkMode) p.pkMode = String(data.pkMode);
         if (data.hp != null) p.hp = Number(data.hp);
@@ -1786,6 +1864,7 @@ wss.on('connection', (ws) => {
           mount: p.mount,
           cloakTier: p.cloakTier,
           pkMode: p.pkMode,
+          eq: p.eq,
           hp: p.hp,
           maxHp: p.maxHp
         }, ws);

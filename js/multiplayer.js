@@ -154,7 +154,10 @@ function handleServerMessage(msg) {
     if (msg.player && msg.player.id !== MP.myId) {
       addOrUpdatePlayer(msg.player);
       const p = MP.otherPlayers[msg.player.id];
-      if (p && msg.player.lvl != null) p.lvl = msg.player.lvl;
+      if (p) {
+        if (msg.player.lvl != null) p.lvl = msg.player.lvl;
+        if (msg.player.eq) p.eq = msg.player.eq;
+      }
     }
   } else if (msg.type === 'player_move') {
     let p = MP.otherPlayers[msg.id];
@@ -173,13 +176,15 @@ function handleServerMessage(msg) {
         mounted: msg.mounted,
         mountTier: msg.mountTier,
         mount: msg.mount,
-        cloakTier: msg.cloakTier
+        cloakTier: msg.cloakTier,
+        eq: msg.eq
       });
       p = MP.otherPlayers[msg.id];
     }
     if (p) {
       if (msg.lvl != null) p.lvl = msg.lvl;
       if (msg.name) p.name = msg.name;
+      if (msg.eq) p.eq = msg.eq;
       p.targetX = msg.x;
       p.targetY = msg.y;
       if (msg.dir != null && p.act !== 'at') p.dir = msg.dir;
@@ -308,11 +313,18 @@ function handleServerMessage(msg) {
   } else if (msg.type === 'state_sync') {
     // Nhận gói tin đồng bộ trạng thái chính xác tuyệt đối từ Server (Server-Authoritative State)
     if (typeof S !== 'undefined' && S) {
-      if (msg.gold !== undefined) S.gold = msg.gold;
-      if (msg.lvl !== undefined) S.lvl = msg.lvl;
-      if (msg.xp !== undefined) S.xp = msg.xp;
-      if (msg.attrPts !== undefined) S.attrPts = msg.attrPts;
-      if (msg.skPts !== undefined) S.skPts = msg.skPts;
+      window._legitLevelTransition = true;
+      window._legitExpGain = true;
+      try {
+        if (msg.gold !== undefined) S.gold = msg.gold;
+        if (msg.lvl !== undefined) S.lvl = msg.lvl;
+        if (msg.xp !== undefined) S.xp = msg.xp;
+        if (msg.attrPts !== undefined) S.attrPts = msg.attrPts;
+        if (msg.skPts !== undefined) S.skPts = msg.skPts;
+      } finally {
+        window._legitLevelTransition = false;
+        window._legitExpGain = false;
+      }
       if (msg.inv !== undefined) S.inv = msg.inv;
       if (msg.mount !== undefined) S.mount = msg.mount;
       if (msg.attr && typeof S.attr === 'object') Object.assign(S.attr, msg.attr);
@@ -595,9 +607,10 @@ function addOrUpdatePlayer(p) {
     mounted: p.mounted !== undefined ? !!p.mounted : (existing.mounted || false),
     mountTier: p.mountTier != null ? p.mountTier : (existing.mountTier || 1),
     mount: p.mount || existing.mount || null,
-    cloakTier: p.cloakTier != null ? p.cloakTier : (p.cloak && p.cloak.tier ? p.cloak.tier : (existing.cloakTier || 1)),
+    cloakTier: p.cloakTier != null ? p.cloakTier : (p.cloak && p.cloak.tier != null ? p.cloak.tier : (existing.cloakTier || 0)),
     cloak: p.cloak || existing.cloak || null,
     pkMode: p.pkMode || existing.pkMode || 'peace',
+    eq: p.eq || existing.eq || null,
     hp: p.hp != null ? p.hp : (existing.hp != null ? existing.hp : 100),
     maxHp: p.maxHp != null ? p.maxHp : (existing.maxHp != null ? existing.maxHp : 100),
     stall: p.stall || existing.stall || null
@@ -627,7 +640,12 @@ function sendProfile() {
     mountTier: (S && S.mount ? S.mount.tier : 1),
     mount: (S && S.mount ? S.mount : null),
     cloakTier: (S && S.cloak && S.cloak.tier ? S.cloak.tier : 0),
-    pkMode: (S && S.pkMode) || 'peace'
+    pkMode: (S && S.pkMode) || 'peace',
+    eq: (S && S.eq) ? {
+      weapon: S.eq.weapon ? { n: S.eq.weapon.n, d: S.eq.weapon.d, k: S.eq.weapon.k, lvl: S.eq.weapon.lvl, r: S.eq.weapon.r, enh: S.eq.weapon.enh, s: S.eq.weapon.s, ic: S.eq.weapon.ic } : null,
+      armor: S.eq.armor ? { n: S.eq.armor.n, lvl: S.eq.armor.lvl, r: S.eq.armor.r, enh: S.eq.armor.enh, s: S.eq.armor.s } : null,
+      helm: S.eq.helm ? { n: S.eq.helm.n, lvl: S.eq.helm.lvl, r: S.eq.helm.r, enh: S.eq.helm.enh, s: S.eq.helm.s } : null
+    } : null
   }));
 }
 
@@ -672,6 +690,11 @@ function sendMove(dt) {
     mount: (S && S.mount ? S.mount : null),
     cloakTier: curCloakTier,
     pkMode: curPkMode,
+    eq: (S && S.eq) ? {
+      weapon: S.eq.weapon ? { n: S.eq.weapon.n, d: S.eq.weapon.d, k: S.eq.weapon.k, lvl: S.eq.weapon.lvl, r: S.eq.weapon.r, enh: S.eq.weapon.enh, s: S.eq.weapon.s, ic: S.eq.weapon.ic } : null,
+      armor: S.eq.armor ? { n: S.eq.armor.n, lvl: S.eq.armor.lvl, r: S.eq.armor.r, enh: S.eq.armor.enh, s: S.eq.armor.s } : null,
+      helm: S.eq.helm ? { n: S.eq.helm.n, lvl: S.eq.helm.lvl, r: S.eq.helm.r, enh: S.eq.helm.enh, s: S.eq.helm.s } : null
+    } : null,
     hp: Math.round((typeof R !== 'undefined' && R) ? R.life : 100),
     maxHp: Math.round((typeof R !== 'undefined' && R && R.P) ? R.P.life : 100),
     mp: Math.round((typeof R !== 'undefined' && R) ? R.mana : 100),
@@ -806,9 +829,9 @@ function drawSingleOtherPlayer(c, dt, p) {
     c.fill();
   }
 
-  // 2. Vẽ Phi Phong của người chơi khác (chuẩn màu sắc, tà áo và hào quang theo bậc)
-  const cTier = p.cloakTier || (p.cloak && p.cloak.tier) || 1;
-  if (typeof CLOAK_SYSTEM !== 'undefined' && CLOAK_SYSTEM.drawCloak) {
+  // 2. Vẽ Phi Phong của người chơi khác (chỉ vẽ khi cTier > 0)
+  const cTier = p.cloakTier != null ? p.cloakTier : ((p.cloak && p.cloak.tier != null) ? p.cloak.tier : 0);
+  if (cTier > 0 && typeof CLOAK_SYSTEM !== 'undefined' && CLOAK_SYSTEM.drawCloak) {
     CLOAK_SYSTEM.drawCloak(c, p.x, playerY, p.dir || 0, cTier, p.moving);
   }
 
@@ -827,6 +850,11 @@ function drawSingleOtherPlayer(c, dt, p) {
     c.arc(p.x, playerY - 20, 14, 0, 7);
     c.fill();
     drawn = 30;
+  }
+
+  // 4. Vẽ Res Ngoại Trang: Vũ Khí, Chiến Giáp, Khôi Giáp của người chơi khác và Bot
+  if (typeof drawHeroEquipment === 'function' && p.eq) {
+    drawHeroEquipment(c, p.x, playerY, p.dir || 0, p.face || 1, p.act || 'st', p.actT || 0, p.eq, p.series || 0);
   }
 
   // 3. Tên & Đẳng cấp & VIP trên đầu

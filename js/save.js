@@ -89,8 +89,12 @@ function save() {
   if (typeof syncCloudSave === 'function') syncCloudSave();
 }
 function migrate(o) {
-  const s = Object.assign(newSave(), o);
-  s.attr = Object.assign({ str: 0, dex: 0, vit: 0, eng: 0 }, o.attr || {});
+  window._legitLevelTransition = true;
+  window._legitExpGain = true;
+  let s;
+  try {
+    s = Object.assign(newSave(), o);
+    s.attr = Object.assign({ str: 0, dex: 0, vit: 0, eng: 0 }, o.attr || {});
   if (s.fac && !FAC[s.fac]) s.fac = null;
   for (const id in s.sk) if (!SK[id]) delete s.sk[id];
   s.stage = clamp(s.stage | 0 || 1, 1, STAGES + 400);
@@ -147,6 +151,13 @@ function migrate(o) {
     }
   };
   s.v = SAVE_V;
+  if (typeof secureObjectState === 'function') {
+    secureObjectState(s);
+  }
+  } finally {
+    window._legitLevelTransition = false;
+    window._legitExpGain = false;
+  }
   return s;
 }
 /* Stub giữ lại cho tương thích nếu các module khác gọi - đều là no-op khi đã dùng Server DB */

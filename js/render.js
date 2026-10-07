@@ -662,6 +662,12 @@ function draw(dt) {
         c.fill();
         drawn = 30;
       }
+
+      // Vẽ Res Ngoại Trang: Vũ Khí, Chiến Giáp, Khôi Giáp, Hào quang Thần Binh
+      if (typeof drawHeroEquipment === 'function' && typeof S !== 'undefined' && S && S.eq) {
+        drawHeroEquipment(c, H.x, heroY, H.dir || 0, H.face || 1, H.act || 'st', H.actT || 0, S.eq, (typeof heroSeries === 'function' ? heroSeries() : 0));
+      }
+
       if (R.hurtT > 0) { c.fillStyle = '#f004'; c.beginPath(); c.arc(H.x, heroY - 24, 20, 0, 7); c.fill(); }
 
       const heroLabelY = heroY - (drawn ? Math.min(drawn, 90) * 0.9 : 52) - 6;
