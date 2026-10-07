@@ -587,6 +587,7 @@ function killCheck() {
 }
 
 function onKill(e) {
+  R.stall = 0; // Đang tiêu diệt quái thành công -> xóa bộ đếm stall
   R.kills++; S.totalKills = (S.totalKills || 0) + 1;
   const lvDiff = e.L - S.lvl, mult = lvDiff < -10 ? 0.2 : lvDiff < -5 ? 0.6 : 1;
   gainXp(expFor(e.L) * CLS[e.cls].xp * mult * diffOf().rew);

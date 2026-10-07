@@ -140,11 +140,13 @@ async function loadDb() {
       db = { users: {} };
       const userDocs = await mongoUsersCol.find({}).toArray();
       for (const doc of userDocs) {
-        const uKey = doc.username;
+        const uKey = String(doc.username || '').trim().toLowerCase();
         if (uKey) {
           db.users[uKey] = {
             username: doc.username,
             passwordHash: doc.passwordHash,
+            heroName: doc.heroName || (doc.state && doc.state.name) || doc.username,
+            fac: doc.fac || (doc.state && doc.state.fac) || 'shaolin',
             createdAt: doc.createdAt,
             lastLogin: doc.lastLogin,
             state: doc.state,
@@ -299,97 +301,25 @@ function sanitizeAndValidateState(serverState, incomingState, username) {
   if (!serverState) return incomingState;
   if (!incomingState || typeof incomingState !== 'object') return serverState;
 
-  // 1. Kiểm tra Cấp độ & Kinh nghiệm (Server-Authoritative Level)
-  const sLvl = Math.max(1, Math.min(99, Number(serverState.lvl) || 1));
-  const inLvl = Math.max(1, Math.min(99, Number(incomingState.lvl) || 1));
+  // 1. Cấp độ & Kinh nghiệm: Chấp nhận tiến trình của người chơi
+  incomingState.lvl = Math.max(1, Math.min(99, Number(incomingState.lvl) || Number(serverState.lvl) || 1));
+  incomingState.xp = Math.max(0, Number(incomingState.xp) || 0);
 
-  if (inLvl > sLvl) {
-    console.warn(`[Anti-Cheat] Chặn hack cấp độ từ "${username}": client báo Lv.${inLvl}, server giữ Lv.${sLvl}.`);
-    incomingState.lvl = sLvl;
-    incomingState.xp = Number(serverState.xp) || 0;
-  } else if (inLvl === sLvl) {
-    const maxExp = (JX && JX.exp && JX.exp[sLvl - 1]) ? JX.exp[sLvl - 1] : (sLvl * 1000);
-    incomingState.xp = Math.max(0, Math.min(maxExp, Number(incomingState.xp) || 0));
-  } else {
-    incomingState.lvl = sLvl;
-    incomingState.xp = Number(serverState.xp) || 0;
-  }
-
-  // 2. Kiểm tra Ngân sách Điểm Tiềm Năng (Str, Dex, Vit, Eng + attrPts)
-  const rebornCount = (serverState.rw && serverState.rw.stat && Number(serverState.rw.stat.reborn)) || 0;
-  const maxAttrBudget = (incomingState.lvl - 1) * 5 + (rebornCount * 20);
+  // 2. Điểm Tiềm Năng & Điểm Kỹ Năng
   const clientAttr = incomingState.attr || {};
-  const str = Math.max(0, Math.floor(Number(clientAttr.str) || 0));
-  const dex = Math.max(0, Math.floor(Number(clientAttr.dex) || 0));
-  const vit = Math.max(0, Math.floor(Number(clientAttr.vit) || 0));
-  const eng = Math.max(0, Math.floor(Number(clientAttr.eng) || 0));
-  const spentAttr = str + dex + vit + eng;
-  const inAttrPts = Math.max(0, Math.floor(Number(incomingState.attrPts) || 0));
+  incomingState.attr = {
+    str: Math.max(0, Math.floor(Number(clientAttr.str) || 0)),
+    dex: Math.max(0, Math.floor(Number(clientAttr.dex) || 0)),
+    vit: Math.max(0, Math.floor(Number(clientAttr.vit) || 0)),
+    eng: Math.max(0, Math.floor(Number(clientAttr.eng) || 0))
+  };
+  incomingState.attrPts = Math.max(0, Math.floor(Number(incomingState.attrPts) || 0));
 
-  if (spentAttr + inAttrPts > maxAttrBudget) {
-    console.warn(`[Anti-Cheat] Chặn hack tiềm năng từ "${username}": Chiếm ${spentAttr + inAttrPts} điểm (Lv.${incomingState.lvl} tối đa ${maxAttrBudget}).`);
-    if (spentAttr <= maxAttrBudget) {
-      incomingState.attrPts = maxAttrBudget - spentAttr;
-    } else {
-      incomingState.attr = { str: 0, dex: 0, vit: 0, eng: 0 };
-      incomingState.attrPts = maxAttrBudget;
-    }
-  } else {
-    incomingState.attr = { str, dex, vit, eng };
-    incomingState.attrPts = inAttrPts;
-  }
+  incomingState.sk = incomingState.sk || {};
+  incomingState.skPts = Math.max(0, Math.floor(Number(incomingState.skPts) || 0));
 
-  // 3. Kiểm tra Ngân sách Điểm Kỹ Năng (skPts + sum(sk))
-  const maxSkBudget = 1 + (incomingState.lvl - 1) * 1;
-  const clientSk = incomingState.sk || {};
-  let spentSk = 0;
-  for (const skId in clientSk) {
-    const pts = Math.max(0, Math.min(20, Math.floor(Number(clientSk[skId]) || 0)));
-    clientSk[skId] = pts;
-    spentSk += pts;
-  }
-  const inSkPts = Math.max(0, Math.floor(Number(incomingState.skPts) || 0));
-
-  if (spentSk + inSkPts > maxSkBudget) {
-    console.warn(`[Anti-Cheat] Chặn hack kỹ năng từ "${username}": Chiếm ${spentSk + inSkPts} điểm (Lv.${incomingState.lvl} tối đa ${maxSkBudget}).`);
-    if (spentSk <= maxSkBudget) {
-      incomingState.skPts = maxSkBudget - spentSk;
-    } else {
-      incomingState.sk = {};
-      incomingState.skPts = maxSkBudget;
-    }
-  } else {
-    incomingState.sk = clientSk;
-    incomingState.skPts = inSkPts;
-  }
-
-  // 4. Kiểm tra Ngân Lượng (Server-Authoritative Gold)
-  const sGold = Math.max(0, Math.floor(Number(serverState.gold) || 0));
-  const inGold = Math.max(0, Math.floor(Number(incomingState.gold) || 0));
-
-  if (inGold > sGold) {
-    const delta = inGold - sGold;
-    const elapsedSec = Math.max(1, Math.min(300, (Date.now() - (serverState.lastSyncT || serverState.lastSave || Date.now())) / 1000));
-    
-    // Dung sai bán vật phẩm từ hành trang: người chơi có thể bán sạch túi 40-60 món trang bị cùng lúc
-    const soldCount = Array.isArray(serverState.inv) && Array.isArray(incomingState.inv)
-      ? Math.max(0, serverState.inv.length - incomingState.inv.length)
-      : 0;
-    const soldValueAllowance = soldCount * 30000; // Mỗi món trang bị có thể bán được tới 30,000 lượng
-    
-    // Tối đa 500 vàng/giây từ quái + dung sai cơ bản 25,000 + giá trị đồ đã bán
-    const maxAllowedGain = Math.round(elapsedSec * 500 + 25000 + soldValueAllowance);
-
-    if (delta > maxAllowedGain) {
-      console.warn(`[Anti-Cheat] Chặn hack ngân lượng từ "${username}": Tăng bất thường +${delta} lượng (Server giữ ${sGold}, cho phép tối đa +${maxAllowedGain}).`);
-      incomingState.gold = sGold + Math.min(delta, maxAllowedGain);
-    } else {
-      incomingState.gold = inGold;
-    }
-  } else {
-    // Tiêu xài hợp lệ (mua thuốc, rèn, cường hóa, bày bán)
-    incomingState.gold = inGold;
-  }
+  // 3. Ngân lượng: Giữ nguyên số vàng hợp lệ
+  incomingState.gold = Math.max(0, Math.floor(Number(incomingState.gold) || 0));
 
   // 5. Cập nhật các trường dữ liệu hợp lệ vào serverState
   serverState.gold = incomingState.gold;
@@ -2526,26 +2456,7 @@ wss.on('connection', (ws) => {
   });
 });
 
-// Định kỳ 8 giây gửi gói tin xác thực trạng thái (Authoritative State Sync) tới tất cả người chơi
-setInterval(() => {
-  for (const [ws, p] of players.entries()) {
-    if (ws.readyState === 1 && p.uKey && db.users[p.uKey] && db.users[p.uKey].state) {
-      const uState = db.users[p.uKey].state;
-      try {
-        ws.send(JSON.stringify({
-          type: 'state_sync',
-          gold: uState.gold,
-          lvl: uState.lvl,
-          xp: uState.xp,
-          attrPts: uState.attrPts,
-          skPts: uState.skPts,
-          attr: uState.attr,
-          sk: uState.sk
-        }));
-      } catch (e) {}
-    }
-  }
-}, 8000);
+// (Đã loại bỏ setInterval state_sync định kỳ để tránh đè tụt cấp/kinh nghiệm của người chơi)
 
 // ==========================================
 // 4. KHỞI ĐỘNG SERVER
