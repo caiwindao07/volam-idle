@@ -25,12 +25,17 @@
         },
         set(val) {
           const targetVal = Math.floor(Number(val) || 1);
-          // Chỉ cho phép thay đổi nếu có cờ xác thực hợp lệ từ hệ thống game (chiến đấu / chuyển sinh / đồng bộ server)
-          if (window._legitLevelTransition) {
+          // 1. Cho phép chuyển sinh (giảm cấp) hoặc có cờ chuyển sinh / đồng bộ
+          if (window._legitLevelTransition || targetVal <= _realLvl) {
             _realLvl = Math.max(1, Math.min(200, targetVal));
             return;
           }
-          // Can thiệp trái phép từ DevTools / F10 / F12 console
+          // 2. Cho phép lên đúng 1 cấp (tiến trình đánh quái cày cấp chuẩn)
+          if (targetVal - _realLvl === 1) {
+            _realLvl = targetVal;
+            return;
+          }
+          // 3. Can thiệp nhảy vọt cấp độ > 1 qua Console (ví dụ S.lvl = 50)
           console.warn(`[Anti-Cheat] CẢNH BÁO: Phát hiện can thiệp cấp độ trái phép qua Console (thử đặt: ${val}). Đã khôi phục về cấp độ chuẩn Lv.${_realLvl}!`);
           if (typeof toast === 'function') {
             toast(`⚠️ Không thể can thiệp cấp độ qua Console! (Cấp hợp lệ: Lv.${_realLvl})`);
@@ -47,13 +52,7 @@
           return _realXp;
         },
         set(val) {
-          const targetVal = Math.max(0, Math.floor(Number(val) || 0));
-          if (window._legitExpGain || window._legitLevelTransition) {
-            _realXp = targetVal;
-            return;
-          }
-          console.warn(`[Anti-Cheat] CẢNH BÁO: Phát hiện can thiệp kinh nghiệm trái phép qua Console. Đã khôi phục về EXP chuẩn (${_realXp})!`);
-          if (typeof refresh === 'function') refresh();
+          _realXp = Math.max(0, Math.floor(Number(val) || 0));
         },
         configurable: true,
         enumerable: true

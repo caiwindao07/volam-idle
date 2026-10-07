@@ -366,10 +366,10 @@ function sanitizeAndValidateState(serverState, incomingState, username) {
   if (!serverState) return incomingState;
   if (!incomingState || typeof incomingState !== 'object') return serverState;
 
-  // 1. Cấp độ & Kinh nghiệm: Chấp nhận tiến trình hợp lệ từ server, chặn hoàn toàn hack F10/F12
+  // 1. Cấp độ & Kinh nghiệm: Cho phép lên 1 cấp bình thường, chỉ chặn khi nhảy vọt > 1 cấp
   const currentSrvLvl = Math.max(1, Math.min(200, Number(serverState.lvl) || 1));
   const incLvl = Math.max(1, Math.min(200, Number(incomingState.lvl) || currentSrvLvl));
-  if (incLvl > currentSrvLvl) {
+  if (incLvl - currentSrvLvl > 1) {
     console.warn(`[Anti-Cheat] Tài khoản "${username}" cố tình lưu cấp độ nhảy vọt: Lv.${incLvl} (Server: Lv.${currentSrvLvl}). Đã khôi phục về Lv.${currentSrvLvl}.`);
     incomingState.lvl = currentSrvLvl;
     incomingState.xp = Number(serverState.xp) || 0;
@@ -1866,7 +1866,7 @@ wss.on('connection', (ws) => {
           : (p.lvl || 1);
         if (data.lvl != null) {
           const clientLvl = Number(data.lvl);
-          if (clientLvl > authLvl) {
+          if (clientLvl - authLvl > 1) {
             console.warn(`[Anti-Cheat] Phát hiện người chơi "${p.name}" gửi cấp độ ảo: Lv.${clientLvl} (Server: Lv.${authLvl}). Đã khôi phục về cấp chuẩn.`);
             p.lvl = authLvl;
             ws.send(JSON.stringify({
@@ -1875,7 +1875,10 @@ wss.on('connection', (ws) => {
               xp: (p.uKey && db.users[p.uKey]?.state) ? db.users[p.uKey].state.xp : 0
             }));
           } else {
-            p.lvl = authLvl;
+            p.lvl = clientLvl;
+            if (p.uKey && db.users[p.uKey] && db.users[p.uKey].state) {
+              db.users[p.uKey].state.lvl = clientLvl;
+            }
           }
         } else {
           p.lvl = authLvl;
