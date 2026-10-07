@@ -250,8 +250,12 @@ const sexReqOkFor = (it, sex) => { const r = (it.req || []).find(q => q[0] === 3
 const sexReqOk = req => sexReqOkFor({ req }, (typeof S !== 'undefined' && S && S.sex) || 0);
 const sexOk = it => sexReqOk(it.req);
 function reqOk(it) {
+  if (!it || typeof it !== 'object') return false;
   if (!sexOk(it)) return false;
-  for (const [id, v] of it.req || []) {
+  for (const entry of (it.req || [])) {
+    if (!entry) continue;
+    const id = Array.isArray(entry) ? entry[0] : (entry.id !== undefined ? entry.id : entry[0]);
+    const v = Array.isArray(entry) ? entry[1] : (entry.v !== undefined ? entry.v : entry[1]);
     if (id === 36 && S.lvl < v) return false;
     if (id === 32 && heroAttr('str') < v) return false;
     if (id === 33 && heroAttr('dex') < v) return false;

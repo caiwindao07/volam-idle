@@ -621,7 +621,8 @@ function mountFeed(useFodder) {
     if (S.eq) {
       S.eq.horse = {
         uid: S.uid++, n: newM.n, d: 10, r: newM.tier >= 8 ? 4 : newM.tier >= 5 ? 3 : 2,
-        s: heroSeries(), req: [{ id: 36, v: newM.minLvl }],
+        s: heroSeries(), req: [[36, newM.minLvl]],
+        ic: newM.ic || 'img/i/10_0.png',
         base: [[106, newM.spd, newM.spd], [82, newM.hpPct, newM.hpPct]],
         mag: [
           { a: 109, p: [newM.allRes, -1, 0], pre: 1 },
@@ -632,6 +633,7 @@ function mountFeed(useFodder) {
   }
   if (R) R.dirty = true;
   if (typeof recalc === 'function') recalc();
+  if (typeof refresh === 'function') refresh();
   save();
   if (document.getElementById('giftTabs')) {
     if (typeof refreshGift === 'function') refreshGift();

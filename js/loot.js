@@ -115,7 +115,12 @@ function itemLines(it) {
     for (const r of setMembers(it)) L.push(['r', `  ${Object.values(S.eq).some(e => e && e.set && e.n === r.n) ? '✔' : '·'} ${r.n}`]);
   }
   const REQ = { 36: 'Cấp', 32: 'Sức mạnh', 33: 'Thân pháp', 34: 'Sinh khí', 35: 'Nội công', 37: 'Hệ', 38: 'Giới tính', 39: 'Môn phái' };
-  for (const [id, v] of it.req) if (REQ[id] && (v > 0 || id === 39)) L.push(['r', `Yêu cầu ${REQ[id]}: ${id === 37 ? SERIES[v] : id === 39 ? ((J.factions[v] || {}).n || v) : v}`]);
+  for (const entry of (it.req || [])) {
+    if (!entry) continue;
+    const id = Array.isArray(entry) ? entry[0] : (entry.id !== undefined ? entry.id : entry[0]);
+    const v = Array.isArray(entry) ? entry[1] : (entry.v !== undefined ? entry.v : entry[1]);
+    if (REQ[id] && (v > 0 || id === 39)) L.push(['r', `Yêu cầu ${REQ[id]}: ${id === 37 ? SERIES[v] : id === 39 ? ((J.factions[v] || {}).n || v) : v}`]);
+  }
   return L;
 }
 

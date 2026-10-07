@@ -129,6 +129,12 @@ function migrate(o) {
   }
   s.gold = Number.isFinite(+s.gold) ? Math.max(0, +s.gold) : 0; s.skPts = Math.max(0, Math.floor(+s.skPts) || 0); s.attrPts = Math.max(0, Math.floor(+s.attrPts) || 0);
   s.inv = (Array.isArray(s.inv) ? s.inv : []).filter(it => it && typeof it === 'object' && Array.isArray(it.base) && Array.isArray(it.mag)).slice(0, INV_MAX);
+  // Chuan hoa req cho tat ca do (neu tung luu dang {id, v} hoac loi)
+  for (const it of s.inv.concat(Object.values(s.eq || {}))) {
+    if (it && Array.isArray(it.req)) {
+      it.req = it.req.map(r => Array.isArray(r) ? r : (r && r.id !== undefined && r.v !== undefined ? [r.id, r.v] : r)).filter(r => Array.isArray(r));
+    }
+  }
   let maxUid = 0; for (const it of s.inv.concat(Object.values(s.eq || {}))) if (it && it.uid > maxUid) maxUid = it.uid; s.uid = Math.max(+s.uid || 1, maxUid + 1);
   { const seen = new Set(); s.inv = s.inv.filter(it => { if (seen.has(it.uid)) { it.uid = s.uid++; } seen.add(it.uid); return true; }); }   // uid trung (nhap ma sua tay): cap lai
   s.diff = [0, 1, 2].includes(+o.diff) ? +o.diff : 1; s.hints = o.hints && typeof o.hints === 'object' ? o.hints : {};
