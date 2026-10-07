@@ -642,8 +642,10 @@ function renderInv() {
   const pageTabsHtml = Array.from({ length: INV_PAGE_COUNT }, (_, idx) => {
     const isAct = idx === invPage;
     const pageItemCount = S.inv.slice(idx * INV_PAGE_SIZE, (idx + 1) * INV_PAGE_SIZE).length;
-    return `<button class="inv-page-btn ${isAct ? 'active' : ''}" data-page="${idx}" style="flex:1;padding:5px 2px;font-size:11px;font-weight:bold;cursor:pointer;border-radius:4px;border:1.5px solid ${isAct ? '#ffd700' : '#5a4425'};background:${isAct ? 'linear-gradient(180deg,#854d0e,#582900)' : '#1e140a'};color:${isAct ? '#ffd700' : '#a39276'};box-shadow:${isAct ? '0 0 8px rgba(255,215,0,0.35)' : 'none'};" title="Rương ${idx + 1} (${pageItemCount}/${INV_PAGE_SIZE})">
-      Rương ${idx + 1} <small style="font-size:9.5px;opacity:${pageItemCount ? 1 : 0.6};color:${pageItemCount >= INV_PAGE_SIZE ? '#ef4444' : isAct ? '#fff' : '#888'};">(${pageItemCount}/${INV_PAGE_SIZE})</small>
+    const countCol = pageItemCount >= INV_PAGE_SIZE ? '#ef4444' : isAct ? '#ffd700' : '#888';
+    return `<button class="inv-page-btn ${isAct ? 'active' : ''}" data-page="${idx}" style="flex:1;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;border-radius:4px;border:1.5px solid ${isAct ? '#ffd700' : '#4a3820'};background:${isAct ? 'linear-gradient(180deg,#78350f,#3a1700)' : '#140d07'};box-shadow:${isAct ? '0 0 8px rgba(255,215,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)' : 'none'};transition:all 0.15s;" title="Rương ${idx + 1}: ${pageItemCount}/${INV_PAGE_SIZE} ô">
+      <span style="font-size:10.5px;font-weight:bold;color:${isAct ? '#ffd700' : '#d4c7b0'};letter-spacing:0.3px;line-height:1.1;">RƯƠNG ${idx + 1}</span>
+      <span style="font-size:9px;color:${countCol};line-height:1;font-weight:600;">${pageItemCount}/${INV_PAGE_SIZE}</span>
     </button>`;
   }).join('');
 
