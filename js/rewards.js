@@ -255,7 +255,13 @@ function doReborn() {
     return;
   }
   const nextN = r.stat.reborn + 1;
-  if (!confirm(`Chuyển sinh lần ${nextN}: Nhân vật sẽ trở về cấp 1, giữ nguyên toàn bộ trang bị và võ công, nhận lượng lớn điểm tiềm năng và BẢO VẬT QUÝ HIẾM theo số lần chuyển sinh! Tiếp tục?`)) return;
+  const rebornCost = nextN * 5000000; // lần 1: 5tr, lần 2: 10tr, ..., lần 10: 50tr
+  if ((S.gold || 0) < rebornCost) {
+    if (typeof toast === 'function') toast(`❌ Chuyển sinh lần ${nextN} cần ${rebornCost.toLocaleString()} Vàng!`);
+    return;
+  }
+  if (!confirm(`Chuyển sinh lần ${nextN}: Nhân vật sẽ trở về cấp 1, giữ nguyên toàn bộ trang bị và võ công, nhận lượng lớn điểm tiềm năng và BẢO VẬT QUÝ HIẾM theo số lần chuyển sinh!\n\nChi phí: ${rebornCost.toLocaleString()} Vàng. Tiếp tục?`)) return;
+  S.gold -= rebornCost;
 
   r.stat.reborn++;
   window._legitLevelTransition = true;
