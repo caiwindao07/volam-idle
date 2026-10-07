@@ -1007,41 +1007,7 @@ function renderInv() {
 function renderMore() {
   const moreEl = tabEl('more'); if (!moreEl) return;
   moreEl.innerHTML = `
-    <!-- Tai khoan nguoi choi -->
-    <div class="jx-box">
-      <div class="jx-box-header">
-        <span>👤 Tài Khoản Võ Lâm & Đám Mây</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div>
-          <span style="font-size:12px;color:#cbd5e1;">Tài khoản: </span>
-          <b style="color:#ffd700;font-size:13px;">${(typeof ACC !== 'undefined' && ACC.user) ? esc(ACC.user.username) : 'Khách'}</b>
-          ${(typeof ACC !== 'undefined' && ACC.user && ACC.user.heroName) ? `<small style="color:#38bdf8;"> (${esc(ACC.user.heroName)})</small>` : ''}
-        </div>
-        <button class="jx-action-btn" id="bLogout" style="padding:4px 10px;font-size:11px;color:#ef4444;border-color:#ef444455;">🚪 Đăng Xuất</button>
-      </div>
-      <div class="jx-btn-grid" style="grid-template-columns:1fr 1fr;">
-        <button class="jx-action-btn gold" id="bSyncCloud">☁️ Đồng bộ máy chủ</button>
-        <button class="jx-action-btn" id="bSwitchAcc">🔄 Đổi tài khoản</button>
-      </div>
-    </div>
 
-    <!-- Luu game -->
-    <div class="jx-box">
-      <div class="jx-box-header">
-        <span>💾 Dữ Liệu Nhân Vật (.jxsave)</span>
-      </div>
-      <p class="dim small" style="margin-bottom:6px;font-size:10px;line-height:1.3;">Nhân vật lưu trong trình duyệt (3 slot). Để chơi máy khác: bấm <b>Tải file lưu</b> rồi nạp vào máy kia.</p>
-      <div class="jx-btn-grid" style="grid-template-columns:1fr 1fr;margin-bottom:6px;">
-        <button class="jx-action-btn gold" id="bDl">📥 Tải file lưu (.jxsave)</button>
-        <button class="jx-action-btn" id="bFile">📂 Nạp từ file</button>
-      </div>
-      <div class="jx-btn-grid" style="grid-template-columns:1fr 1fr;margin-bottom:4px;">
-        <button class="jx-action-btn" id="bExp">📋 Xuất mã văn bản</button>
-        <button class="jx-action-btn" id="bImp">📥 Nhập mã văn bản</button>
-      </div>
-      <textarea id="saveTxt" rows="2" style="font-size:10px;padding:3px;" placeholder="Dán mã văn bản tại đây nếu không dùng file .jxsave"></textarea>
-    </div>
 
     <!-- Am thanh -->
     <div class="jx-box">
@@ -1102,19 +1068,6 @@ function renderMore() {
     </div>`;
 
   const m = s => moreEl.querySelector(s);
-  const bLogout = m('#bLogout'); if (bLogout) bLogout.onclick = () => { if (typeof logoutAccount === 'function') logoutAccount(); };
-  const bSwitchAcc = m('#bSwitchAcc'); if (bSwitchAcc) bSwitchAcc.onclick = () => { if (typeof logoutAccount === 'function') logoutAccount(); };
-  const bSyncCloud = m('#bSyncCloud'); if (bSyncCloud) bSyncCloud.onclick = () => {
-    if (typeof syncCloudSave === 'function') {
-      if (typeof ACC !== 'undefined') ACC.lastCloudSaveT = 0;
-      syncCloudSave();
-      toast('Đang đồng bộ dữ liệu với máy chủ...');
-    }
-  };
-  m('#bDl').onclick = () => { if (downloadSaveFile()) toast('Đã tải file lưu: ' + saveFileName()); };
-  m('#bFile').onclick = () => pickSaveFile(null);
-  m('#bExp').onclick = () => { m('#saveTxt').value = exportSave(); toast('Đã xuất mã'); };
-  m('#bImp').onclick = () => importFlow(m('#saveTxt').value, null);
   m('#cAuto').onchange = e => {
     S.autoEquip = e.target.checked;
     S.autoEquipExplicit = true;
