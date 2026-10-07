@@ -32,7 +32,7 @@
           <div class="bar xp" title="Kinh Nghiệm"><i id="xpBar"></i><span id="xpTxt">0.0%</span></div>
         </div>
       </div>
-      <div class="hud-rank-tag" id="hudRankTag">Hạng #1 Võ Lâm</div>
+      <div class="hud-rank-tag" id="hudRankTag" onclick="openRankModal()" title="Nhấp xem Bảng Xếp Hạng Giang Hồ (Đẳng cấp, Phú hộ, Môn phái, Tống Kim, Ác Nhân)">Hạng #1 Võ Lâm</div>
     </div>
 
     <!-- Center: Stage & Hero Name -->
@@ -52,13 +52,13 @@
         <span class="hud-map-icon">📍</span>
         <span id="hudCoords">198/121</span>
         <b id="hudZoneName">Hoa Sơn</b>
-      <span id="mpStatus" class="hud-online-badge">🟢 Online (1)</span>
+      </div>
+      <span id="mpStatus" class="hud-online-badge">🟢 Trực tuyến</span>
       <button id="partyBtn" class="party-top-btn" title="[Phím P] Tổ Đội Luyện Công (+10% EXP/người)">👥 Tổ Đội</button>
       <button id="vipBtn" class="vip-top-btn" title="Đặc Quyền VIP">👑 VIP 1</button>
       <button id="actBtn" class="act-top-btn" title="Hoạt Động / Phó Bản / Tháp">⚔ Hoạt Động</button>
       <button id="forgeBtn" class="forge-top-btn" title="Dã Luyện Thần Binh (+16, Chế Hoàng Kim, Bạch Kim)">🔨 Rèn Đồ</button>
       <button id="casinoBtn" class="casino-top-btn" title="Tửu Quán Tiêu Dao (Tài Xỉu, Bầu Cua, Oản Tù Tì)">🎲 Tửu Quán</button>
-      <button id="chatBtn" class="chat-top-btn" title="Trực Tuyến & Chat Thế Giới">💬 Chat</button>
       <button id="giftBtn" title="Phần thưởng">🎁</button>
       <button id="compactBtn" title="Thu gọn / mở rộng sân đấu">⛶</button>
     </div>
@@ -72,11 +72,6 @@
     </div>
     <button id="ctrlBtn" class="chip"></button>
     <button id="pkChipBtn" class="chip" style="color:#4ade80;font-weight:bold;" title="[Phím F9] Chế độ PK: Luyện công / PK / Đồ sát">🛡️ PK: Luyện công</button>
-    <button id="chatChipBtn" class="chip" style="color:#38bdf8;font-weight:bold;">💬 Chat</button>
-    <button id="actChipBtn" class="chip" style="color:#ffd700;font-weight:bold;">⚔ Hoạt Động</button>
-    <button id="forgeChipBtn" class="chip" style="color:#f59e0b;font-weight:bold;">🔨 Rèn Đồ</button>
-    <button id="casinoChipBtn" class="chip" style="color:#f472b6;font-weight:bold;">🎲 Tửu Quán</button>
-    <button id="campBtn" class="chip">🔥 Lửa Trại</button>
     <button id="mountBtn" class="chip">🐎 Chiến Mã</button>
     <button id="bossBtn" class="chip">👑 Boss HK</button>
     <button id="ktcBtn" class="chip">💎 Kỳ Trân</button>
@@ -222,6 +217,18 @@
       <div class="jx-float-win hidden" id="fw-cloak-meridian" style="width: 520px;"></div>
     </div>
 
+    <!-- Cụm chiêu thức võ công 1-4 & Chiêu chính nổi bên trên action bar (không che thanh bar dưới) -->
+    <div class="jx-skill-belt" id="pad">
+      <button class="pbtn sk" data-i="0" title="Chiêu 1 [Phím 1]"><span class="key-tag">1</span><i></i><b>1</b></button>
+      <button class="pbtn sk" data-i="1" title="Chiêu 2 [Phím 2]"><span class="key-tag">2</span><i></i><b>2</b></button>
+      <button class="pbtn sk" data-i="2" title="Chiêu 3 [Phím 3]"><span class="key-tag">3</span><i></i><b>3</b></button>
+      <button class="pbtn sk" data-i="3" title="Chiêu 4 [Phím 4]"><span class="key-tag">4</span><i></i><b>4</b></button>
+      <!-- Giữ lại các nút pot ẩn trong pad để tương thích ngược logic cũ -->
+      <button class="pbtn pot hp hidden" id="bHp"><div class="cd"></div><span>HP</span></button>
+      <button class="pbtn pot mp hidden" id="bMp"><div class="cd"></div><span>MP</span></button>
+      <button class="pbtn pot tp hidden" id="bTp"><div class="cd"></div><span>Về<br>thành</span></button>
+    </div>
+
     <!-- Classical Bottom Action & Skill Hotbar (Chuẩn hình 1 JX) -->
     <div id="jx-action-bar" class="jx-action-bar">
       <!-- Cụm phím tắt thuốc & vật phẩm -->
@@ -230,19 +237,6 @@
         <button class="jx-q-slot pot-mp" id="qbMp" title="[Phím 2/E] Bơm Nội Lực (MP)"><span class="key-tag">2</span><span class="pot-lbl">MP</span><div class="cd"></div></button>
         <button class="jx-q-slot pot-tp" id="qbTp" title="[Phím 3/T] Thổ Địa Phù"><span class="key-tag">3</span><span class="pot-lbl">Về</span><div class="cd"></div></button>
         <button class="jx-q-slot pot-mount" id="qbMount" title="[Phím 4] Chiến Mã"><span class="key-tag">4</span><span class="pot-lbl">Mã</span></button>
-        <button class="jx-q-slot pot-camp" id="qbCamp" title="[Phím 5] Lửa Trại"><span class="key-tag">5</span><span class="pot-lbl">Trại</span></button>
-      </div>
-
-      <!-- Cụm chiêu thức võ công 1-4 & Chiêu chính -->
-      <div class="jx-skill-belt" id="pad">
-        <button class="pbtn sk" data-i="0" title="Chiêu 1 [Phím 1]"><span class="key-tag">1</span><i></i><b>1</b></button>
-        <button class="pbtn sk" data-i="1" title="Chiêu 2 [Phím 2]"><span class="key-tag">2</span><i></i><b>2</b></button>
-        <button class="pbtn sk" data-i="2" title="Chiêu 3 [Phím 3]"><span class="key-tag">3</span><i></i><b>3</b></button>
-        <button class="pbtn sk" data-i="3" title="Chiêu 4 [Phím 4]"><span class="key-tag">4</span><i></i><b>4</b></button>
-        <!-- Giữ lại các nút pot ẩn trong pad để tương thích ngược logic cũ -->
-        <button class="pbtn pot hp hidden" id="bHp"><div class="cd"></div><span>HP</span></button>
-        <button class="pbtn pot mp hidden" id="bMp"><div class="cd"></div><span>MP</span></button>
-        <button class="pbtn pot tp hidden" id="bTp"><div class="cd"></div><span>Về<br>thành</span></button>
       </div>
 
       <!-- Cụm phím chức năng mở cửa sổ -->

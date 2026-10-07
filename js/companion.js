@@ -106,28 +106,9 @@
       }
     },
 
-    // Thêm nút mở Bạn Đồng Hành trên thanh phím tắt
+    // Nút mở Bạn Đồng Hành đã có trên thanh điều hướng dưới (btnOpenPet)
     setupHudButton() {
-      const topCluster = document.querySelector('.hud-right-cluster');
-      if (!topCluster) return;
-      if (document.getElementById('petTopBtn')) return;
-
-      const btn = document.createElement('button');
-      btn.id = 'petTopBtn';
-      btn.className = 'pet-top-btn';
-      btn.title = 'Hệ Thống Bạn Đồng Hành (Pet / Companion)';
-      btn.innerHTML = '🐾 Đồng Hành';
-      btn.style.cssText = 'background:#241d13;border:1px solid #9c7a3c;color:#ffd700;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:3px;cursor:pointer;';
-      
-      btn.onclick = () => this.toggleWindow();
-      
-      // Chèn trước nút VIP hoặc Hoạt Động (nếu refBtn là con của topCluster), ngược lại appendChild
-      const refBtn = document.getElementById('vipBtn');
-      if (refBtn && refBtn.parentNode === topCluster) {
-        topCluster.insertBefore(btn, refBtn);
-      } else {
-        topCluster.appendChild(btn);
-      }
+      // Đã chuyển xuống thanh chức năng bên dưới
     },
 
     // Bật/tắt cửa sổ Bạn Đồng Hành

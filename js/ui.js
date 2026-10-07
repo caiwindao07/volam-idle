@@ -1195,6 +1195,13 @@ function updateTop() {
   }
 
   const mainSkEl = $('#mainSk'); if (mainSkEl) mainSkEl.textContent = P.main ? P.main.n : '';
+
+  const rankEl = $('#hudRankTag');
+  if (rankEl) {
+    const myRank = (typeof getPlayerRank === 'function') ? getPlayerRank('level') : 1;
+    rankEl.textContent = `Hạng #${myRank} Giang Hồ`;
+    rankEl.title = `Nhấp xem Bảng Xếp Hạng Giang Hồ (Hiện tại: Hạng #${myRank})`;
+  }
 }
 /* Nap tu file .jxsave (hoac ma van ban): chon slot dich, canh bao ghi de, roi tai lai trang */
 function pickSaveFile(after) {
@@ -1527,17 +1534,12 @@ function initChatbox() {
 }
 
 function initActionBar() {
-  const qHp = $('#qbHp'), qMp = $('#qbMp'), qTp = $('#qbTp'), qMount = $('#qbMount'), qCamp = $('#qbCamp');
+  const qHp = $('#qbHp'), qMp = $('#qbMp'), qTp = $('#qbTp'), qMount = $('#qbMount');
   if (qHp) qHp.onclick = () => { if (typeof drinkNow === 'function') drinkNow('life'); };
   if (qMp) qMp.onclick = () => { if (typeof drinkNow === 'function') drinkNow('mana'); };
   if (qTp) qTp.onclick = () => { if (typeof openMapTravelModal === 'function') openMapTravelModal(); };
   if (qMount) qMount.onclick = () => {
     toggleMountRide();
-  };
-  if (qCamp) qCamp.onclick = () => {
-    const cb = $('#campBtn');
-    if (cb) cb.click();
-    else toast('Lửa trại ấm áp!');
   };
 
   const mapCell = $('#jxHudMapCell');
@@ -1555,6 +1557,202 @@ function initActionBar() {
     };
   }
 }
+
+/* =========================================================================
+   BẢNG XẾP HẠNG GIANG HỒ VÕ LÂM 1 (ĐẲNG CẤP, PHÚ HỘ, MÔN PHÁI, TỐNG KIM, ÁC NHÂN)
+   ========================================================================= */
+const RANK_LEGENDS = [
+  { name: 'Trương Tam Phong', fac: 'vd', lvl: 85, gold: 12000000, kills: 14500, pk: 0, tk: 43500 },
+  { name: 'Phong Thanh Dương', fac: 'cl', lvl: 84, gold: 9800000, kills: 13200, pk: 0, tk: 39600 },
+  { name: 'Dương Quá', fac: 'cl', lvl: 82, gold: 8900000, kills: 12400, pk: 3, tk: 37200 },
+  { name: 'Quách Tĩnh', fac: 'cb', lvl: 81, gold: 11000000, kills: 12000, pk: 0, tk: 36000 },
+  { name: 'Lệnh Hồ Xung', fac: 'vd', lvl: 80, gold: 7500000, kills: 11000, pk: 2, tk: 33000 },
+  { name: 'Hà Thiết Thủ', fac: '5d', lvl: 79, gold: 8200000, kills: 10500, pk: 8, tk: 31500 },
+  { name: 'Nhậm Ngã Hành', fac: 'tn', lvl: 79, gold: 7100000, kills: 10100, pk: 15, tk: 30300 },
+  { name: 'Cừu Thiên Nhận', fac: 'tn', lvl: 78, gold: 6900000, kills: 9800, pk: 12, tk: 29400 },
+  { name: 'Hoàng Dung', fac: 'ty', lvl: 77, gold: 10500000, kills: 8900, pk: 0, tk: 26700 },
+  { name: 'Cổ Mộ Thu Cúc', fac: 'ty', lvl: 76, gold: 5400000, kills: 8400, pk: 0, tk: 25200 },
+  { name: 'Điền Bá Quang', fac: 'dm', lvl: 75, gold: 4800000, kills: 7900, pk: 25, tk: 23700 },
+  { name: 'Tạ Tốn', fac: 'tv', lvl: 74, gold: 5100000, kills: 8100, pk: 18, tk: 24300 },
+  { name: 'Hư Trúc', fac: 'tl', lvl: 73, gold: 6400000, kills: 7100, pk: 0, tk: 21300 },
+  { name: 'Chu Bá Thông', fac: 'cb', lvl: 73, gold: 3900000, kills: 7200, pk: 1, tk: 21600 },
+  { name: 'Đoàn Dự', fac: 'tl', lvl: 72, gold: 9200000, kills: 6800, pk: 0, tk: 20400 }
+];
+
+function getLeaderboardList() {
+  const myName = (typeof ACC !== 'undefined' && ACC.user && (ACC.user.heroName || ACC.user.username)) || (typeof S !== 'undefined' && (S.heroName || S.name)) || 'Võ Lâm Hiệp Khách';
+  const myFac = (typeof S !== 'undefined' && S.fac) || 'tl';
+  const myLvl = (typeof S !== 'undefined' && S.lvl) || 1;
+  const myGold = (typeof S !== 'undefined' && S.gold) || 0;
+  const myKills = (typeof S !== 'undefined' && S.totalKills) || 0;
+  const myPk = (typeof S !== 'undefined' && S.pk) || 0;
+  const myTk = (typeof S !== 'undefined' && (S.tkPoints || (S.totalKills || 0) * 3)) || 0;
+
+  const me = {
+    isMe: true,
+    name: myName,
+    fac: myFac,
+    lvl: myLvl,
+    gold: myGold,
+    kills: myKills,
+    pk: myPk,
+    tk: myTk
+  };
+
+  const list = [me];
+  for (const leg of RANK_LEGENDS) {
+    list.push({ ...leg });
+  }
+
+  // Live bot & player sync from MP.otherPlayers
+  if (typeof MP !== 'undefined' && MP.otherPlayers) {
+    for (const id in MP.otherPlayers) {
+      const p = MP.otherPlayers[id];
+      if (!p || !p.name) continue;
+      const exist = list.find(x => x.name === p.name);
+      if (exist) {
+        if (p.lvl) exist.lvl = Math.max(exist.lvl, p.lvl);
+      } else {
+        const pLvl = p.lvl || 1;
+        list.push({
+          name: p.name,
+          fac: p.fac || 'tl',
+          lvl: pLvl,
+          gold: pLvl * 12000,
+          kills: pLvl * 25,
+          pk: 0,
+          tk: pLvl * 80
+        });
+      }
+    }
+  }
+
+  return list;
+}
+
+function getPlayerRank(cat = 'level') {
+  const list = getLeaderboardList();
+  if (cat === 'level') {
+    list.sort((a, b) => b.lvl - a.lvl || b.gold - a.gold);
+  } else if (cat === 'wealth') {
+    list.sort((a, b) => b.gold - a.gold || b.lvl - a.lvl);
+  } else if (cat === 'tongkim') {
+    list.sort((a, b) => b.tk - a.tk || b.lvl - a.lvl);
+  } else if (cat === 'pk') {
+    list.sort((a, b) => b.pk - a.pk || b.kills - a.kills);
+  }
+  const idx = list.findIndex(x => x.isMe);
+  return idx >= 0 ? idx + 1 : 1;
+}
+
+function openRankModal(category = 'level', curFac = 'all') {
+  let list = getLeaderboardList();
+
+  if (category === 'faction' && curFac !== 'all') {
+    list = list.filter(x => x.fac === curFac || x.isMe);
+  }
+
+  // Sort
+  if (category === 'level' || category === 'faction') {
+    list.sort((a, b) => b.lvl - a.lvl || b.gold - a.gold);
+  } else if (category === 'wealth') {
+    list.sort((a, b) => b.gold - a.gold || b.lvl - a.lvl);
+  } else if (category === 'tongkim') {
+    list.sort((a, b) => b.tk - a.tk || b.lvl - a.lvl);
+  } else if (category === 'pk') {
+    list.sort((a, b) => b.pk - a.pk || b.kills - a.kills);
+  }
+
+  const myRank = list.findIndex(x => x.isMe) + 1;
+
+  const facNames = {
+    tl: 'Thiếu Lâm', tv: 'Thiên Vương', dm: 'Đường Môn', '5d': 'Ngũ Độc',
+    nm: 'Nga My', ty: 'Thúy Yên', cb: 'Cái Bang', tn: 'Thiên Nhẫn',
+    vd: 'Võ Đang', cl: 'Côn Lôn'
+  };
+
+  const facBtns = Object.keys(facNames).map(k => {
+    const on = curFac === k ? 'style="border-color:#ffd700;color:#ffd700;background:#2a1f14;"' : '';
+    return `<button class="btn sm" ${on} onclick="openRankModal('faction','${k}')">${facNames[k]}</button>`;
+  }).join(' ');
+
+  const rows = list.slice(0, 20).map((item, idx) => {
+    const rankNum = idx + 1;
+    const medal = rankNum === 1 ? '🥇' : rankNum === 2 ? '🥈' : rankNum === 3 ? '🥉' : `#${rankNum}`;
+    const medalColor = rankNum === 1 ? '#ffd700' : rankNum === 2 ? '#e2e8f0' : rankNum === 3 ? '#f97316' : '#94a3b8';
+    const isMe = item.isMe;
+    const bgRow = isMe ? 'background:rgba(234,179,8,0.18);border:1px solid #ffd700;font-weight:bold;' : (idx % 2 === 0 ? 'background:rgba(0,0,0,0.3);' : 'background:rgba(255,255,255,0.02);');
+    const fName = (typeof FAC !== 'undefined' && FAC[item.fac]) ? FAC[item.fac].n : (facNames[item.fac] || item.fac);
+
+    let valCol = '';
+    if (category === 'level' || category === 'faction') {
+      valCol = `<span style="color:#ffd700;font-weight:bold;">Cấp ${item.lvl}</span>`;
+    } else if (category === 'wealth') {
+      valCol = `<span style="color:#fde047;font-weight:bold;">${(typeof fmt === 'function' ? fmt(item.gold) : item.gold)} lượng</span>`;
+    } else if (category === 'tongkim') {
+      valCol = `<span style="color:#60a5fa;font-weight:bold;">${item.tk.toLocaleString()} điểm</span>`;
+    } else if (category === 'pk') {
+      valCol = `<span style="color:#ef4444;font-weight:bold;">Trị ác: ${item.pk}</span> <small style="color:#94a3b8">(${item.kills} trảm)</small>`;
+    }
+
+    return `
+      <div style="display:grid;grid-template-columns:48px 1fr 100px 110px;align-items:center;padding:7px 10px;font-size:12px;border-radius:4px;margin-bottom:3px;${bgRow}">
+        <div style="font-weight:bold;color:${medalColor};font-size:13px;">${medal}</div>
+        <div style="display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+          <span style="color:${isMe ? '#fef08a' : '#fff'};font-weight:${isMe ? 'bold' : 'normal'};">${item.name}</span>
+          ${isMe ? '<span style="font-size:9px;background:#ca8a04;color:#000;font-weight:800;padding:1px 4px;border-radius:3px;">BẠN</span>' : ''}
+        </div>
+        <div style="color:#cbd5e1;font-size:11px;">${fName}</div>
+        <div style="text-align:right;">${valCol}</div>
+      </div>
+    `;
+  }).join('');
+
+  const modalHtml = `
+    <div style="max-width:540px;width:100%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #5a4425;padding-bottom:8px;margin-bottom:10px;">
+        <h3 style="margin:0;color:#ffd700;font-size:15px;display:flex;align-items:center;gap:6px;">🏆 BẢNG XẾP HẠNG GIANG HỒ</h3>
+        <span style="font-size:11px;color:#a3e635;">Vị trí của bạn: <b>Hạng #${myRank}</b></span>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+        <button class="btn sm ${category === 'level' ? 'on' : ''}" onclick="openRankModal('level')">🥋 Đẳng Cấp</button>
+        <button class="btn sm ${category === 'wealth' ? 'on' : ''}" onclick="openRankModal('wealth')">💰 Phú Hộ</button>
+        <button class="btn sm ${category === 'faction' ? 'on' : ''}" onclick="openRankModal('faction', '${curFac === 'all' ? (typeof S !== 'undefined' ? S.fac : 'tl') : curFac}')">⚡ Môn Phái</button>
+        <button class="btn sm ${category === 'tongkim' ? 'on' : ''}" onclick="openRankModal('tongkim')">⚔ Tống Kim</button>
+        <button class="btn sm ${category === 'pk' ? 'on' : ''}" onclick="openRankModal('pk')">💀 Ác Nhân</button>
+      </div>
+
+      ${category === 'faction' ? `
+        <div style="display:flex;gap:3px;flex-wrap:wrap;background:rgba(0,0,0,0.4);padding:5px;border-radius:4px;margin-bottom:8px;border:1px solid #3d2a18;">
+          ${facBtns}
+        </div>
+      ` : ''}
+
+      <!-- Header table -->
+      <div style="display:grid;grid-template-columns:48px 1fr 100px 110px;padding:4px 10px;font-size:11px;color:#9ca3af;border-bottom:1px solid #3d2a18;margin-bottom:4px;text-transform:uppercase;font-weight:bold;">
+        <div>Hạng</div>
+        <div>Hiệp Khách</div>
+        <div>Môn Phái</div>
+        <div style="text-align:right;">${category === 'level' || category === 'faction' ? 'Đẳng Cấp' : category === 'wealth' ? 'Tài Phú' : category === 'tongkim' ? 'Chiến Tích' : 'Ác Danh'}</div>
+      </div>
+
+      <!-- List -->
+      <div style="max-height:360px;overflow-y:auto;padding-right:3px;">
+        ${rows}
+      </div>
+
+      <div style="margin-top:10px;text-align:center;">
+        <button class="btn sm" onclick="if(typeof modalClose === 'function') modalClose(); else modal();">Đóng</button>
+      </div>
+    </div>
+  `;
+
+  modal(modalHtml);
+}
+window.openRankModal = openRankModal;
+window.getPlayerRank = getPlayerRank;
 
 if (typeof window !== 'undefined') {
   window.addEventListener('DOMContentLoaded', () => {

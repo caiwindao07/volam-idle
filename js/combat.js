@@ -323,13 +323,18 @@ function nearest(list) {
   const prio = cfg.targetPrio || 'near';
 
   let valid = list.filter(e => e.hp > 0 && !e.dead && (!e._unreachable || e._unreachable <= now));
-  if (!valid.length) valid = list.filter(e => e.hp > 0 && !e.dead);
-  if (!valid.length) return null;
+  if (!valid.length) return null; // Không quay lại nhắm mục tiêu đang bị kẹt góc lag
 
   let pool = valid;
   if (range < 2500) {
     const inRange = valid.filter(e => Math.hypot(e.x - H.x, e.y - H.y) <= range);
-    if (inRange.length > 0) pool = inRange; // Con quai trong tam thi uu tien, het quai trong tam thi mo rong tim toan map
+    if (inRange.length > 0) pool = inRange;
+  }
+
+  // Ưu tiên quái thông thoáng tầm nhìn (không bị chướng ngại vật/tường ngăn cách)
+  if (typeof obsLine === 'function') {
+    const directLine = pool.filter(e => obsLine(H.x, H.y, e.x, e.y));
+    if (directLine.length > 0) pool = directLine;
   }
 
   if (prio === 'boss') {
@@ -480,12 +485,24 @@ function autoPatrol(dt) {
   if (manual() || !S || !S.auto || !S.auto.on) return;
   if (R.town || R.tower || (typeof SV !== 'undefined' && SV.on)) return;
   _patrolT = (_patrolT || 0) + dt;
-  if (!_patrolTarget || _patrolT > 3.5 || Math.hypot(_patrolTarget.x - H.x, _patrolTarget.y - H.y) < 25) {
+  if (!_patrolTarget || _patrolT > 3.5 || Math.hypot(_patrolTarget.x - H.x, _patrolTarget.y - H.y) < 25 || (H._stuck && H._stuck > 8)) {
     _patrolT = 0;
-    const ang = Math.random() * Math.PI * 2;
-    const dist = 160 + Math.random() * 120;
-    const [px, py] = inWorld(H.x + Math.cos(ang) * dist, H.y + Math.sin(ang) * dist);
-    _patrolTarget = { x: px, y: py };
+    H._stuck = 0;
+    let chosen = null;
+    for (let tryI = 0; tryI < 8; tryI++) {
+      const ang = Math.random() * Math.PI * 2;
+      const dist = 140 + Math.random() * 120;
+      const [px, py] = inWorld(H.x + Math.cos(ang) * dist, H.y + Math.sin(ang) * dist);
+      if (typeof obsWalk === 'function' && obsWalk(px, py)) {
+        chosen = { x: px, y: py };
+        break;
+      }
+    }
+    if (!chosen && typeof inWorld === 'function') {
+      const [cx, cy] = inWorld(WORLD.w / 2, WORLD.h / 2);
+      chosen = { x: cx, y: cy };
+    }
+    _patrolTarget = chosen || { x: H.x, y: H.y };
   }
   const sp = (S && S.mounted ? 240 : 160) * (R.P ? R.P.speed : 1);
   obsSteer(H, _patrolTarget.x, _patrolTarget.y, sp * dt);
@@ -532,12 +549,16 @@ function tick(dt) {
       const chaseSpeed = (S && S.mounted ? 260 : 185) * (P ? P.speed : 1);
       obsSteer(H, R.moveTo.x, R.moveTo.y, chaseSpeed * dt);
       H.face = R.moveTo.x >= H.x ? 1 : -1;
-      if (H._stuck && H._stuck > 20) {
-        if (R.moveTo) R.moveTo._unreachable = Date.now() + 4000;
+      if (H._stuck && H._stuck > 10) {
+        if (R.moveTo) R.moveTo._unreachable = Date.now() + 10000;
         R.moveTo = null;
         H._stuck = 0;
+        if (typeof obsSnap === 'function') {
+          const [sx, sy] = obsSnap(H.x, H.y);
+          H.x = sx; H.y = sy;
+        }
       }
-    } else if (!alive().length && S.auto && S.auto.on && !manual()) {
+    } else if ((!alive().length || !R.moveTo) && S.auto && S.auto.on && !manual()) {
       autoPatrol(dt);
       if (R.serverMobsActive && typeof requestZoneMobs === 'function') requestZoneMobs();
     }
@@ -582,14 +603,26 @@ function onKill(e) {
   for (const it of rollDrops(e)) dropToGround(it, e);
   for (const m of allDrops(e)) log(`Nhặt được <b style="color:${RAR_COL[3]}">${esc(m)}</b>`);
   const gold = rollSetDrop(e); if (gold) { dropToGround(gold, e); log(`<b style="color:${RAR_COL[gold.r]}">${esc(gold.n)}</b> rơi ra!`); }
-  if (e.cls === 'boss' || e.stageBoss) log(`Hạ <b class="boss">${esc(e.n)}</b> (+${fmt(g)} lượng)`);
-  if (Math.random() < 0.04 && typeof pvkEnsureCamp === 'function') {
-    pvkEnsureCamp(); S.camp.wood++;
-    addText(e.x, e.y - 42, '+1 Gỗ Đốt Lửa', '#ffaa44', 11);
-  }
-  if (Math.random() < 0.02 && typeof pvkEnsureCamp === 'function') {
-    pvkEnsureCamp(); S.camp.wine++;
-    addText(e.x, e.y - 54, '+1 Nữ Nhi Hồng', '#ff66aa', 11);
+  // Boss xanh (elite/leader) có xác xuất 10% rơi lửa trại tại vị trí đánh, tối đa 3 lửa trại
+  const isBlueBoss = (e.cls === 'elite' || e.isElite || e.cls === 'leader');
+  if (isBlueBoss && Math.random() < 0.10) {
+    if (!R.campfires) R.campfires = [];
+    if (R.campfires.length < 3) {
+      const newCamp = {
+        x: e.x,
+        y: e.y,
+        dur: 300,
+        maxDur: 300
+      };
+      R.campfires.push(newCamp);
+      const campTotal = R.campfires.length;
+      if (typeof toast === 'function') toast(`🔥 Boss xanh rơi Lửa Trại (+10% EXP, hiện có ${campTotal}/3)!`);
+      log(`<b style="color:#ffaa44">🔥 Tiêu diệt Boss Xanh rơi Lửa Trại tại (${Math.round(e.x)}, ${Math.round(e.y)})! +10% EXP quái (cộng dồn ${campTotal * 10}% EXP, ${campTotal}/3 đống lửa).</b>`);
+      if (typeof burst === 'function') burst(e.x, e.y, '#ffaa44');
+      if (R) R.dirty = true;
+    } else {
+      if (typeof toast === 'function') toast('🔥 Đã có tối đa 3 Lửa Trại đang cháy (+30% EXP)!');
+    }
   }
   if (Math.random() < 0.03 && typeof pvkEnsureMount === 'function') {
     pvkEnsureMount(); S.mount.fodder = (S.mount.fodder || 0) + 1;
@@ -713,6 +746,7 @@ function gainXp(x) {
     S.attrPts += PTS_PER_LEVEL; S.skPts += SKILL_PTS_PER_LEVEL;
     R.dirty = true; uiSfx('levelup'); log(`<b class="up">Lên cấp ${S.lvl}!</b> +${PTS_PER_LEVEL} tiềm năng, +${SKILL_PTS_PER_LEVEL} kỹ năng`);
     if (typeof onLevelUp === 'function') onLevelUp();
+    if (typeof sendProfile === 'function') sendProfile();
     checkAutoMap();
   }
 }

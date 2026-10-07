@@ -32,7 +32,8 @@ button[disabled]{opacity:.4;cursor:default}
 .topmid b{color:var(--gold);font-family:var(--font)}
 #stageLbl{color:var(--dim)}
 
-.hud-rank-tag{font-size:10px;font-weight:700;color:#ffd700;background:linear-gradient(180deg,#3d1c14 0%,#1a0b08 100%);border:1px solid #8e6c38;padding:2px 7px;border-radius:4px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,215,0,0.2)}
+.hud-rank-tag{font-size:10px;font-weight:700;color:#ffd700;background:linear-gradient(180deg,#3d1c14 0%,#1a0b08 100%);border:1px solid #8e6c38;padding:2px 7px;border-radius:4px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,215,0,0.2);cursor:pointer;user-select:none;transition:all .15s ease}
+.hud-rank-tag:hover{filter:brightness(1.25);transform:scale(1.04);border-color:#ffd700;box-shadow:0 0 8px rgba(255,215,0,0.4)}
 
 .hud-right-cluster{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .hud-map-banner{display:flex;align-items:center;gap:5px;background:radial-gradient(circle,#2a1f14 0%,#100b07 100%);border:1.5px solid #d4af37;border-radius:4px;padding:3px 8px;font-size:11px;color:#ffd700;box-shadow:0 0 8px rgba(212,175,55,0.25),inset 0 1px 0 rgba(255,255,255,0.15);white-space:nowrap;cursor:pointer}
@@ -209,13 +210,13 @@ select,textarea{background:#0b100e;color:var(--text);border:1px solid var(--line
 /* dieu khien: nut che do, o ky nang, thuoc, the do dia phu */
 .chip{position:absolute;right:8px;top:174px;z-index:4;font-size:11px;padding:3px 9px;border-radius:12px;border:1px solid var(--gold2);background:#000a;color:var(--gold)}
 .chip.on{background:#3a2a10;box-shadow:0 0 8px #e6c67a66}
-#campBtn{position:absolute;right:8px;top:200px;z-index:4}
-#mountBtn{position:absolute;right:8px;top:226px;z-index:4}
-#bossBtn{position:absolute;right:8px;top:252px;z-index:4}
-#ktcBtn{position:absolute;right:8px;top:278px;z-index:4}
-#marketBtn{position:absolute;right:8px;top:304px;z-index:4}
+#campBtn{display:none!important}
+#mountBtn{position:absolute;right:8px;top:200px;z-index:4}
+#bossBtn{position:absolute;right:8px;top:226px;z-index:4}
+#ktcBtn{position:absolute;right:8px;top:252px;z-index:4}
+#marketBtn{position:absolute;right:8px;top:278px;z-index:4}
 body.sv #campBtn,body.sv #mountBtn,body.sv #bossBtn,body.sv #ktcBtn,body.sv #marketBtn{display:none!important}
-#pad{position:absolute;right:8px;left:auto;bottom:8px;width:152px;height:auto;z-index:5;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;pointer-events:none}
+#pad{position:absolute;right:14px;left:auto;bottom:60px;width:auto;height:auto;z-index:30;display:flex;flex-direction:row;align-items:center;gap:8px;pointer-events:none;background:rgba(12,9,6,0.75);padding:4px 8px;border-radius:26px;border:1px solid #8e6c38;box-shadow:0 4px 12px rgba(0,0,0,0.7)}
 .pbtn{position:relative;width:44px;height:44px;border-radius:50%;border:2px solid var(--gold2);background:#0c120f center/cover no-repeat;overflow:hidden;pointer-events:auto;touch-action:none;box-shadow:0 2px 6px #000b}
 .pbtn i{position:absolute;inset:0;background:center/cover no-repeat}
 .pbtn b{position:absolute;right:3px;bottom:0;font-size:9px;color:#fff;text-shadow:0 0 2px #000}

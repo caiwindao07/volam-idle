@@ -634,55 +634,63 @@ function broadcastToZone(zoneId, msg, senderWs = null) {
   }
 }
 
+function broadcastOnlineCount() {
+  const count = players.size + BOTS.length;
+  broadcast({
+    type: 'online_count',
+    count: count
+  });
+}
+
 // ==========================================
 // HỆ THỐNG BOT TỰ ĐỘNG (BOT AI SYSTEM)
 // Bot luyện công, trò chuyện, rao bán, nhắn tin trả giá & giao dịch
 // ==========================================
 const BOTS = [
-  { id: 901, name: 'Độc Cô Kiếm', fac: 'huashan', series: 2, lvl: 42, zoneId: 2, x: 820, y: 840, targetX: 820, targetY: 840, dir: 0, face: 1, act: 'st', vip: 3, chat: '', chatT: 0, initialized: true, isBot: true,
+  { id: 901, name: 'Độc Cô Kiếm', fac: 'huashan', series: 2, lvl: 1, xp: 0, zoneId: 2, x: 820, y: 840, targetX: 820, targetY: 840, dir: 0, face: 1, act: 'st', vip: 3, chat: '', chatT: 0, initialized: true, isBot: true,
     sellItems: [
-      { uid: 90101, n: 'Thanh Phong Kiếm', k: 0, r: 3, lvl: 40, s: 2, price: 1500, minPrice: 1000, desc: 'Bảo kiếm Hoa Sơn phái, sắc bén vô cùng', ic: 'img/i/0_0.png' },
-      { uid: 90102, n: 'Huyền Tinh Cấp 4', k: 4, r: 2, lvl: 30, s: -1, price: 800, minPrice: 500, desc: 'Khoáng thạch rèn trang bị', ic: 'img/i/4_0.png' }
+      { uid: 90101, n: 'Thanh Phong Kiếm', k: 0, r: 3, lvl: 10, s: 2, price: 1500, minPrice: 1000, desc: 'Bảo kiếm Hoa Sơn phái, sắc bén vô cùng', ic: 'img/i/0_0.png' },
+      { uid: 90102, n: 'Huyền Tinh Cấp 4', k: 4, r: 2, lvl: 10, s: -1, price: 800, minPrice: 500, desc: 'Khoáng thạch rèn trang bị', ic: 'img/i/4_0.png' }
     ]
   },
-  { id: 902, name: 'Tiểu Long Nữ', fac: 'cuiyan', series: 2, lvl: 35, zoneId: 2, x: 950, y: 780, targetX: 950, targetY: 780, dir: 0, face: -1, act: 'st', vip: 2, chat: '', chatT: 0, initialized: true, isBot: true,
+  { id: 902, name: 'Tiểu Long Nữ', fac: 'cuiyan', series: 2, lvl: 1, xp: 0, zoneId: 2, x: 950, y: 780, targetX: 950, targetY: 780, dir: 0, face: -1, act: 'st', vip: 2, chat: '', chatT: 0, initialized: true, isBot: true,
     sellItems: [
-      { uid: 90201, n: 'Băng Tằm Y', k: 1, r: 3, lvl: 35, s: 2, price: 2000, minPrice: 1400, desc: 'Áo giáp tơ tằm băng giá, tăng mạnh kháng Thủy', ic: 'img/i/1_0.png' },
-      { uid: 90202, n: 'Lam Thủy Tinh', k: 4, r: 3, lvl: 35, s: -1, price: 1200, minPrice: 900, desc: 'Đá quý khảm nạm trang bị', ic: 'img/i/4_1.png' }
+      { uid: 90201, n: 'Băng Tằm Y', k: 1, r: 3, lvl: 10, s: 2, price: 2000, minPrice: 1400, desc: 'Áo giáp tơ tằm băng giá, tăng mạnh kháng Thủy', ic: 'img/i/1_0.png' },
+      { uid: 90202, n: 'Lam Thủy Tinh', k: 4, r: 3, lvl: 10, s: -1, price: 1200, minPrice: 900, desc: 'Đá quý khảm nạm trang bị', ic: 'img/i/4_1.png' }
     ]
   },
-  { id: 903, name: 'Kiều Phong', fac: 'gaibang', series: 3, lvl: 58, zoneId: 2, x: 700, y: 920, targetX: 700, targetY: 920, dir: 0, face: 1, act: 'st', vip: 4, chat: '', chatT: 0, initialized: true, isBot: true,
+  { id: 903, name: 'Kiều Phong', fac: 'gaibang', series: 3, lvl: 1, xp: 0, zoneId: 2, x: 700, y: 920, targetX: 700, targetY: 920, dir: 0, face: 1, act: 'st', vip: 4, chat: '', chatT: 0, initialized: true, isBot: true,
     sellItems: [
-      { uid: 90301, n: 'Đả Cẩu Bổng', k: 0, r: 4, lvl: 55, s: 3, price: 5000, minPrice: 3800, desc: 'Trấn bang chi bảo Cái Bang', ic: 'img/i/0_10.png' },
-      { uid: 90302, n: 'Tử Thủy Tinh', k: 4, r: 3, lvl: 50, s: -1, price: 1500, minPrice: 1100, desc: 'Bảo ngọc luyện thần binh', ic: 'img/i/4_2.png' }
+      { uid: 90301, n: 'Đả Cẩu Bổng', k: 0, r: 4, lvl: 10, s: 3, price: 5000, minPrice: 3800, desc: 'Trấn bang chi bảo Cái Bang', ic: 'img/i/0_10.png' },
+      { uid: 90302, n: 'Tử Thủy Tinh', k: 4, r: 3, lvl: 10, s: -1, price: 1500, minPrice: 1100, desc: 'Bảo ngọc luyện thần binh', ic: 'img/i/4_2.png' }
     ]
   },
-  { id: 904, name: 'Vô Danh Tăng', fac: 'shaolin', series: 0, lvl: 65, zoneId: 37, x: 1720, y: 1750, targetX: 1720, targetY: 1750, dir: 0, face: 1, act: 'st', vip: 5, chat: '', chatT: 0, initialized: true, isBot: true,
+  { id: 904, name: 'Vô Danh Tăng', fac: 'shaolin', series: 0, lvl: 1, xp: 0, zoneId: 37, x: 1720, y: 1750, targetX: 1720, targetY: 1750, dir: 0, face: 1, act: 'st', vip: 5, chat: '', chatT: 0, initialized: true, isBot: true,
     stall: {
       title: 'Tàng Kinh Các Tiệm',
       sellerName: 'Vô Danh Tăng',
       items: [
-        { uid: 90401, n: 'Dịch Cân Kinh Tàn Trang', k: 4, r: 4, lvl: 60, s: 0, price: 3000, desc: 'Tăng vĩnh viễn tiềm năng', ic: 'img/i/4_0.png' },
-        { uid: 90402, n: 'Kim Cang Quyển', k: 3, r: 3, lvl: 50, s: 0, price: 1800, desc: 'Vòng tay hộ thân Phật môn', ic: 'img/i/3_0.png' }
+        { uid: 90401, n: 'Dịch Cân Kinh Tàn Trang', k: 4, r: 4, lvl: 10, s: 0, price: 3000, desc: 'Tăng vĩnh viễn tiềm năng', ic: 'img/i/4_0.png' },
+        { uid: 90402, n: 'Kim Cang Quyển', k: 3, r: 3, lvl: 10, s: 0, price: 1800, desc: 'Vòng tay hộ thân Phật môn', ic: 'img/i/3_0.png' }
       ]
     },
     sellItems: [
-      { uid: 90401, n: 'Dịch Cân Kinh Tàn Trang', k: 4, r: 4, lvl: 60, s: 0, price: 3000, minPrice: 2400, desc: 'Tăng vĩnh viễn tiềm năng', ic: 'img/i/4_0.png' },
-      { uid: 90402, n: 'Kim Cang Quyển', k: 3, r: 3, lvl: 50, s: 0, price: 1800, minPrice: 1300, desc: 'Vòng tay hộ thân Phật môn', ic: 'img/i/3_0.png' }
+      { uid: 90401, n: 'Dịch Cân Kinh Tàn Trang', k: 4, r: 4, lvl: 10, s: 0, price: 3000, minPrice: 2400, desc: 'Tăng vĩnh viễn tiềm năng', ic: 'img/i/4_0.png' },
+      { uid: 90402, n: 'Kim Cang Quyển', k: 3, r: 3, lvl: 10, s: 0, price: 1800, minPrice: 1300, desc: 'Vòng tay hộ thân Phật môn', ic: 'img/i/3_0.png' }
     ]
   },
-  { id: 905, name: 'Đông Phương Bất Bại', fac: 'tangmen', series: 1, lvl: 48, zoneId: 2, x: 880, y: 890, targetX: 880, targetY: 890, dir: 0, face: -1, act: 'st', vip: 3, chat: '', chatT: 0, initialized: true, isBot: true,
+  { id: 905, name: 'Đông Phương Bất Bại', fac: 'tangmen', series: 1, lvl: 1, xp: 0, zoneId: 2, x: 880, y: 890, targetX: 880, targetY: 890, dir: 0, face: -1, act: 'st', vip: 3, chat: '', chatT: 0, initialized: true, isBot: true,
     stall: {
       title: 'Hắc Mộc Nhai Tiệm',
       sellerName: 'Đông Phương Bất Bại',
       items: [
-        { uid: 90501, n: 'Bạo Vũ Lê Hoa Châm', k: 0, r: 4, lvl: 45, s: 1, price: 4200, desc: 'Ám khí Đường Môn độc môn', ic: 'img/i/0_1.png' },
-        { uid: 90502, n: 'Bách Thảo Đan', k: 4, r: 2, lvl: 30, s: 1, price: 600, desc: 'Thần dược trừ bách độc', ic: 'img/i/4_0.png' }
+        { uid: 90501, n: 'Bạo Vũ Lê Hoa Châm', k: 0, r: 4, lvl: 10, s: 1, price: 4200, desc: 'Ám khí Đường Môn độc môn', ic: 'img/i/0_1.png' },
+        { uid: 90502, n: 'Bách Thảo Đan', k: 4, r: 2, lvl: 10, s: 1, price: 600, desc: 'Thần dược trừ bách độc', ic: 'img/i/4_0.png' }
       ]
     },
     sellItems: [
-      { uid: 90501, n: 'Bạo Vũ Lê Hoa Châm', k: 0, r: 4, lvl: 45, s: 1, price: 4200, minPrice: 3200, desc: 'Ám khí Đường Môn độc môn', ic: 'img/i/0_1.png' },
-      { uid: 90502, n: 'Bách Thảo Đan', k: 4, r: 2, lvl: 30, s: 1, price: 600, minPrice: 400, desc: 'Thần dược trừ bách độc', ic: 'img/i/4_0.png' }
+      { uid: 90501, n: 'Bạo Vũ Lê Hoa Châm', k: 0, r: 4, lvl: 10, s: 1, price: 4200, minPrice: 3200, desc: 'Ám khí Đường Môn độc môn', ic: 'img/i/0_1.png' },
+      { uid: 90502, n: 'Bách Thảo Đan', k: 4, r: 2, lvl: 10, s: 1, price: 600, minPrice: 400, desc: 'Thần dược trừ bách độc', ic: 'img/i/4_0.png' }
     ]
   }
 ];
@@ -708,10 +716,29 @@ const BOT_RANDOM_CHATS = [
   'Anh em nào mua đồ thì cứ nhắn tin trả giá nhé, hợp lý là tôi gật đầu ngay!'
 ];
 
-// Định kỳ cho Bot di chuyển, luyện công xuất chiêu, và phát ngôn
+// Định kỳ cho Bot di chuyển, luyện công xuất chiêu, tăng cấp và phát ngôn
 setInterval(() => {
   const now = Date.now();
   for (const bot of BOTS) {
+    // Bot luyện công nhận kinh nghiệm và tăng cấp cùng người chơi
+    bot.xp = (bot.xp || 0) + 25;
+    const needXp = bot.lvl * bot.lvl * 60;
+    if (bot.xp >= needXp && bot.lvl < 150) {
+      bot.lvl++;
+      bot.xp = 0;
+      bot.maxHp = 1000 + bot.lvl * 80;
+      bot.hp = bot.maxHp;
+      // Cập nhật cấp độ cho thành viên tổ đội nếu bot đang trong pt
+      for (const pt of serverParties.values()) {
+        const m = pt.members.find(x => x.id === bot.id);
+        if (m) { m.lvl = bot.lvl; broadcastParty(pt); }
+      }
+      broadcastToZone(bot.zoneId, {
+        type: 'player_update',
+        player: bot
+      });
+    }
+
     // 1. Bot di chuyển quanh khu vực luyện công
     if (Math.random() < 0.4) {
       const angle = Math.random() * Math.PI * 2;
@@ -724,6 +751,8 @@ setInterval(() => {
       broadcastToZone(bot.zoneId, {
         type: 'player_move',
         id: bot.id,
+        name: bot.name,
+        lvl: bot.lvl,
         x: bot.x,
         y: bot.y,
         dir: 0,
@@ -1471,6 +1500,7 @@ wss.on('connection', (ws) => {
   }));
 
   console.log(`[Multiplayer] Kết nối mới #${pId}. Tổng client: ${players.size}`);
+  broadcastOnlineCount();
 
   ws.on('message', (message) => {
     try {
@@ -1621,6 +1651,7 @@ wss.on('connection', (ws) => {
           }
         }
 
+        if (data.lvl != null) p.lvl = Number(data.lvl);
         if (data.dir != null) p.dir = Number(data.dir);
         if (data.face != null) p.face = Number(data.face);
         if (data.act) p.act = String(data.act);
@@ -1686,6 +1717,8 @@ wss.on('connection', (ws) => {
         broadcastToZone(p.zoneId, {
           type: 'player_move',
           id: p.id,
+          lvl: p.lvl,
+          name: p.name,
           x: p.x,
           y: p.y,
           dir: p.dir,
@@ -2124,6 +2157,64 @@ wss.on('connection', (ws) => {
         broadcastParty(party);
       } else if (data.type === 'party_invite') {
         const targetId = Number(data.targetId);
+        const bot = BOTS.find(b => b.id === targetId);
+        if (bot) {
+          let party = getPlayerParty(p.id);
+          if (!party) {
+            const partyId = ++nextPartyId;
+            party = {
+              id: partyId,
+              leaderId: p.id,
+              leaderName: p.name,
+              members: [{
+                id: p.id,
+                name: p.name,
+                fac: p.fac,
+                series: p.series,
+                lvl: p.lvl,
+                x: p.x,
+                y: p.y,
+                hp: p.hp || 100,
+                maxHp: p.maxHp || 100,
+                mp: p.mp || 100,
+                maxMp: p.maxMp || 100,
+                zoneId: p.zoneId
+              }]
+            };
+            serverParties.set(partyId, party);
+            broadcastParty(party);
+          }
+          if (party.members.length < 8 && !party.members.some(m => m.id === bot.id)) {
+            party.members.push({
+              id: bot.id,
+              name: bot.name,
+              fac: bot.fac,
+              series: bot.series,
+              lvl: bot.lvl,
+              x: bot.x,
+              y: bot.y,
+              hp: bot.hp || 1000,
+              maxHp: bot.maxHp || 1000,
+              mp: bot.mp || 800,
+              maxMp: bot.maxMp || 800,
+              zoneId: bot.zoneId
+            });
+            broadcastParty(party);
+            ws.send(JSON.stringify({
+              type: 'toast',
+              msg: `[Tổ Đội] ${bot.name} đã gia nhập đội ngũ luyện công!`
+            }));
+            broadcastToZone(bot.zoneId, {
+              type: 'player_chat',
+              id: bot.id,
+              name: bot.name,
+              vip: bot.vip,
+              chan: 'team',
+              text: `Chào các huynh đệ! Cùng nhau cày cấp nhé!`
+            });
+          }
+          return;
+        }
         const targetEntry = Array.from(players.entries()).find(([w, pl]) => pl.id === targetId);
         if (targetEntry) {
           let party = getPlayerParty(p.id);
@@ -2825,6 +2916,7 @@ wss.on('connection', (ws) => {
         type: 'player_leave',
         id: p.id
       });
+      broadcastOnlineCount();
     }
   });
 

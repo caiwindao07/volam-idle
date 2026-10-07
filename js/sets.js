@@ -15,11 +15,20 @@ function makeSetItem(kind, row, luck) {
   it.ext = row.ext.map(i => geValue(i, g())).filter(Boolean);
   return it;
 }
-/* Roi do bo: chu yeu tu trum; uu tien bo cua mon phai nhan vat (requiremenpai), yeu cau cap khong qua xa cap nhan vat */
+/* Rơi đồ bộ Hoàng Kim & Bạch Kim: Chỉ rơi từ Boss hoặc leo tháp, khiêu chiến tầng cuối, quái thường KHÔNG rơi */
 function rollSetDrop(e) {
-  const chance = e.cls === 'boss' ? 0.05 + zoneIdx(Math.min(S.stage, STAGES)) * 0.004 : e.cls === 'elite' ? 0.004 : 0.0002;
+  const isBoss = !!(e.cls === 'boss' || e.stageBoss || e.goldBoss || e.worldBoss || (typeof R !== 'undefined' && ((R.tower && e.cls === 'boss') || (R.dungeon && e.cls === 'boss'))));
+  if (!isBoss) return null; // Quái thường & quái tinh anh không bao giờ rớt đồ Hoàng Kim / Bạch Kim
+
+  const isTowerFinal = typeof R !== 'undefined' && R.tower && (R.towerWave >= 5 || R.towerFloor % 5 === 0);
+  const isDungeonFinal = typeof R !== 'undefined' && R.dungeon && (R.dungeonWave >= 5);
+  const isFinalBoss = e.worldBoss || e.goldBoss || isTowerFinal || isDungeonFinal;
+
+  const baseChance = isFinalBoss ? 0.35 : 0.12;
+  const chance = baseChance + (typeof zoneIdx === 'function' ? zoneIdx(Math.min(S.stage || 1, STAGES)) * 0.005 : 0);
   if (Math.random() >= chance) return null;
-  const kind = e.L >= 100 && Math.random() < 0.2 ? 'platina' : 'gold';
+
+  const kind = (e.L >= 90 || isFinalBoss) && Math.random() < 0.35 ? 'platina' : 'gold';
   const lvCap = Math.max(S.lvl, e.L) + 10, fid = FAC[S.fac] ? FAC[S.fac].id : -1;
   const reqOf = (r, id) => (r.req.find(q => q[0] === id) || [0, -1])[1];
   let pool = J.sets[kind].filter(r => reqOf(r, 36) <= lvCap && sexReqOk(r.req));

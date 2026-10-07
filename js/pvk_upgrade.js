@@ -353,8 +353,13 @@ function campExpMul() {
   pvkEnsureCamp();
   const c = S.camp;
   let mul = 1;
-  if (c.fireT > 0) mul *= 2; // Lua trai: x2 EXP
-  if (c.wineT > 0) mul *= 2; // Ruou Nu Nhi Hong: them x2 EXP (tong cong x4)
+  const numFires = (typeof R !== 'undefined' && R && R.campfires) ? R.campfires.length : 0;
+  if (numFires > 0) {
+    mul += numFires * 0.10; // mỗi lửa trại + 10% exp từ quái, có cộng dồn (tối đa 3 đống = +30%)
+  } else if (c && c.fireT > 0) {
+    mul += 0.10;
+  }
+  if (c && c.wineT > 0) mul *= 2; // Ruou Nu Nhi Hong: them x2 EXP
   return mul;
 }
 
@@ -364,7 +369,8 @@ function campAttr(A) {
   if (c.wineT > 0) {
     addAttr(A, 'lucky_v', [30, 0, 0]); // Ruou tang +30% may man
   }
-  if (c.fireT > 0) {
+  const numFires = (typeof R !== 'undefined' && R && R.campfires) ? R.campfires.length : 0;
+  if (numFires > 0 || c.fireT > 0) {
     addAttr(A, 'lifereplenish_p', [100, 0, 0]); // Am ap lua trai tang hoi phuc
   }
 }
@@ -405,20 +411,26 @@ function campDrink() {
 
 function campTick(dt) {
   pvkEnsureCamp();
-  const c = S.camp;
-  if (c.fireT > 0) {
-    c.fireT = Math.max(0, c.fireT - dt);
-    // Hoi phuc sinh luc/noi luc xung quanh lua trai
-    if (R && R.P) {
-      heal(R.P.life * 0.01 * dt, true);
-      R.mana = Math.min(R.P.mana, R.mana + R.P.mana * 0.01 * dt);
+  // Đếm ngược thời gian các đống lửa trại xuất hiện từ Boss Xanh
+  if (typeof R !== 'undefined' && R && R.campfires && R.campfires.length > 0) {
+    for (let i = R.campfires.length - 1; i >= 0; i--) {
+      const f = R.campfires[i];
+      f.dur -= dt;
+      if (f.dur <= 0) {
+        R.campfires.splice(i, 1);
+        log('<span class="dim">Một đống lửa trại đã tàn.</span>');
+        if (R) R.dirty = true;
+      }
     }
-    if (c.fireT === 0) {
-      log('<span class="dim">Lửa trại đã tàn.</span>');
-      if (R) R.dirty = true;
+    // Hồi phục sinh lực nhẹ khi có lửa trại (0.5% mỗi giây mỗi đống lửa)
+    if (R.P && R.campfires.length > 0) {
+      heal(R.P.life * 0.005 * R.campfires.length * dt, true);
+      R.mana = Math.min(R.P.mana, R.mana + R.P.mana * 0.005 * R.campfires.length * dt);
     }
   }
-  if (c.wineT > 0) {
+
+  const c = S.camp;
+  if (c && c.wineT > 0) {
     c.wineT = Math.max(0, c.wineT - dt);
     if (c.wineT === 0) {
       log('<span class="dim">Hơi rượu đã tan.</span>');
@@ -430,57 +442,57 @@ function campTick(dt) {
 
 let _campImg = null;
 function drawCampfire(c, dt) {
-  pvkEnsureCamp();
-  const cp = S.camp;
-  if (!cp || cp.fireT <= 0) return;
-  const x = cp.fireX || H.x, y = cp.fireY || H.y;
+  if (typeof R === 'undefined' || !R || !R.campfires || !R.campfires.length) return;
 
-  // Vang sang vang cam lap lanh xung quanh dong lua
-  const pulse = Math.sin(Date.now() * 0.006);
-  const glow = 42 + pulse * 6;
-  const grad = c.createRadialGradient(x, y - 10, 8, x, y - 10, glow);
-  grad.addColorStop(0, 'rgba(255, 170, 40, 0.45)');
-  grad.addColorStop(0.4, 'rgba(255, 80, 0, 0.22)');
-  grad.addColorStop(1, 'rgba(200, 40, 0, 0)');
-  c.fillStyle = grad;
-  c.beginPath();
-  c.arc(x, y - 10, glow, 0, 7);
-  c.fill();
-
-  // Load and draw real animated campfire sprite (domlua.png from domlua.spr)
   if (!_campImg) {
     _campImg = new Image();
     _campImg.src = 'img/a/domlua.png';
   }
 
-  if (_campImg.complete && _campImg.naturalWidth) {
-    // 8 frames, total width 912, each frame 114x200. CenterX=63, CenterY=159
-    const totalFrames = 8;
-    const fw = 114, fh = 200;
-    const animSpeed = 10; // 10 fps
-    const frame = Math.floor(Date.now() / 1000 * animSpeed) % totalFrames;
-    const sx = frame * fw;
+  for (let idx = 0; idx < R.campfires.length; idx++) {
+    const f = R.campfires[idx];
+    const x = f.x, y = f.y;
 
-    // Scale slightly for pleasing size on map (e.g. 0.6x or 0.65x)
-    const scale = 0.55;
-    const drawW = fw * scale;
-    const drawH = fh * scale;
-    // Align with CenterX (63) and CenterY (159)
-    const drawX = x - (63 * scale);
-    const drawY = y - (159 * scale);
-
-    c.drawImage(_campImg, sx, 0, fw, fh, drawX, drawY, drawW, drawH);
-  } else {
-    // Fallback if image still loading
-    c.fillStyle = '#ff660088';
+    // Vang sang vang cam lap lanh xung quanh dong lua
+    const pulse = Math.sin((Date.now() + idx * 750) * 0.006);
+    const glow = 42 + pulse * 6;
+    const grad = c.createRadialGradient(x, y - 10, 8, x, y - 10, glow);
+    grad.addColorStop(0, 'rgba(255, 170, 40, 0.45)');
+    grad.addColorStop(0.4, 'rgba(255, 80, 0, 0.22)');
+    grad.addColorStop(1, 'rgba(200, 40, 0, 0)');
+    c.fillStyle = grad;
     c.beginPath();
-    c.arc(x, y - 12, 16, 0, 7);
+    c.arc(x, y - 10, glow, 0, 7);
     c.fill();
-  }
 
-  // Nhan thoi gian
-  const m = Math.floor(cp.fireT / 60), s = Math.floor(cp.fireT % 60);
-  label(x, y - 48, `🔥 Lửa Trại ${m}:${s < 10 ? '0' : ''}${s}`, '#ffd24a', 11, -1);
+    // Sprite animated domlua.png
+    if (_campImg.complete && _campImg.naturalWidth) {
+      const totalFrames = 8;
+      const fw = 114, fh = 200;
+      const animSpeed = 10;
+      const frame = Math.floor((Date.now() / 1000 * animSpeed) + idx * 2) % totalFrames;
+      const sx = frame * fw;
+
+      const scale = 0.55;
+      const drawW = fw * scale;
+      const drawH = fh * scale;
+      const drawX = x - (63 * scale);
+      const drawY = y - (159 * scale);
+
+      c.drawImage(_campImg, sx, 0, fw, fh, drawX, drawY, drawW, drawH);
+    } else {
+      c.fillStyle = '#ff660088';
+      c.beginPath();
+      c.arc(x, y - 12, 16, 0, 7);
+      c.fill();
+    }
+
+    // Nhan thoi gian & EXP
+    const m = Math.floor(f.dur / 60), s = Math.floor(f.dur % 60);
+    if (typeof label === 'function') {
+      label(x, y - 48, `🔥 Lửa Trại (+10% EXP) ${m}:${s < 10 ? '0' : ''}${s}`, '#ffd24a', 11, -1);
+    }
+  }
 }
 
 function updateCampHud() {

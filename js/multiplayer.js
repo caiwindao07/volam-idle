@@ -147,15 +147,22 @@ function handleServerMessage(msg) {
       }
       updateOnlineCount();
     }
+  } else if (msg.type === 'online_count') {
+    MP.onlineCount = Number(msg.count) || 1;
+    updateOnlineCount();
   } else if (msg.type === 'player_update') {
     if (msg.player && msg.player.id !== MP.myId) {
       addOrUpdatePlayer(msg.player);
+      const p = MP.otherPlayers[msg.player.id];
+      if (p && msg.player.lvl != null) p.lvl = msg.player.lvl;
     }
   } else if (msg.type === 'player_move') {
     let p = MP.otherPlayers[msg.id];
     if (!p) {
       addOrUpdatePlayer({
         id: msg.id,
+        name: msg.name,
+        lvl: msg.lvl,
         x: msg.x,
         y: msg.y,
         dir: msg.dir,
@@ -171,6 +178,8 @@ function handleServerMessage(msg) {
       p = MP.otherPlayers[msg.id];
     }
     if (p) {
+      if (msg.lvl != null) p.lvl = msg.lvl;
+      if (msg.name) p.name = msg.name;
       p.targetX = msg.x;
       p.targetY = msg.y;
       if (msg.dir != null && p.act !== 'at') p.dir = msg.dir;
@@ -655,6 +664,7 @@ function sendMove(dt) {
     dir: H.dir || 0,
     face: H.face || 1,
     act: H.act || 'st',
+    lvl: S.lvl || 1,
     stage: S.stage || 1,
     zoneId: myZone,
     mounted: curMounted,
@@ -972,7 +982,7 @@ function drawSpeechBubble(c, x, y, text) {
 }
 
 function updateOnlineStatusBadge(online) {
-  const count = Object.keys(MP.otherPlayers).length + 1;
+  const count = MP.onlineCount || (Object.keys(MP.otherPlayers).length + 1);
   const el = $('#mpStatus');
   if (el) {
     el.innerHTML = online 
