@@ -245,7 +245,7 @@ function createInitialHeroState(heroName, fac) {
     sex: (fac === 'emei' || fac === 'cuiyan') ? 1 : 0,
     lvl: 1,
     xp: 0,
-    gold: 500,
+    gold: 0,
     attrPts: 0,
     attr: { str: 0, dex: 0, vit: 0, eng: 0 },
     skPts: 1,
@@ -280,8 +280,21 @@ function createInitialHeroState(heroName, fac) {
     lootF: { minRar: 0, minLvl: 1, groups: [], series: [], auto: true },
     ground: [],
     mats: { ht: {}, ore: {}, shard: {}, misc: {} },
-    camp: { wood: 5, wine: 2, fireT: 0, wineT: 0, fireX: 0, fireY: 0 },
-    mount: { tier: 1, lvl: 1, exp: 0, fodder: 10 },
+    camp: { wood: 0, wine: 0, fireT: 0, wineT: 0, fireX: 0, fireY: 0 },
+    mount: { tier: 0, lvl: 1, exp: 0, fodder: 0 },
+    cloak: { tier: 0 },
+    meridian: { qi: 0, levels: { nham: 0, doc: 0, xung: 0, doi: 0, amduy: 0, duongduy: 0, amkieu: 0, duongkieu: 0 } },
+    companion: {
+      activeId: null,
+      selectedTabId: 1,
+      list: {
+        1: { id: 1, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+        2: { id: 2, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+        3: { id: 3, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+        4: { id: 4, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+        5: { id: 5, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } }
+      }
+    },
     rw: { stat: { kills: 0, elite: 0, boss: 0, chests: 0 }, fd: 0 },
     last: Date.now()
   };
@@ -621,15 +634,257 @@ function broadcastToZone(zoneId, msg, senderWs = null) {
   }
 }
 
-// Quản lý quái vật thế giới theo từng bản đồ (zoneId)
-const zoneMobs = new Map(); // zoneId -> Map(mobId -> mob)
-let nextMobId = 5000;
+// ==========================================
+// HỆ THỐNG BOT TỰ ĐỘNG (BOT AI SYSTEM)
+// Bot luyện công, trò chuyện, rao bán, nhắn tin trả giá & giao dịch
+// ==========================================
+const BOTS = [
+  { id: 901, name: 'Độc Cô Kiếm', fac: 'huashan', series: 2, lvl: 42, zoneId: 2, x: 820, y: 840, targetX: 820, targetY: 840, dir: 0, face: 1, act: 'st', vip: 3, chat: '', chatT: 0, initialized: true, isBot: true,
+    sellItems: [
+      { uid: 90101, n: 'Thanh Phong Kiếm', k: 0, r: 3, lvl: 40, s: 2, price: 1500, minPrice: 1000, desc: 'Bảo kiếm Hoa Sơn phái, sắc bén vô cùng', ic: 'img/i/0_0.png' },
+      { uid: 90102, n: 'Huyền Tinh Cấp 4', k: 4, r: 2, lvl: 30, s: -1, price: 800, minPrice: 500, desc: 'Khoáng thạch rèn trang bị', ic: 'img/i/4_0.png' }
+    ]
+  },
+  { id: 902, name: 'Tiểu Long Nữ', fac: 'cuiyan', series: 2, lvl: 35, zoneId: 2, x: 950, y: 780, targetX: 950, targetY: 780, dir: 0, face: -1, act: 'st', vip: 2, chat: '', chatT: 0, initialized: true, isBot: true,
+    sellItems: [
+      { uid: 90201, n: 'Băng Tằm Y', k: 1, r: 3, lvl: 35, s: 2, price: 2000, minPrice: 1400, desc: 'Áo giáp tơ tằm băng giá, tăng mạnh kháng Thủy', ic: 'img/i/1_0.png' },
+      { uid: 90202, n: 'Lam Thủy Tinh', k: 4, r: 3, lvl: 35, s: -1, price: 1200, minPrice: 900, desc: 'Đá quý khảm nạm trang bị', ic: 'img/i/4_1.png' }
+    ]
+  },
+  { id: 903, name: 'Kiều Phong', fac: 'gaibang', series: 3, lvl: 58, zoneId: 2, x: 700, y: 920, targetX: 700, targetY: 920, dir: 0, face: 1, act: 'st', vip: 4, chat: '', chatT: 0, initialized: true, isBot: true,
+    sellItems: [
+      { uid: 90301, n: 'Đả Cẩu Bổng', k: 0, r: 4, lvl: 55, s: 3, price: 5000, minPrice: 3800, desc: 'Trấn bang chi bảo Cái Bang', ic: 'img/i/0_10.png' },
+      { uid: 90302, n: 'Tử Thủy Tinh', k: 4, r: 3, lvl: 50, s: -1, price: 1500, minPrice: 1100, desc: 'Bảo ngọc luyện thần binh', ic: 'img/i/4_2.png' }
+    ]
+  },
+  { id: 904, name: 'Vô Danh Tăng', fac: 'shaolin', series: 0, lvl: 65, zoneId: 37, x: 1720, y: 1750, targetX: 1720, targetY: 1750, dir: 0, face: 1, act: 'st', vip: 5, chat: '', chatT: 0, initialized: true, isBot: true,
+    stall: {
+      title: 'Tàng Kinh Các Tiệm',
+      sellerName: 'Vô Danh Tăng',
+      items: [
+        { uid: 90401, n: 'Dịch Cân Kinh Tàn Trang', k: 4, r: 4, lvl: 60, s: 0, price: 3000, desc: 'Tăng vĩnh viễn tiềm năng', ic: 'img/i/4_0.png' },
+        { uid: 90402, n: 'Kim Cang Quyển', k: 3, r: 3, lvl: 50, s: 0, price: 1800, desc: 'Vòng tay hộ thân Phật môn', ic: 'img/i/3_0.png' }
+      ]
+    },
+    sellItems: [
+      { uid: 90401, n: 'Dịch Cân Kinh Tàn Trang', k: 4, r: 4, lvl: 60, s: 0, price: 3000, minPrice: 2400, desc: 'Tăng vĩnh viễn tiềm năng', ic: 'img/i/4_0.png' },
+      { uid: 90402, n: 'Kim Cang Quyển', k: 3, r: 3, lvl: 50, s: 0, price: 1800, minPrice: 1300, desc: 'Vòng tay hộ thân Phật môn', ic: 'img/i/3_0.png' }
+    ]
+  },
+  { id: 905, name: 'Đông Phương Bất Bại', fac: 'tangmen', series: 1, lvl: 48, zoneId: 2, x: 880, y: 890, targetX: 880, targetY: 890, dir: 0, face: -1, act: 'st', vip: 3, chat: '', chatT: 0, initialized: true, isBot: true,
+    stall: {
+      title: 'Hắc Mộc Nhai Tiệm',
+      sellerName: 'Đông Phương Bất Bại',
+      items: [
+        { uid: 90501, n: 'Bạo Vũ Lê Hoa Châm', k: 0, r: 4, lvl: 45, s: 1, price: 4200, desc: 'Ám khí Đường Môn độc môn', ic: 'img/i/0_1.png' },
+        { uid: 90502, n: 'Bách Thảo Đan', k: 4, r: 2, lvl: 30, s: 1, price: 600, desc: 'Thần dược trừ bách độc', ic: 'img/i/4_0.png' }
+      ]
+    },
+    sellItems: [
+      { uid: 90501, n: 'Bạo Vũ Lê Hoa Châm', k: 0, r: 4, lvl: 45, s: 1, price: 4200, minPrice: 3200, desc: 'Ám khí Đường Môn độc môn', ic: 'img/i/0_1.png' },
+      { uid: 90502, n: 'Bách Thảo Đan', k: 4, r: 2, lvl: 30, s: 1, price: 600, minPrice: 400, desc: 'Thần dược trừ bách độc', ic: 'img/i/4_0.png' }
+    ]
+  }
+];
 
-// Hệ thống Chợ Đen giao dịch người chơi
-const serverMarket = [];
-let nextMarketId = 1000;
+// Khởi tạo các Bot vào danh sách người chơi thế giới
+function initBots() {
+  for (const bot of BOTS) {
+    bot.lastUpdate = Date.now();
+    bot.hp = 1000 + bot.lvl * 80;
+    bot.maxHp = bot.hp;
+    bot.mp = 800 + bot.lvl * 50;
+    bot.maxMp = bot.mp;
+  }
+}
+initBots();
 
-// Hệ thống Tổ Đội (Party Multiplayer)
+const BOT_RANDOM_CHATS = [
+  'Hôm nay cày cấp ở đây rớt nhiều đồ xịn quá các huynh đệ!',
+  'Ai mua trang bị hoặc đá khảm không? Nhắn tin tôi có giá tốt!',
+  'Bản đồ này quái đông thật, cắm auto luyện công khỏe re.',
+  'Cần thanh lý ít đồ kiếm tiền mua máu mana, ai có nhu cầu mật tôi!',
+  'Đang rảnh rỗi luyện chiêu thức, huynh đệ nào qua giao lưu không?',
+  'Anh em nào mua đồ thì cứ nhắn tin trả giá nhé, hợp lý là tôi gật đầu ngay!'
+];
+
+// Định kỳ cho Bot di chuyển, luyện công xuất chiêu, và phát ngôn
+setInterval(() => {
+  const now = Date.now();
+  for (const bot of BOTS) {
+    // 1. Bot di chuyển quanh khu vực luyện công
+    if (Math.random() < 0.4) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 30 + Math.random() * 80;
+      bot.x = Math.round(bot.x + Math.cos(angle) * dist);
+      bot.y = Math.round(bot.y + Math.sin(angle) * dist);
+      bot.face = Math.cos(angle) >= 0 ? 1 : -1;
+      bot.act = Math.random() < 0.4 ? 'at' : 'run';
+      
+      broadcastToZone(bot.zoneId, {
+        type: 'player_move',
+        id: bot.id,
+        x: bot.x,
+        y: bot.y,
+        dir: 0,
+        face: bot.face,
+        act: bot.act,
+        stage: 1,
+        zoneId: bot.zoneId,
+        mounted: false,
+        mountTier: 0,
+        cloakTier: 0,
+        pkMode: 'peace',
+        hp: bot.hp,
+        maxHp: bot.maxHp
+      });
+    }
+
+    // 2. Bot mô phỏng xuất chiêu luyện công (player_skill)
+    if (Math.random() < 0.3) {
+      const skillMap = { huashan: 1347, cuiyan: 95, gaibang: 115, shaolin: 4, tangmen: 47 };
+      const skId = skillMap[bot.fac] || 4;
+      broadcastToZone(bot.zoneId, {
+        type: 'player_skill',
+        id: bot.id,
+        x: bot.x,
+        y: bot.y,
+        dir: 0,
+        face: bot.face,
+        tx: bot.x + bot.face * 120,
+        ty: bot.y + (Math.random() - 0.5) * 60,
+        skillId: skId
+      });
+    }
+
+    // 3. Bot rao bán hoặc trò chuyện trên kênh Thế Giới / Kênh Mua Bán
+    if (Math.random() < 0.08) {
+      let chatMsg = '';
+      let chan = 'world';
+      if (Math.random() < 0.6 && bot.sellItems && bot.sellItems.length > 0) {
+        const it = bot.sellItems[Math.floor(Math.random() * bot.sellItems.length)];
+        chatMsg = `Bán gấp [${it.n}] giá ${it.price} lượng, ai mua mật tin trả giá trực tiếp nhé!`;
+        chan = 'trade';
+      } else {
+        chatMsg = BOT_RANDOM_CHATS[Math.floor(Math.random() * BOT_RANDOM_CHATS.length)];
+        chan = 'world';
+      }
+
+      bot.chat = chatMsg;
+      bot.chatT = now;
+      broadcast({
+        type: 'player_chat',
+        id: bot.id,
+        name: bot.name,
+        vip: bot.vip,
+        chan: chan,
+        text: chatMsg
+      });
+    }
+  }
+}, 3500);
+
+// Xử lý phản hồi thông minh khi người chơi trò chuyện / trả giá / giao dịch với Bot
+function handleBotChatResponse(bot, player, playerWs, text) {
+  const t = text.toLowerCase();
+  let reply = '';
+  const botItems = bot.sellItems || [];
+
+  // 1. Người chơi hỏi mua đồ hoặc hỏi giá
+  if (t.includes('mua') || t.includes('giá') || t.includes('bán') || t.includes('bao nhiêu') || t.includes('đồ')) {
+    if (botItems.length > 0) {
+      const itemListStr = botItems.map(it => `[${it.n}]: ${it.price} lượng`).join(', ');
+      reply = `Chào đại hiệp! Tôi đang có: ${itemListStr}. Huynh đệ muốn mua món nào hoặc trả giá bao nhiêu cứ bảo tôi!`;
+    } else {
+      reply = `Hiện tại tôi vừa bán hết đồ rồi đại hiệp ơi!`;
+    }
+  }
+  // 2. Người chơi trả giá (e.g. "bán 1000 lượng nhé", "giảm giá 1200 đi", "1000k dc ko")
+  else if (/\d+/.test(t) || t.includes('bớt') || t.includes('giảm') || t.includes('fix') || t.includes('rẻ')) {
+    const numbers = t.match(/\d+/g);
+    const offerPrice = numbers ? parseInt(numbers[0], 10) : 0;
+    
+    // Tìm món đồ gần nhất
+    const targetItem = botItems[0];
+    if (targetItem) {
+      if (offerPrice >= targetItem.minPrice) {
+        reply = `Được rồi! Hảo sảng! Giá ${offerPrice} lượng tôi đồng ý bán [${targetItem.n}] cho huynh đệ! Mời giao dịch ngay nhé!`;
+        targetItem.agreePrice = offerPrice;
+        // Tự động gửi lời mời giao dịch tới người chơi
+        setTimeout(() => {
+          if (playerWs.readyState === 1) {
+            playerWs.send(JSON.stringify({
+              type: 'trade_req_prompt',
+              fromId: bot.id,
+              fromName: bot.name,
+              fromLvl: bot.lvl
+            }));
+          }
+        }, 1500);
+      } else if (offerPrice > 0 && offerPrice < targetItem.minPrice) {
+        const counterOffer = Math.round((targetItem.price + targetItem.minPrice) / 2);
+        reply = `Giá ${offerPrice} lượng bèo quá huynh đệ ơi, tôi lỗ vốn mất! Để hữu nghị cho huynh ${counterOffer} lượng nhé? Đồng ý thì mời giao dịch!`;
+      } else {
+        reply = `Huynh đệ muốn bớt bao nhiêu lượng? Cứ ra giá cụ thể xem tôi có để lại được không!`;
+      }
+    } else {
+      reply = `Tôi hết hàng rồi huynh đệ ơi!`;
+    }
+  }
+  // 3. Người chơi rủ giao dịch / hẹn địa điểm
+  else if (t.includes('giao dịch') || t.includes('gd') || t.includes('trade') || t.includes('đổi')) {
+    reply = `Được chứ, tôi đang ở gần đây! Mời đại hiệp xác nhận giao dịch nhé!`;
+    setTimeout(() => {
+      if (playerWs.readyState === 1) {
+        playerWs.send(JSON.stringify({
+          type: 'trade_req_prompt',
+          fromId: bot.id,
+          fromName: bot.name,
+          fromLvl: bot.lvl
+        }));
+      }
+    }, 1000);
+  }
+  // 4. Trò chuyện chào hỏi thông thường
+  else if (t.includes('chào') || t.includes('hi') || t.includes('hello') || t.includes('alo')) {
+    reply = `Chào ${player.name}! Rất vui được gặp trên chốn võ lâm giang hồ! Huynh đệ đang cày cấp hay tìm mua đồ gì thế?`;
+  } else if (t.includes('ở đâu') || t.includes('tọa độ')) {
+    reply = `Tôi đang ở tọa độ (${bot.x}, ${bot.y}) bản đồ này đây đại hiệp ơi!`;
+  } else {
+    const defaultReplies = [
+      `Hay đấy đại hiệp! Giang hồ hiểm ác, có gì cứ tương trợ lẫn nhau nhé!`,
+      `Huynh đệ cần mua trang bị hoặc đá quý thì cứ bảo tôi, giá cả thương lượng thoải mái!`,
+      `Tôi đang tập trung luyện chiêu thức, chúc huynh đệ sớm xưng bá võ lâm!`
+    ];
+    reply = defaultReplies[Math.floor(Math.random() * defaultReplies.length)];
+  }
+
+  // Gửi tin nhắn phản hồi lại người chơi
+  setTimeout(() => {
+    bot.chat = reply;
+    bot.chatT = Date.now();
+    if (playerWs.readyState === 1) {
+      // Gửi riêng hoặc hiển thị tin nhắn mật / lân cận
+      playerWs.send(JSON.stringify({
+        type: 'player_chat',
+        id: bot.id,
+        name: bot.name,
+        vip: bot.vip,
+        chan: 'whisper',
+        text: reply
+      }));
+    }
+    // Đồng thời hiển thị bong bóng chat trên đầu bot
+    broadcastToZone(bot.zoneId, {
+      type: 'player_chat',
+      id: bot.id,
+      name: bot.name,
+      vip: bot.vip,
+      chan: 'near',
+      text: reply
+    });
+  }, 1000 + Math.random() * 800);
+}
 const serverParties = new Map(); // partyId -> { id, leaderId, leaderName, members: [ { id, name, fac, series, lvl, x, y } ] }
 let nextPartyId = 100;
 
@@ -1207,8 +1462,8 @@ wss.on('connection', (ws) => {
   };
   players.set(ws, pData);
 
-  // Gửi danh sách người chơi đã khởi tạo cho client vừa vào (sẽ lọc zone sau khi nhận profile)
-  const allActivePlayers = Array.from(players.values()).filter(x => x.id === pId || x.initialized);
+  // Gửi danh sách người chơi & BOTS đã khởi tạo cho client vừa vào
+  const allActivePlayers = Array.from(players.values()).filter(x => x.id === pId || x.initialized).concat(BOTS);
   ws.send(JSON.stringify({
     type: 'init',
     myId: pId,
@@ -1325,6 +1580,14 @@ wss.on('connection', (ws) => {
             player: p
           }, ws);
           console.log(`[Multiplayer] Người chơi #${p.id} (${p.name} - ${p.username || 'Khách'}) đã vào thế giới (zone ${p.zoneId}).`);
+          // Gửi danh sách người chơi & BOTS cùng zone
+          const zonePlayers = Array.from(players.values())
+            .filter(pl => pl.zoneId === p.zoneId && pl.id !== p.id && pl.initialized)
+            .concat(BOTS.filter(b => b.zoneId === p.zoneId));
+          ws.send(JSON.stringify({
+            type: 'zone_players_sync',
+            players: zonePlayers
+          }));
         } else {
           // player_update chỉ gửi cho người cùng zone
           broadcastToZone(p.zoneId, {
@@ -1408,9 +1671,10 @@ wss.on('connection', (ws) => {
               type: 'player_join',
               player: p
             }, ws);
-            // Gửi cho client mới vào zone: danh sách người chơi cùng zone
+            // Gửi cho client mới vào zone: danh sách người chơi cùng zone (bao gồm BOTS)
             const zonePlayers = Array.from(players.values())
-              .filter(pl => pl.zoneId === p.zoneId && pl.id !== p.id && pl.initialized);
+              .filter(pl => pl.zoneId === p.zoneId && pl.id !== p.id && pl.initialized)
+              .concat(BOTS.filter(b => b.zoneId === p.zoneId));
             ws.send(JSON.stringify({
               type: 'zone_players_sync',
               players: zonePlayers
@@ -1755,6 +2019,25 @@ wss.on('connection', (ws) => {
           chan: chan,
           text: text
         });
+
+        // Kiểm tra phản hồi thông minh từ BOT
+        const tLower = text.toLowerCase();
+        let targetBot = null;
+        for (const b of BOTS) {
+          if (tLower.includes(b.name.toLowerCase())) {
+            targetBot = b;
+            break;
+          }
+        }
+        if (!targetBot) {
+          const zoneBots = BOTS.filter(b => b.zoneId === p.zoneId);
+          if (zoneBots.length > 0 && (chan === 'trade' || tLower.includes('mua') || tLower.includes('giá') || tLower.includes('bán') || tLower.includes('bớt') || tLower.includes('giảm') || tLower.includes('gd') || tLower.includes('trade') || tLower.includes('alo') || tLower.includes('bot') || /\d+/.test(tLower))) {
+            targetBot = zoneBots[0];
+          }
+        }
+        if (targetBot) {
+          handleBotChatResponse(targetBot, p, ws, text);
+        }
       } else if (data.type === 'market_post') {
         const price = Math.max(10, Math.floor(Number(data.price) || 100));
         const itemObj = {
@@ -1955,6 +2238,25 @@ wss.on('connection', (ws) => {
           ws.send(JSON.stringify({ type: 'toast', msg: 'Đối phương đang bận giao dịch' }));
           return;
         }
+        const bot = BOTS.find(b => b.id === targetId);
+        if (bot) {
+          const tid = ++nextTradeId;
+          const botItem = (bot.sellItems && bot.sellItems[0]) ? Object.assign({}, bot.sellItems[0]) : { uid: bot.id * 100 + 1, n: 'Bảo Đao', price: 1000, r: 3, lvl: 40 };
+          const session = {
+            id: tid,
+            p1: { id: p.id, name: p.name, lvl: p.lvl, uKey: p.uKey, items: [], money: 0, locked: false, confirmed: false },
+            p2: { id: bot.id, name: bot.name, lvl: bot.lvl, isBot: true, botObj: bot, items: [botItem], money: 0, locked: true, confirmed: false }
+          };
+          activeTrades.set(tid, session);
+          playerTradeMap.set(p.id, tid);
+          playerTradeMap.set(bot.id, tid);
+          syncTradeSession(session);
+          ws.send(JSON.stringify({
+            type: 'toast',
+            msg: `[Giao Dịch] ${bot.name} đã chấp nhận giao dịch và đưa [${botItem.n}] lên sàn!`
+          }));
+          return;
+        }
         const tEntry = Array.from(players.entries()).find(([w, pl]) => pl.id === targetId);
         if (tEntry && tEntry[0].readyState === 1) {
           tEntry[0].send(JSON.stringify({
@@ -1967,6 +2269,21 @@ wss.on('connection', (ws) => {
       } else if (data.type === 'trade_accept') {
         const targetId = Number(data.targetId);
         if (playerTradeMap.has(p.id) || playerTradeMap.has(targetId)) return;
+        const bot = BOTS.find(b => b.id === targetId);
+        if (bot) {
+          const tid = ++nextTradeId;
+          const botItem = (bot.sellItems && bot.sellItems[0]) ? Object.assign({}, bot.sellItems[0]) : { uid: bot.id * 100 + 1, n: 'Bảo Đao', price: 1000, r: 3, lvl: 40 };
+          const session = {
+            id: tid,
+            p1: { id: p.id, name: p.name, lvl: p.lvl, uKey: p.uKey, items: [], money: 0, locked: false, confirmed: false },
+            p2: { id: bot.id, name: bot.name, lvl: bot.lvl, isBot: true, botObj: bot, items: [botItem], money: 0, locked: true, confirmed: false }
+          };
+          activeTrades.set(tid, session);
+          playerTradeMap.set(p.id, tid);
+          playerTradeMap.set(bot.id, tid);
+          syncTradeSession(session);
+          return;
+        }
         const tEntry = Array.from(players.entries()).find(([w, pl]) => pl.id === targetId);
         if (!tEntry) return;
         const targetPl = tEntry[1];
@@ -2017,8 +2334,10 @@ wss.on('connection', (ws) => {
         const maxGold = uState ? (uState.gold || 0) : 0;
         const amt = Math.max(0, Math.min(maxGold, Math.floor(Number(data.money) || 0)));
         me.money = amt;
-        s.p1.locked = false; s.p2.locked = false;
-        s.p1.confirmed = false; s.p2.confirmed = false;
+        s.p1.locked = false;
+        if (!s.p2.isBot) s.p2.locked = false;
+        s.p1.confirmed = false;
+        s.p2.confirmed = false;
         syncTradeSession(s);
       } else if (data.type === 'trade_lock') {
         const s = getTradeSession(p.id);
@@ -2026,15 +2345,55 @@ wss.on('connection', (ws) => {
         const me = (s.p1.id === p.id) ? s.p1 : s.p2;
         me.locked = true;
         syncTradeSession(s);
+
+        if (s.p2.isBot) {
+          s.p2.locked = true;
+          syncTradeSession(s);
+          setTimeout(() => {
+            if (activeTrades.has(s.id)) {
+              s.p2.confirmed = true;
+              syncTradeSession(s);
+            }
+          }, 600);
+        }
       } else if (data.type === 'trade_confirm') {
         const s = getTradeSession(p.id);
         if (!s) return;
         if (!s.p1.locked || !s.p2.locked) return;
         const me = (s.p1.id === p.id) ? s.p1 : s.p2;
         me.confirmed = true;
+        if (s.p2.isBot) s.p2.confirmed = true;
         syncTradeSession(s);
 
         if (s.p1.confirmed && s.p2.confirmed) {
+          if (s.p2.isBot) {
+            const u1 = (s.p1.uKey && db.users[s.p1.uKey]) ? db.users[s.p1.uKey].state : null;
+            if (u1) {
+              const p1Uids = new Set(s.p1.items.map(x => x.uid));
+              u1.inv = (u1.inv || []).filter(x => !p1Uids.has(x.uid)).concat(s.p2.items);
+              u1.gold = Math.max(0, (u1.gold || 0) - s.p1.money);
+              saveDb();
+            }
+            const e1 = Array.from(players.entries()).find(([w, pl]) => pl.id === s.p1.id);
+            if (e1 && e1[0].readyState === 1) {
+              e1[0].send(JSON.stringify({ type: 'trade_complete' }));
+              if (u1) e1[0].send(JSON.stringify({ type: 'state_sync', gold: u1.gold, inv: u1.inv }));
+              e1[0].send(JSON.stringify({ type: 'toast', msg: `Giao dịch cùng ${s.p2.name} thành công!` }));
+            }
+            broadcastToZone(p.zoneId, {
+              type: 'player_chat',
+              id: s.p2.id,
+              name: s.p2.name,
+              vip: s.p2.botObj ? s.p2.botObj.vip : 3,
+              chan: 'near',
+              text: `Giao dịch thành công! Đa tạ đại hiệp ${p.name} đã ủng hộ!`
+            });
+            activeTrades.delete(s.id);
+            playerTradeMap.delete(s.p1.id);
+            playerTradeMap.delete(s.p2.id);
+            return;
+          }
+
           const u1 = (s.p1.uKey && db.users[s.p1.uKey]) ? db.users[s.p1.uKey].state : null;
           const u2 = (s.p2.uKey && db.users[s.p2.uKey]) ? db.users[s.p2.uKey].state : null;
           if (u1 && u2) {
@@ -2333,9 +2692,10 @@ wss.on('connection', (ws) => {
       } else if (data.type === 'stall_buy') {
         const sellerId = Number(data.sellerId);
         const itemUid = Number(data.itemUid);
-        let seller = null, sellerWs = null;
+        let seller = Array.from(players.values()).find(pl => pl.id === sellerId) || BOTS.find(b => b.id === sellerId);
+        let sellerWs = null;
         for (const [sock, pl] of players.entries()) {
-          if (pl.id === sellerId) { seller = pl; sellerWs = sock; break; }
+          if (pl.id === sellerId) { sellerWs = sock; break; }
         }
 
         if (!seller || !seller.stall || !Array.isArray(seller.stall.items)) {
@@ -2347,26 +2707,31 @@ wss.on('connection', (ws) => {
           } else {
             const price = Number(stallIt.price) || 0;
             const buyerUser = (p.uKey && db.users[p.uKey]) ? db.users[p.uKey] : null;
-            const sellerUser = (seller.uKey && db.users[seller.uKey]) ? db.users[seller.uKey] : null;
 
-            if (!buyerUser || !sellerUser) {
+            if (!buyerUser) {
               ws.send(JSON.stringify({ type: 'toast', msg: 'Lỗi đồng bộ tài khoản!' }));
             } else if ((buyerUser.state.gold || 0) < price) {
               ws.send(JSON.stringify({ type: 'toast', msg: 'Không đủ ngân lượng để thanh toán!' }));
             } else {
               // Thực hiện giao dịch nguyên tử
               buyerUser.state.gold -= price;
-              sellerUser.state.gold = (sellerUser.state.gold || 0) + price;
 
-              // Chuyển vật phẩm
+              // Chuyển vật phẩm vào hành trang người mua
               if (!Array.isArray(buyerUser.state.inv)) buyerUser.state.inv = [];
-              if (Array.isArray(sellerUser.state.inv)) {
-                sellerUser.state.inv = sellerUser.state.inv.filter(x => x.uid !== itemUid);
-              }
               buyerUser.state.inv.push(stallIt);
 
               // Cập nhật sạp hàng của người bán
               seller.stall.items = seller.stall.items.filter(x => x.uid !== itemUid);
+
+              if (!seller.isBot) {
+                const sellerUser = (seller.uKey && db.users[seller.uKey]) ? db.users[seller.uKey] : null;
+                if (sellerUser) {
+                  sellerUser.state.gold = (sellerUser.state.gold || 0) + price;
+                  if (Array.isArray(sellerUser.state.inv)) {
+                    sellerUser.state.inv = sellerUser.state.inv.filter(x => x.uid !== itemUid);
+                  }
+                }
+              }
               saveDb();
 
               // Gửi cập nhật cho người mua
@@ -2380,13 +2745,25 @@ wss.on('connection', (ws) => {
                 msg: `Mua thành công [${stallIt.n}] với giá ${price} lượng!`
               }));
 
-              // Gửi cập nhật cho người bán
-              if (sellerWs && sellerWs.readyState === 1) {
-                sellerWs.send(JSON.stringify({
-                  type: 'state_sync',
-                  gold: sellerUser.state.gold,
-                  inv: sellerUser.state.inv
-                }));
+              // Nếu người bán là Bot, Bot cảm ơn trên kênh gần
+              if (seller.isBot) {
+                broadcastToZone(seller.zoneId, {
+                  type: 'player_chat',
+                  id: seller.id,
+                  name: seller.name,
+                  vip: seller.vip,
+                  chan: 'near',
+                  text: `Đa tạ đại hiệp ${p.name} đã ghé mua [${stallIt.n}]! Chúc đại hiệp sớm xưng bá võ lâm!`
+                });
+              } else if (sellerWs && sellerWs.readyState === 1) {
+                const sellerUser = (seller.uKey && db.users[seller.uKey]) ? db.users[seller.uKey] : null;
+                if (sellerUser) {
+                  sellerWs.send(JSON.stringify({
+                    type: 'state_sync',
+                    gold: sellerUser.state.gold,
+                    inv: sellerUser.state.inv
+                  }));
+                }
                 sellerWs.send(JSON.stringify({
                   type: 'toast',
                   msg: `[Sạp Hàng] Hiệp khách ${p.name} đã mua [${stallIt.n}] (+${price} lượng)!`

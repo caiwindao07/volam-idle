@@ -48,18 +48,18 @@ function newSave() {
   return { v: SAVE_V, name: 'Tân thủ', fac: null, sex: 0, lvl: 1, xp: 0, gold: 0, attrPts: 0, attr: { str: 0, dex: 0, vit: 0, eng: 0 },
     skPts: 1, sk: {}, main: 0, eq: {}, inv: [], stage: 1, maxStage: 1, wave: 1, push: true, uid: 1, autoSell: 0,
     kps: 0.2, totalKills: 0, autoEquip: false, autoPts: false, autoMap: true, diff: 1, autoForge: false, autoBuy: true, tut: 0, hints: {}, bakAt: 0, potOff: false, potUsed: 0, potStock: { life: {}, mana: {} }, ctrl: 'auto', joy: 'fixed', slots: [0, 0, 0, 0], snd: { on: true, vol: 0.7, music: true, mvol: 0.4 }, lootF: { minRar: 0, minLvl: 1, groups: [], series: [], auto: true }, ground: [], mats: { ht: {}, ore: {}, shard: {}, misc: {} }, auto: defaultAutoSettings(),
-    cloak: { tier: 1 },
+    cloak: { tier: 0 },
     pkMode: 'peace',
-    meridian: { qi: 1500, levels: { nham: 2, doc: 2, xung: 1, doi: 1, amduy: 1, duongduy: 1, amkieu: 1, duongkieu: 1 } },
+    meridian: { qi: 0, levels: { nham: 0, doc: 0, xung: 0, doi: 0, amduy: 0, duongduy: 0, amkieu: 0, duongkieu: 0 } },
     companion: {
-      activeId: 1,
+      activeId: null,
       selectedTabId: 1,
       list: {
-        1: { id: 1, lvl: 15, exp: 240, intimacy: 100, maxIntimacy: 100, star: 1, equips: { weapon: 1, helm: 1, armor: 1, gloves: 1, boots: 1 } },
-        2: { id: 2, lvl: 1, exp: 0, intimacy: 80, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
-        3: { id: 3, lvl: 1, exp: 0, intimacy: 80, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
-        4: { id: 4, lvl: 1, exp: 0, intimacy: 80, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
-        5: { id: 5, lvl: 1, exp: 0, intimacy: 80, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } }
+        1: { id: 1, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+        2: { id: 2, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+        3: { id: 3, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+        4: { id: 4, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+        5: { id: 5, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } }
       }
     },
     last: Date.now() };

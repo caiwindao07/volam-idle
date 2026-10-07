@@ -1446,15 +1446,17 @@ function appendChatLine(chan, sender, text) {
     world: 'Thế giới',
     trade: 'Rao bán',
     fac: 'Môn phái',
-    team: 'Đội ngũ'
+    team: 'Đội ngũ',
+    whisper: 'Mật',
+    near: 'Lân cận'
   };
   const chanName = chanNames[chan] || 'Thế giới';
   line.innerHTML = `<span class="c-tag ${chan}">[${chanName}]</span> ${sender ? `<b style="color:#ffd700;">${esc(sender)}:</b> ` : ''}${text}`;
   
-  // Tách biệt kênh nghiêm ngặt: kiểm tra tab đang được chọn
+  // Tách biệt kênh nghiêm ngặt: kiểm tra tab đang được chọn (kênh Mật luôn hiển thị)
   const activeTab = document.querySelector('.jx-ctab.on');
   const activeChan = activeTab ? activeTab.dataset.chan : 'all';
-  if (activeChan !== 'all' && activeChan !== chan) {
+  if (activeChan !== 'all' && activeChan !== chan && chan !== 'whisper') {
     line.style.display = 'none';
   }
 

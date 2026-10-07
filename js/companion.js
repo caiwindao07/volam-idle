@@ -78,19 +78,16 @@
       if (window.S) {
         if (!S.companion || !S.companion.list) {
           S.companion = {
-            activeId: 1, // Mặc định mở khóa và xuất chiến Yến Tiểu Lâu
+            activeId: null, // Chưa có pet xuất chiến
             selectedTabId: 1,
             list: {
-              1: { id: 1, lvl: 15, exp: 240, intimacy: 100, maxIntimacy: 100, star: 1, equips: { weapon: 1, helm: 1, armor: 1, gloves: 1, boots: 1 } },
-              2: { id: 2, lvl: 1, exp: 0, intimacy: 80, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
-              3: { id: 3, lvl: 1, exp: 0, intimacy: 80, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
-              4: { id: 4, lvl: 1, exp: 0, intimacy: 80, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
-              5: { id: 5, lvl: 1, exp: 0, intimacy: 80, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } }
+              1: { id: 1, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+              2: { id: 2, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+              3: { id: 3, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+              4: { id: 4, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+              5: { id: 5, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } }
             }
           };
-        } else {
-          if (!S.companion.activeId && S.companion.activeId !== null) S.companion.activeId = 1;
-          if (!S.companion.selectedTabId) S.companion.selectedTabId = S.companion.activeId || 1;
         }
       }
       this.preloadImages();

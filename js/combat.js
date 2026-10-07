@@ -163,6 +163,7 @@ function heroHit(a, e) {
   if (counters(a.series, e.series)) tot += R.P.series5;
   tot = Math.max(1, tot);
   e.hp -= tot; e.hitT = 0.12;
+  R.stall = 0;
   if (e.isPlayer) {
     if (typeof sendPvpHit === 'function') {
       sendPvpHit(e.id, tot, a.id);
@@ -546,30 +547,15 @@ function tick(dt) {
   for (const e of alive()) enemyAI(e, dt);
   separateEnemies(dt);
   killCheck();
-  R.stall += dt; if (R.stall > 45) stallOut();
+  R.stall += dt; if (R.stall > 180) stallOut();
   if (R.life <= 0) heroDeath();
 }
-/* Dot quai qua lau (danh khong noi): truoc day chi goi lai dot moi -> o ai trum, nhan vat yeu danh lai trum mai mai, khong
-   tien khong lui (ket vinh vien o ai 30/40/50). Nay: lui 1 ai va luyen cong nhu khi guc (khong mat mau), thap thi roi thap. */
+/* Đợt quái quá lâu (không có hành động tiêu diệt hoặc đánh trúng trong 180s): làm mới đợt quái, không tụt ải/cấp */
 function stallOut() {
   R.stall = 0;
   if (R.tower) { towerExit(false); return; }
-  const boss = R.enemies.some(e => !e.dead && (e.cls === 'boss' || e.stageBoss));
-  if (boss || S.wave === WAVES) {
-    if (R.enemies.some(e => e.goldBoss && !e.dead)) RW().gbT = GB_RETRY;
-    if (S.push) {
-      S.push = false;
-      S.wave = 1;
-      R.waveKills = 0;
-      log('<b style="color:#ef4444;">[Chiến Trường]</b> Quá thời gian quy định, tạm lui về <b>Luyện Công</b> để dưỡng sức.');
-      if (typeof toast === 'function') toast('🛡 Quá thời gian, lui về Luyện Công!');
-    } else {
-      log('<span class="dim">Đợt quái kéo dài quá lâu, gọi đợt mới.</span>');
-    }
-    if (S.stage > 1) { S.stage--; R.farm = 0; }
-    S.wave = 1;
-    if (typeof onStageChange === 'function') onStageChange();
-  } else log('<span class="dim">Đợt quái kéo dài quá lâu, gọi đợt mới.</span>');
+  if (R.enemies.some(e => e.goldBoss && !e.dead)) RW().gbT = GB_RETRY;
+  log('<span class="dim">Làm mới đợt quái luyện công.</span>');
   if (!R.serverMobsActive || typeof MP === 'undefined' || !MP.connected) spawnWave();
   if (typeof refresh === 'function') refresh();
   if (typeof save === 'function') save();

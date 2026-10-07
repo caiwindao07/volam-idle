@@ -906,6 +906,9 @@ function showOtherPlayerMenu(p) {
             🏪 Xem Sạp Hàng [${esc(p.stall.title)}]
           </button>
         ` : ''}
+        <button class="jx-action-btn" onclick="const _t = prompt('Gửi tin nhắn tới ${esc(pName)} (hỏi mua đồ, trả giá, trò chuyện...):'); if(_t){ if(window.MP && MP.ws) MP.ws.send(JSON.stringify({type:'chat', chan:'trade', text: '@${esc(pName)} ' + _t})); if(typeof appendChatLine==='function') appendChatLine('trade', (window.S?S.name:'Tôi'), '@${esc(pName)} ' + _t); } closeModal();" style="background:#0284c7;color:#fff;font-weight:bold;">
+          💬 Nhắn Tin / Trả Giá
+        </button>
         <button class="jx-action-btn" onclick="if(window.TRADE)TRADE.request(${p.id}, '${esc(pName)}'); closeModal();">
           🤝 Mời Giao Dịch
         </button>

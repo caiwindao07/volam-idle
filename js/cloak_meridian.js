@@ -34,15 +34,15 @@
   const CLOAK_MERIDIAN = {
     init() {
       if (!window.S) return;
-      if (!S.cloak || typeof S.cloak !== 'object') S.cloak = { tier: 1 };
-      if (!S.cloak.tier) S.cloak.tier = 1;
+      if (!S.cloak || typeof S.cloak !== 'object') S.cloak = { tier: 0 };
+      if (S.cloak.tier === undefined) S.cloak.tier = 0;
       if (!S.meridian || typeof S.meridian !== 'object') {
         S.meridian = {
-          qi: 1500, // Điểm Chân Khí tích lũy
-          levels: { nham: 2, doc: 2, xung: 1, doi: 1, amduy: 1, duongduy: 1, amkieu: 1, duongkieu: 1 }
+          qi: 0,
+          levels: { nham: 0, doc: 0, xung: 0, doi: 0, amduy: 0, duongduy: 0, amkieu: 0, duongkieu: 0 }
         };
       } else if (!S.meridian.levels) {
-        S.meridian.levels = { nham: 2, doc: 2, xung: 1, doi: 1, amduy: 1, duongduy: 1, amkieu: 1, duongkieu: 1 };
+        S.meridian.levels = { nham: 0, doc: 0, xung: 0, doi: 0, amduy: 0, duongduy: 0, amkieu: 0, duongkieu: 0 };
       }
       console.log('[CloakMeridian] Đã khởi tạo Hệ Thống Phi Phong & Kinh Mạch.');
     },
