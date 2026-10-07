@@ -1178,41 +1178,30 @@ function draw(dt) {
       let dollH = 0;
       if (typeof drawDoll === 'function') {
         const dollScale = (typeof HERO_DOLL_SCALE !== 'undefined') ? HERO_DOLL_SCALE : (1 / 0.6);
-        if (S && S.mounted) {
-          // Khi cưỡi ngựa: clip chỉ vẽ phần thân trên (từ vai lên đầu)
-          // Đẩy heroY xuống thêm để thân trên nằm đúng tư thế ngồi trên yên ngựa
-          const seatY = H.y - 30 + mountBob; // vị trí "mông" ngồi trên yên
-          const clipTop = seatY - 80;         // đỉnh clip (đầu nhân vật)
-          const clipH = 90;                   // chiều cao phần thân trên hiện ra
-          c.save();
-          c.beginPath();
-          c.rect(H.x - 80, clipTop, 160, clipH);
-          c.clip();
-          dollH = drawDoll(c, H.x, seatY, H.act || 'st', H.dir || 0, H.actT || 0, dollScale, R.deadT > 0 ? 0.45 : 1, S);
-          c.restore();
-          if (dollH > 0) drawn = dollH;
-        } else {
-          dollH = drawDoll(c, H.x, heroY, H.act || 'st', H.dir || 0, H.actT || 0, dollScale, R.deadT > 0 ? 0.45 : 1, S);
-          if (dollH > 0) drawn = dollH;
-        }
+        // Khi cưỡi ngựa: đẩy paperdoll lên cao để ngồi trên yên (y-52),
+        // thân trước ngựa (drawHorseForeground) vẽ sau sẽ tự che chân
+        const drawY = (S && S.mounted) ? (H.y - 52 + mountBob) : heroY;
+        dollH = drawDoll(c, H.x, drawY, H.act || 'st', H.dir || 0, H.actT || 0, dollScale, R.deadT > 0 ? 0.45 : 1, S);
+        if (dollH > 0) drawn = dollH;
       }
+      const mountedDrawY = (S && S.mounted) ? (H.y - 52 + mountBob) : heroY;
       if (!drawn && hw && hw.anim && typeof drawAnim === 'function') {
-        drawn = drawAnim(hw.anim, H.act || 'st', H.dir || 0, H.actT || 0, H.x, heroY, HERO_SCALE);
+        drawn = drawAnim(hw.anim, H.act || 'st', H.dir || 0, H.actT || 0, H.x, mountedDrawY, HERO_SCALE);
       }
       if (!drawn && hw && typeof drawSprite === 'function' && typeof img === 'function') {
-        drawn = drawSprite(img(hw.img), hw.sz, H.x, heroY, 0.9, H.face < 0, R.deadT > 0 ? 0.35 : 1);
+        drawn = drawSprite(img(hw.img), hw.sz, H.x, mountedDrawY, 0.9, H.face < 0, R.deadT > 0 ? 0.35 : 1);
       }
       if (!drawn) {
         c.fillStyle = (typeof SERIES_COL !== 'undefined' && typeof heroSeries === 'function') ? SERIES_COL[heroSeries()] : '#ffd700';
         c.beginPath();
-        c.arc(H.x, heroY - 20, 14, 0, 7);
+        c.arc(H.x, mountedDrawY - 20, 14, 0, 7);
         c.fill();
         drawn = 30;
       }
 
       // Vẽ Res Ngoại Trang phụ trợ (nếu Paperdoll chưa vẽ)
       if (!dollH && typeof drawHeroEquipment === 'function' && typeof S !== 'undefined' && S && S.eq) {
-        drawHeroEquipment(c, H.x, heroY, H.dir || 0, H.face || 1, H.act || 'st', H.actT || 0, S.eq, (typeof heroSeries === 'function' ? heroSeries() : 0));
+        drawHeroEquipment(c, H.x, mountedDrawY, H.dir || 0, H.face || 1, H.act || 'st', H.actT || 0, S.eq, (typeof heroSeries === 'function' ? heroSeries() : 0));
       }
 
       // Vẽ các chi tiết phía trước của Chiến Mã (cổ, đầu, bờm, yên, dây cương) phủ lên phía trước hiệp khách
