@@ -84,8 +84,19 @@
         <button id="svHpBtn" class="pbtn pot hp"><div class="cd"></div><span>HP</span></button>
       </div>
     </div>
-    <div id="svBar" class="hidden"></div>
-    <div id="townBar" class="hidden"><b id="townName"></b><button class="btn sm" id="bShop">Cửa hàng</button><button class="btn sm" id="bStashT">Kho chung</button><button class="btn sm" id="bSellTown">Bán đồ không khớp lọc</button><button class="btn sm on" id="bBack">Trở lại ải</button></div>
+    <div id="townBar" class="hidden">
+      <span style="font-size:13px;color:#ffd700;font-weight:bold;display:flex;align-items:center;gap:4px;">
+        <span>🏯</span><b id="townName">Biện Kinh</b>
+      </span>
+      <span style="background:#15803d;color:#fff;font-size:10px;padding:2px 6px;border-radius:3px;font-weight:bold;">🕊️ Khu An Toàn (Nghỉ Ngơi)</span>
+      <button class="btn sm" id="bTownTravel" onclick="if(typeof openMapTravelModal==='function')openMapTravelModal();" title="Mở Xa Phu dịch chuyển thành thị, thôn trấn, bãi quái">🗺️ Xa Phu</button>
+      <button class="btn sm" id="bTownStall" onclick="if(window.STALL)STALL.toggle();" title="Mở Sạp Bày Bán hàng rong trong thành">🏪 Bày bán</button>
+      <button class="btn sm" id="bTownTrade" onclick="if(window.TRADE)TRADE.openRequestModal();" title="Giao dịch vật phẩm & ngân lượng">🤝 Giao dịch</button>
+      <button class="btn sm" id="bShop">Cửa hàng</button>
+      <button class="btn sm" id="bStashT">Kho chung</button>
+      <button class="btn sm" id="bSellTown">Bán rác</button>
+      <button class="btn sm on" id="bBack" title="Rời thành để trở lại chiến trường / ải luyện công">⚔️ Rời thành</button>
+    </div>
 
     <!-- THANH TỔ ĐỘI CHUẨN PC (TEAMBAR NATIVE VLTK - H:\JxPhaThien) -->
     <div id="teambar" class="teambar hidden">

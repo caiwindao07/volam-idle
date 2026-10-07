@@ -786,7 +786,7 @@ function shakeCamera(mag = 4, dur = 0.15) {
 const BG_TILE = 1536;
 function drawTiledBg(c, bg) {
   if (!(bg && bg.complete && bg.naturalWidth)) { c.fillStyle = '#26301f'; c.fillRect(CAM.x - 40, CAM.y - 40, AR.w + 80, AR.h + 80); return; }
-  if (OBS.g || (typeof S !== 'undefined' && S && S.chosenZone === 386)) { c.drawImage(bg, 0, 0, WORLD.w, WORLD.h); return; }          // ban do that rong, khong lat guong
+  if (R.town || OBS.g || (typeof S !== 'undefined' && S && S.chosenZone === 386)) { c.drawImage(bg, 0, 0, WORLD.w, WORLD.h); return; }          // ban do that rong, khong lat guong
   const T = BG_TILE, i0 = Math.floor((CAM.x - 40) / T), i1 = Math.floor((CAM.x + AR.w + 40) / T), j0 = Math.floor((CAM.y - 40) / T), j1 = Math.floor((CAM.y + AR.h + 40) / T);
   for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
     const fx = i & 1, fy = j & 1;

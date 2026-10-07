@@ -15,6 +15,7 @@ window.TOWN_NPC = (function () {
       sub: 'Kinh đô phồn hoa phương Bắc (Bắc Tống)',
       desc: 'Trung tâm quyền lực và giao thương tấp nập nhất thiên hạ.',
       music: 'town_bienkinh',
+      bg: 'img/z/town_37.jpg',
       ambient: 'Kinh thành tráng lệ rợp bóng cờ hoa, người ngựa nườm nượp qua lại.'
     },
     {
@@ -24,6 +25,7 @@ window.TOWN_NPC = (function () {
       sub: 'Chiến địa huyết lệ trung nguyên',
       desc: 'Pháo đài tiền tuyến bất khả xâm phạm, ngã ba sông Hán.',
       music: 'town_tduong',
+      bg: 'img/z/town_78.jpg',
       ambient: 'Hào khí chiến trận ngút ngàn, binh sĩ tuần tra canh phòng cẩn mật.'
     },
     {
@@ -33,6 +35,7 @@ window.TOWN_NPC = (function () {
       sub: 'Kinh đô hoa lệ nam triều (Nam Tống)',
       desc: 'Cảnh sắc Tây Hồ thơ mộng, lâu đài cung điện nguy nga tráng lệ.',
       music: 'town_laman',
+      bg: 'img/z/town_176.jpg',
       ambient: 'Gió hồ Tây nhè nhẹ thổi qua những rặng liễu rủ, cảnh sắc tú lệ ngút ngàn.'
     },
     {
@@ -42,6 +45,7 @@ window.TOWN_NPC = (function () {
       sub: 'Thục trung danh thắng phì nhiêu',
       desc: 'Đất Thục trù phú, sản vật ngàn năm, cửa ngõ Nga My và Đường Môn.',
       music: 'town_thanhdo',
+      bg: 'img/z/town_11.jpg',
       ambient: 'Mảnh đất gấm vóc màu mỡ, tiếng tiêu đồng réo rắt bên sườn đồi.'
     },
     {
@@ -51,6 +55,7 @@ window.TOWN_NPC = (function () {
       sub: 'Nam Chiếu vương quốc ngát hương',
       desc: 'Thành trì thanh bình nơi biên thùy phía Nam, phong hoa tuyết nguyệt.',
       music: 'town_daily',
+      bg: 'img/z/town_162.jpg',
       ambient: 'Hồ Nhĩ Hải xanh biếc soi bóng rặng Thương Sơn quanh năm mây phủ.'
     },
     {
@@ -60,6 +65,7 @@ window.TOWN_NPC = (function () {
       sub: 'Tây Bắc biên ải quan môn',
       desc: 'Hào khí biên cương lộng gió, ngút ngàn non sông đất trời Tây Bắc.',
       music: 'town_phuongtuong',
+      bg: 'img/z/town_1.jpg',
       ambient: 'Gió thảo nguyên thổi lồng lộng qua từng vách đá quan ải sừng sững.'
     },
     {
@@ -69,6 +75,7 @@ window.TOWN_NPC = (function () {
       sub: 'Giang Nam đệ nhất thắng cảnh',
       desc: 'Sông nước hữu tình, bến thuyền tấp nập ngày đêm, đô hội phồn vinh.',
       music: 'town_duongchau',
+      bg: 'img/z/town_80.jpg',
       ambient: 'Thuyền hoa xuôi ngược dòng kênh đào, tiếng đàn hát rộn rã sớm tối.'
     },
 
@@ -80,6 +87,7 @@ window.TOWN_NPC = (function () {
       sub: 'Hồ Nam cổ trấn khởi đầu giang hồ',
       desc: 'Thôn trấn yên bình ngàn năm, nơi xuất thân của biết bao bậc hào kiệt.',
       music: 'town_balang',
+      bg: 'img/z/town_53.jpg',
       ambient: 'Cây đa giếng nước sân đình, nơi bao thế hệ anh hào bôn tẩu giang hồ.'
     },
     {
@@ -89,6 +97,7 @@ window.TOWN_NPC = (function () {
       sub: 'Làng chài ven sông Ba Thục',
       desc: 'Bến nước êm đềm, tiếng chèo khua sóng nước đón chào lữ khách.',
       music: 'town_giangtan',
+      bg: 'img/z/town_20.jpg',
       ambient: 'Sông nước mênh mông, những mái chèo khua nhẹ đưa lữ khách sang sông.'
     },
     {
@@ -98,6 +107,7 @@ window.TOWN_NPC = (function () {
       sub: 'Giang Nam thôn trấn thái bình',
       desc: 'Khói lam chiều bảng lảng, đất đai trù phú, người dân hiền hòa.',
       music: 'town_vinhlac',
+      bg: 'img/z/town_99.jpg',
       ambient: 'Đồng ruộng xanh rì trải dài, người dân chất phác yêu chuộng võ đạo.'
     },
     {
@@ -107,6 +117,7 @@ window.TOWN_NPC = (function () {
       sub: 'Hà Nam danh trấn trù phú',
       desc: 'Địa linh nhân kiệt, nổi tiếng nghề gốm sứ và chợ phiên đông đúc.',
       music: 'town_chutien',
+      bg: 'img/z/town_100.jpg',
       ambient: 'Phố gốm sứ đỏ lửa ngày đêm, thương nhân các nơi tụ hội đông vui.'
     },
     {
@@ -116,6 +127,7 @@ window.TOWN_NPC = (function () {
       sub: 'Thôn quê hương lúa ngạt ngào',
       desc: 'Những cánh đồng lúa vàng óng ả trải dài tít tắp, thanh bình tĩnh lặng.',
       music: 'town_daohuong',
+      bg: 'img/z/town_101.jpg',
       ambient: 'Hương lúa chín ngạt ngào trong gió, tiếng chim hót véo von đầu cành.'
     },
     {
@@ -125,6 +137,7 @@ window.TOWN_NPC = (function () {
       sub: 'Cửa ải sa mạc Tây Bắc',
       desc: 'Nơi giáp ranh quan ải và sa mạc cát vàng, hào khí ngất trời.',
       music: 'town_longmon',
+      bg: 'img/z/town_121.jpg',
       ambient: 'Gió cát vàng mù mịt biên ải, lữ quán ven đường nhộn nhịp khách dừng chân.'
     },
     {
@@ -134,6 +147,7 @@ window.TOWN_NPC = (function () {
       sub: 'Thôn trấn chân núi thanh tịnh',
       desc: 'Vách đá ngàn năm dựng đứng che chở cho cuộc sống êm đềm của thôn dân.',
       music: 'town_thachco',
+      bg: 'img/z/town_153.jpg',
       ambient: 'Tiếng suối reo róc rách dưới chân núi Thạch Cổ ngút ngàn mây bay.'
     },
     {
@@ -143,6 +157,7 @@ window.TOWN_NPC = (function () {
       sub: 'Làng đúc kiếm danh bất hư truyền',
       desc: 'Suối nước lạnh ngắt chuyên dùng tôi luyện những thanh kiếm bén ngọt.',
       music: 'town_longtuyen',
+      bg: 'img/z/town_174.jpg',
       ambient: 'Tiếng đe búa chan chát rền vang ngày đêm của các bậc danh sư đúc kiếm.'
     },
     {
@@ -152,6 +167,7 @@ window.TOWN_NPC = (function () {
       sub: 'Sơn thôn mộc mạc hữu tình',
       desc: 'Thôn xóm ẩn hiện dưới tán rừng thông bạt ngàn, không khí trong lành.',
       music: 'town_tayson',
+      bg: 'img/z/town_175.jpg',
       ambient: 'Tiếng lá thông xào xạc trong làn sương sớm mai mờ ảo.'
     },
     {
@@ -161,6 +177,7 @@ window.TOWN_NPC = (function () {
       sub: 'Hành Sơn chân núi thánh địa',
       desc: 'Cửa ngõ dẫn lên đỉnh Hành Sơn linh thiêng, hương khói nghi ngút.',
       music: 'town_namnhac',
+      bg: 'img/z/town_54.jpg',
       ambient: 'Tiếng chuông chùa ngân vang từ đỉnh Hành Sơn vọng về trấn nhỏ.'
     }
   ];

@@ -167,12 +167,29 @@ function goTown() {
 }
 function backFromTown() {
   if (!R.town) return;
-  R.town = false; { const z = zoneOf(Math.min(S.stage, STAGES)); obsLoad(z.id); [H.x, H.y] = inWorld(H.x, H.y); snapCamera(); } R.tpCd = TP_CD; S.wave = 1; R.spawnT = 0.5; R.zoneShown = null;
-  $('#townBar').classList.add('hidden');
-  onZoneChange(zoneOf(Math.min(S.stage, STAGES)));
+  R.town = false;
+  const z = zoneOf(Math.min(S.stage, STAGES));
+  obsLoad(z.id);
+  R.bgImg = img(z.bg);
+  [H.x, H.y] = inWorld(H.x, H.y);
+  snapCamera();
+  R.tpCd = TP_CD;
+  S.wave = 1;
+  R.spawnT = 0.5;
+  R.zoneShown = null;
+  const tb = $('#townBar');
+  if (tb) tb.classList.add('hidden');
+  onZoneChange(z);
+  toast(`Đã trở lại ải luyện công ${z.n}!`);
 }
-function townTick(dt) { // trong thanh: hoi day nhanh, khong co quai
-  R.life = Math.min(R.P.life, R.life + R.P.life * 0.25 * dt); R.mana = Math.min(R.P.mana, R.mana + R.P.mana * 0.25 * dt);
+function townTick(dt) { // trong thanh thi / thon tran: nghi ngoi hoi day, an toan tuyet doi, khong danh nhau
+  if (R.P) {
+    R.life = Math.min(R.P.life, R.life + R.P.life * 0.25 * dt);
+    R.mana = Math.min(R.P.mana, R.mana + R.P.mana * 0.25 * dt);
+  }
+  if (S && S.pkMode && S.pkMode !== 'peace') S.pkMode = 'peace'; // Khu vuc an toan, cam PK do sat
+  R.enemies = []; // Khong co quai vat
+  R.moveTo = null;
   moveManual(dt);
 }
 

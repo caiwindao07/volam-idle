@@ -1577,23 +1577,34 @@ function openMapTravelModal() {
   });
 }
 
-function travelToTown(idx) {
-  const t = JX_TOWNS[idx];
-  if (!t) return;
+function travelToTown(target) {
+  let t = null;
+  if (typeof target === 'number') {
+    if (target >= 0 && target < JX_TOWNS.length) t = JX_TOWNS[target];
+    else t = JX_TOWNS.find(item => item.id === target);
+  } else if (typeof target === 'string') {
+    t = JX_TOWNS.find(item => item.n === target || String(item.id) === target);
+  } else if (target && typeof target === 'object') {
+    t = target;
+  }
+  if (!t) t = JX_TOWNS[0];
   closeModal();
   if (!R.town) {
     R.town = true;
     R.enemies = []; R.corpses = []; R.pickTarget = null; R.moveTo = null; INPUT.target = null;
   }
+  R.townId = t.id;
   R.currentTown = t.n;
   obsLoad('town');
   [H.x, H.y] = inWorld(WORLD.w / 2, WORLD.h / 2);
   snapCamera();
-  R.bgImg = img(t.bg || 'img/z/town.jpg');
+  R.bgImg = img(t.bg || ('img/z/town_' + t.id + '.jpg'));
   uiSfx('use');
   playMusic(t.id || W.town.id);
-  $('#townName').textContent = t.n;
-  $('#townBar').classList.remove('hidden');
+  const townNameEl = $('#townName');
+  if (townNameEl) townNameEl.textContent = t.n;
+  const townBarEl = $('#townBar');
+  if (townBarEl) townBarEl.classList.remove('hidden');
   R.banner = { t: 2.5, text: t.n, sub: `Khu vực an toàn · ${t.type === 'city' ? 'Đại Thành Thị' : 'Tân Thủ Thôn'}` };
   if (typeof TOWN_NPC !== 'undefined' && TOWN_NPC.onTownEntered) {
     TOWN_NPC.onTownEntered(t);
@@ -1803,37 +1814,90 @@ function initActionBar() {
 /* =========================================================================
    BẢNG XẾP HẠNG GIANG HỒ VÕ LÂM 1 (ĐẲNG CẤP, PHÚ HỘ, MÔN PHÁI, TỐNG KIM, ÁC NHÂN)
    ========================================================================= */
+const RANK_UPDATE_INTERVAL = 3600 * 1000; // Cập nhật bảng xếp hạng 1 tiếng 1 lần (3,600,000 ms)
+let _lastRankInfo = { updatedAt: 0, nextInMinutes: 60, timeStr: '--:--' };
+
 const RANK_LEGENDS = [
-  { name: 'Trương Tam Phong', fac: 'vd', lvl: 85, gold: 12000000, kills: 14500, pk: 0, tk: 43500 },
-  { name: 'Phong Thanh Dương', fac: 'cl', lvl: 84, gold: 9800000, kills: 13200, pk: 0, tk: 39600 },
-  { name: 'Dương Quá', fac: 'cl', lvl: 82, gold: 8900000, kills: 12400, pk: 3, tk: 37200 },
-  { name: 'Quách Tĩnh', fac: 'cb', lvl: 81, gold: 11000000, kills: 12000, pk: 0, tk: 36000 },
-  { name: 'Lệnh Hồ Xung', fac: 'vd', lvl: 80, gold: 7500000, kills: 11000, pk: 2, tk: 33000 },
-  { name: 'Hà Thiết Thủ', fac: '5d', lvl: 79, gold: 8200000, kills: 10500, pk: 8, tk: 31500 },
-  { name: 'Nhậm Ngã Hành', fac: 'tn', lvl: 79, gold: 7100000, kills: 10100, pk: 15, tk: 30300 },
-  { name: 'Cừu Thiên Nhận', fac: 'tn', lvl: 78, gold: 6900000, kills: 9800, pk: 12, tk: 29400 },
-  { name: 'Hoàng Dung', fac: 'ty', lvl: 77, gold: 10500000, kills: 8900, pk: 0, tk: 26700 },
-  { name: 'Cổ Mộ Thu Cúc', fac: 'ty', lvl: 76, gold: 5400000, kills: 8400, pk: 0, tk: 25200 },
-  { name: 'Điền Bá Quang', fac: 'dm', lvl: 75, gold: 4800000, kills: 7900, pk: 25, tk: 23700 },
-  { name: 'Tạ Tốn', fac: 'tv', lvl: 74, gold: 5100000, kills: 8100, pk: 18, tk: 24300 },
-  { name: 'Hư Trúc', fac: 'tl', lvl: 73, gold: 6400000, kills: 7100, pk: 0, tk: 21300 },
-  { name: 'Chu Bá Thông', fac: 'cb', lvl: 73, gold: 3900000, kills: 7200, pk: 1, tk: 21600 },
-  { name: 'Đoàn Dự', fac: 'tl', lvl: 72, gold: 9200000, kills: 6800, pk: 0, tk: 20400 }
+  { name: 'Độc Cô Cầu Bại', fac: 'cl', reborn: 5, lvl: 198, gold: 98000000, kills: 99999, pk: 0, tk: 125000 },
+  { name: 'Vô Danh Thần Tăng', fac: 'tl', reborn: 5, lvl: 195, gold: 88000000, kills: 86000, pk: 0, tk: 110000 },
+  { name: 'Trương Tam Phong', fac: 'vd', reborn: 4, lvl: 196, gold: 65000000, kills: 72000, pk: 0, tk: 95000 },
+  { name: 'Tiêu Phong', fac: 'cb', reborn: 4, lvl: 192, gold: 59000000, kills: 68000, pk: 0, tk: 91000 },
+  { name: 'Đông Phương Bất Bại', fac: 'tn', reborn: 4, lvl: 188, gold: 52000000, kills: 64000, pk: 19, tk: 86000 },
+  { name: 'Phong Thanh Dương', fac: 'cl', reborn: 3, lvl: 195, gold: 48000000, kills: 58000, pk: 0, tk: 79000 },
+  { name: 'Dương Quá', fac: 'cl', reborn: 3, lvl: 190, gold: 44000000, kills: 54000, pk: 3, tk: 75000 },
+  { name: 'Quách Tĩnh', fac: 'cb', reborn: 3, lvl: 185, gold: 46000000, kills: 51000, pk: 0, tk: 71000 },
+  { name: 'Lệnh Hồ Xung', fac: 'vd', reborn: 2, lvl: 195, gold: 38000000, kills: 47000, pk: 2, tk: 66000 },
+  { name: 'Hà Thiết Thủ', fac: '5d', reborn: 2, lvl: 188, gold: 35000000, kills: 43000, pk: 8, tk: 62000 },
+  { name: 'Nhậm Ngã Hành', fac: 'tn', reborn: 2, lvl: 182, gold: 31000000, kills: 39000, pk: 15, tk: 58000 },
+  { name: 'Cừu Thiên Nhận', fac: 'tn', reborn: 1, lvl: 196, gold: 29000000, kills: 36000, pk: 12, tk: 54000 },
+  { name: 'Hoàng Dung', fac: 'ty', reborn: 1, lvl: 192, gold: 37000000, kills: 33000, pk: 0, tk: 51000 },
+  { name: 'Cổ Mộ Thu Cúc', fac: 'ty', reborn: 1, lvl: 185, gold: 25000000, kills: 31000, pk: 0, tk: 48000 },
+  { name: 'Điền Bá Quang', fac: 'dm', reborn: 1, lvl: 180, gold: 22000000, kills: 28000, pk: 25, tk: 45000 },
+  { name: 'Tạ Tốn', fac: 'tv', reborn: 0, lvl: 199, gold: 24000000, kills: 26000, pk: 18, tk: 42000 },
+  { name: 'Hư Trúc', fac: 'tl', reborn: 0, lvl: 195, gold: 27000000, kills: 24000, pk: 0, tk: 39000 },
+  { name: 'Chu Bá Thông', fac: 'cb', reborn: 0, lvl: 190, gold: 19000000, kills: 22000, pk: 1, tk: 36000 },
+  { name: 'Đoàn Dự', fac: 'tl', reborn: 0, lvl: 185, gold: 31000000, kills: 21000, pk: 0, tk: 34000 },
+  { name: 'Phương Chứng Đại Sư', fac: 'tl', reborn: 0, lvl: 180, gold: 20000000, kills: 19000, pk: 0, tk: 31000 }
 ];
 
-function getLeaderboardList() {
+function getLeaderboardList(forceRefresh = false) {
   const myName = (typeof ACC !== 'undefined' && ACC.user && (ACC.user.heroName || ACC.user.username)) || (typeof S !== 'undefined' && (S.heroName || S.name)) || 'Võ Lâm Hiệp Khách';
   const myFac = (typeof S !== 'undefined' && S.fac) || 'tl';
+  const myReborn = (typeof S !== 'undefined' && S.rw && S.rw.stat && S.rw.stat.reborn) || (typeof S !== 'undefined' && S.reborn) || 0;
   const myLvl = (typeof S !== 'undefined' && S.lvl) || 1;
   const myGold = (typeof S !== 'undefined' && S.gold) || 0;
   const myKills = (typeof S !== 'undefined' && S.totalKills) || 0;
   const myPk = (typeof S !== 'undefined' && S.pk) || 0;
   const myTk = (typeof S !== 'undefined' && (S.tkPoints || (S.totalKills || 0) * 3)) || 0;
 
+  const now = Date.now();
+  let cached = null;
+  try {
+    const str = localStorage.getItem('jx_leaderboard_cache_v2');
+    if (str) cached = JSON.parse(str);
+  } catch (e) {}
+
+  const shouldRefresh = forceRefresh || !cached || !cached.updatedAt || (now - cached.updatedAt >= RANK_UPDATE_INTERVAL);
+
+  let legendsList = [];
+  let updatedAt = now;
+
+  if (shouldRefresh) {
+    updatedAt = now;
+    // Cập nhật biến động theo giờ
+    const hourSeed = Math.floor(now / RANK_UPDATE_INTERVAL);
+    legendsList = RANK_LEGENDS.map(leg => {
+      const item = { ...leg };
+      const pseudoRand = ((item.name.length * 9301 + hourSeed * 49297) % 233280) / 233280;
+      item.gold = Math.round(item.gold * (0.98 + pseudoRand * 0.05));
+      item.tk = Math.round(item.tk * (0.99 + pseudoRand * 0.03));
+      return item;
+    });
+
+    try {
+      localStorage.setItem('jx_leaderboard_cache_v2', JSON.stringify({
+        updatedAt: updatedAt,
+        legends: legendsList
+      }));
+    } catch (e) {}
+  } else {
+    updatedAt = cached.updatedAt;
+    legendsList = cached.legends || RANK_LEGENDS;
+  }
+
+  const elapsed = now - updatedAt;
+  const remainingMs = Math.max(0, RANK_UPDATE_INTERVAL - elapsed);
+  _lastRankInfo = {
+    updatedAt: updatedAt,
+    nextInMinutes: Math.max(1, Math.ceil(remainingMs / 60000)),
+    timeStr: new Date(updatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+  };
+
   const me = {
     isMe: true,
     name: myName,
     fac: myFac,
+    reborn: myReborn,
     lvl: myLvl,
     gold: myGold,
     kills: myKills,
@@ -1842,7 +1906,7 @@ function getLeaderboardList() {
   };
 
   const list = [me];
-  for (const leg of RANK_LEGENDS) {
+  for (const leg of legendsList) {
     list.push({ ...leg });
   }
 
@@ -1852,18 +1916,25 @@ function getLeaderboardList() {
       const p = MP.otherPlayers[id];
       if (!p || !p.name) continue;
       const exist = list.find(x => x.name === p.name);
+      const pReborn = p.reborn || (p.rw && p.rw.stat && p.rw.stat.reborn) || 0;
+      const pLvl = p.lvl || 1;
       if (exist) {
-        if (p.lvl) exist.lvl = Math.max(exist.lvl, p.lvl);
+        if (pReborn > (exist.reborn || 0)) {
+          exist.reborn = pReborn;
+          exist.lvl = pLvl;
+        } else if (pReborn === (exist.reborn || 0)) {
+          exist.lvl = Math.max(exist.lvl, pLvl);
+        }
       } else {
-        const pLvl = p.lvl || 1;
         list.push({
           name: p.name,
           fac: p.fac || 'tl',
+          reborn: pReborn,
           lvl: pLvl,
-          gold: pLvl * 12000,
-          kills: pLvl * 25,
+          gold: (pReborn * 10000000) + (pLvl * 25000),
+          kills: (pReborn * 10000) + (pLvl * 50),
           pk: 0,
-          tk: pLvl * 80
+          tk: (pReborn * 20000) + (pLvl * 150)
         });
       }
     }
@@ -1875,34 +1946,34 @@ function getLeaderboardList() {
 function getPlayerRank(cat = 'level') {
   const list = getLeaderboardList();
   if (cat === 'level') {
-    list.sort((a, b) => b.lvl - a.lvl || b.gold - a.gold);
+    list.sort((a, b) => (b.reborn || 0) - (a.reborn || 0) || (b.lvl || 0) - (a.lvl || 0) || (b.gold || 0) - (a.gold || 0));
   } else if (cat === 'wealth') {
-    list.sort((a, b) => b.gold - a.gold || b.lvl - a.lvl);
+    list.sort((a, b) => (b.gold || 0) - (a.gold || 0) || (b.reborn || 0) - (a.reborn || 0) || (b.lvl || 0) - (a.lvl || 0));
   } else if (cat === 'tongkim') {
-    list.sort((a, b) => b.tk - a.tk || b.lvl - a.lvl);
+    list.sort((a, b) => (b.tk || 0) - (a.tk || 0) || (b.reborn || 0) - (a.reborn || 0) || (b.lvl || 0) - (a.lvl || 0));
   } else if (cat === 'pk') {
-    list.sort((a, b) => b.pk - a.pk || b.kills - a.kills);
+    list.sort((a, b) => (b.pk || 0) - (a.pk || 0) || (b.kills || 0) - (a.kills || 0));
   }
   const idx = list.findIndex(x => x.isMe);
   return idx >= 0 ? idx + 1 : 1;
 }
 
-function openRankModal(category = 'level', curFac = 'all') {
-  let list = getLeaderboardList();
+function openRankModal(category = 'level', curFac = 'all', forceRefresh = false) {
+  let list = getLeaderboardList(forceRefresh);
 
   if (category === 'faction' && curFac !== 'all') {
     list = list.filter(x => x.fac === curFac || x.isMe);
   }
 
-  // Sort
+  // Sort: Đẳng Cấp & Môn Phái ưu tiên Chuyển Sinh trước, rồi đến Cấp độ
   if (category === 'level' || category === 'faction') {
-    list.sort((a, b) => b.lvl - a.lvl || b.gold - a.gold);
+    list.sort((a, b) => (b.reborn || 0) - (a.reborn || 0) || (b.lvl || 0) - (a.lvl || 0) || (b.gold || 0) - (a.gold || 0));
   } else if (category === 'wealth') {
-    list.sort((a, b) => b.gold - a.gold || b.lvl - a.lvl);
+    list.sort((a, b) => (b.gold || 0) - (a.gold || 0) || (b.reborn || 0) - (a.reborn || 0) || (b.lvl || 0) - (a.lvl || 0));
   } else if (category === 'tongkim') {
-    list.sort((a, b) => b.tk - a.tk || b.lvl - a.lvl);
+    list.sort((a, b) => (b.tk || 0) - (a.tk || 0) || (b.reborn || 0) - (a.reborn || 0) || (b.lvl || 0) - (a.lvl || 0));
   } else if (category === 'pk') {
-    list.sort((a, b) => b.pk - a.pk || b.kills - a.kills);
+    list.sort((a, b) => (b.pk || 0) - (a.pk || 0) || (b.kills || 0) - (a.kills || 0));
   }
 
   const myRank = list.findIndex(x => x.isMe) + 1;
@@ -1928,7 +1999,8 @@ function openRankModal(category = 'level', curFac = 'all') {
 
     let valCol = '';
     if (category === 'level' || category === 'faction') {
-      valCol = `<span style="color:#ffd700;font-weight:bold;">Cấp ${item.lvl}</span>`;
+      const rbTag = (item.reborn && item.reborn > 0) ? `<span style="color:#fb923c;font-weight:bold;margin-right:4px;">[CS ${item.reborn}]</span>` : '';
+      valCol = `${rbTag}<span style="color:#ffd700;font-weight:bold;">Lv.${item.lvl}</span>`;
     } else if (category === 'wealth') {
       valCol = `<span style="color:#fde047;font-weight:bold;">${(typeof fmt === 'function' ? fmt(item.gold) : item.gold)} lượng</span>`;
     } else if (category === 'tongkim') {
@@ -1938,7 +2010,7 @@ function openRankModal(category = 'level', curFac = 'all') {
     }
 
     return `
-      <div style="display:grid;grid-template-columns:48px 1fr 100px 110px;align-items:center;padding:7px 10px;font-size:12px;border-radius:4px;margin-bottom:3px;${bgRow}">
+      <div style="display:grid;grid-template-columns:48px 1fr 100px 120px;align-items:center;padding:7px 10px;font-size:12px;border-radius:4px;margin-bottom:3px;${bgRow}">
         <div style="font-weight:bold;color:${medalColor};font-size:13px;">${medal}</div>
         <div style="display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
           <span style="color:${isMe ? '#fef08a' : '#fff'};font-weight:${isMe ? 'bold' : 'normal'};">${item.name}</span>
@@ -1952,9 +2024,15 @@ function openRankModal(category = 'level', curFac = 'all') {
 
   const modalHtml = `
     <div style="max-width:540px;width:100%;">
-      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #5a4425;padding-bottom:8px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #5a4425;padding-bottom:8px;margin-bottom:8px;">
         <h3 style="margin:0;color:#ffd700;font-size:15px;display:flex;align-items:center;gap:6px;">🏆 BẢNG XẾP HẠNG GIANG HỒ</h3>
         <span style="font-size:11px;color:#a3e635;">Vị trí của bạn: <b>Hạng #${myRank}</b></span>
+      </div>
+
+      <!-- Khung hiển thị thời gian cập nhật định kỳ 1 tiếng / lần -->
+      <div style="background:rgba(0,0,0,0.35);padding:6px 10px;border-radius:4px;border:1px solid #4a341d;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;font-size:11px;">
+        <span style="color:#cbd5e1;">🕒 Cập nhật: <b style="color:#fde047;">1 tiếng / lần</b> · Đợt trước: <b style="color:#a3e635;">${_lastRankInfo.timeStr}</b> · Đợt mới sau: <b style="color:#38bdf8;">${_lastRankInfo.nextInMinutes} phút</b></span>
+        <button class="btn sm" onclick="openRankModal('${category}', '${curFac}', true)" style="padding:2px 8px;font-size:10px;">🔄 Làm mới ngay</button>
       </div>
 
       <!-- Tabs -->
@@ -1973,11 +2051,11 @@ function openRankModal(category = 'level', curFac = 'all') {
       ` : ''}
 
       <!-- Header table -->
-      <div style="display:grid;grid-template-columns:48px 1fr 100px 110px;padding:4px 10px;font-size:11px;color:#9ca3af;border-bottom:1px solid #3d2a18;margin-bottom:4px;text-transform:uppercase;font-weight:bold;">
+      <div style="display:grid;grid-template-columns:48px 1fr 100px 120px;padding:4px 10px;font-size:11px;color:#9ca3af;border-bottom:1px solid #3d2a18;margin-bottom:4px;text-transform:uppercase;font-weight:bold;">
         <div>Hạng</div>
         <div>Hiệp Khách</div>
         <div>Môn Phái</div>
-        <div style="text-align:right;">${category === 'level' || category === 'faction' ? 'Đẳng Cấp' : category === 'wealth' ? 'Tài Phú' : category === 'tongkim' ? 'Chiến Tích' : 'Ác Danh'}</div>
+        <div style="text-align:right;">${category === 'level' || category === 'faction' ? 'Chuyển Sinh & Cấp' : category === 'wealth' ? 'Tài Phú' : category === 'tongkim' ? 'Chiến Tích' : 'Ác Danh'}</div>
       </div>
 
       <!-- List -->
