@@ -1150,10 +1150,7 @@ function draw(dt) {
         c.fillStyle = '#0007'; c.beginPath(); c.ellipse(H.x, H.y, 16, 6, 0, 0, 7); c.fill();
       }
 
-      // Vẽ tư thế ngồi trên yên kỵ mã chuẩn PC JX1 (Layer 2.1: Thân kỵ mã)
-      if (S && S.mounted && typeof drawHorseRiderBody === 'function') {
-        drawHorseRiderBody(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, S && S.sex, mountBob);
-      }
+      // Rider body sprite cũ đã thay bằng paperdoll clip ở trên
 
       // Vẽ Phi Phong hào quang & cánh áo choàng phát sáng
       if (typeof CLOAK_SYSTEM !== 'undefined' && CLOAK_SYSTEM.drawCloak) {
@@ -1181,8 +1178,23 @@ function draw(dt) {
       let dollH = 0;
       if (typeof drawDoll === 'function') {
         const dollScale = (typeof HERO_DOLL_SCALE !== 'undefined') ? HERO_DOLL_SCALE : (1 / 0.6);
-        dollH = drawDoll(c, H.x, heroY, H.act || 'st', H.dir || 0, H.actT || 0, dollScale, R.deadT > 0 ? 0.45 : 1, S);
-        if (dollH > 0) drawn = dollH;
+        if (S && S.mounted) {
+          // Khi cưỡi ngựa: clip chỉ vẽ phần thân trên (từ vai lên đầu)
+          // Đẩy heroY xuống thêm để thân trên nằm đúng tư thế ngồi trên yên ngựa
+          const seatY = H.y - 30 + mountBob; // vị trí "mông" ngồi trên yên
+          const clipTop = seatY - 80;         // đỉnh clip (đầu nhân vật)
+          const clipH = 90;                   // chiều cao phần thân trên hiện ra
+          c.save();
+          c.beginPath();
+          c.rect(H.x - 80, clipTop, 160, clipH);
+          c.clip();
+          dollH = drawDoll(c, H.x, seatY, H.act || 'st', H.dir || 0, H.actT || 0, dollScale, R.deadT > 0 ? 0.45 : 1, S);
+          c.restore();
+          if (dollH > 0) drawn = dollH;
+        } else {
+          dollH = drawDoll(c, H.x, heroY, H.act || 'st', H.dir || 0, H.actT || 0, dollScale, R.deadT > 0 ? 0.45 : 1, S);
+          if (dollH > 0) drawn = dollH;
+        }
       }
       if (!drawn && hw && hw.anim && typeof drawAnim === 'function') {
         drawn = drawAnim(hw.anim, H.act || 'st', H.dir || 0, H.actT || 0, H.x, heroY, HERO_SCALE);
