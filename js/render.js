@@ -6,6 +6,23 @@ const IMG = {};
 function img(src) { if (!src) return null; let i = IMG[src]; if (!i) { i = new Image(); i.src = src; IMG[src] = i; } return i; }
 function addText(x, y, t, color, size = 12) { const max = S.lowFx ? 20 : 60; if (R.quiet || R.txt.length > max) return; R.txt.push({ x, y, t, color, size, life: S.lowFx ? 0.6 : 0.9 }); }
 function burst(x, y, color) { if (R.quiet) return; R.fx.push({ k: 'ring', x, y, color, life: 0.45, max: 0.45 }); }
+function addSparks(x, y, color = '#ffd700', count = 8, spd = 140) {
+  if ((typeof S !== 'undefined' && S && S.lowFx) || R.quiet || R.fx.length > 80) return;
+  for (let i = 0; i < count; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const s = spd * (0.5 + Math.random() * 0.9);
+    R.fx.push({
+      k: 'spark',
+      x, y,
+      vx: Math.cos(ang) * s,
+      vy: Math.sin(ang) * s,
+      color,
+      size: 2 + Math.random() * 2.5,
+      life: 0.22 + Math.random() * 0.16,
+      max: 0.38
+    });
+  }
+}
 function fxLine(a, b, atk) {
   if (R.quiet || R.fx.length > 80) return;
   let el = 'phys', v = 0; for (const e in atk.parts) if (atk.parts[e] > v) { v = atk.parts[e]; el = e; }
@@ -13,14 +30,14 @@ function fxLine(a, b, atk) {
 }
 /* ---------- hieu ung chieu goc (Missles.txt -> tools/extract_fx.py -> fx.js): dan bay theo huong + no tai muc tieu ----------
    chieu can chien: phat hoat anh tai muc tieu; thieu hinh thi ve tia nhu cu */
-const JFX = window.JFX || { m: {}, s: {}, c: {}, f: {} }, FX_SCALE = 1.4, FX_MAX = 60;
+const JFX = window.JFX || { m: {}, s: {}, c: {}, f: {} }, FX_SCALE = 1.65, FX_MAX = 90;
 const dir16 = (vx, vy) => (((Math.round(Math.atan2(-vx, vy) / (Math.PI / 8)) % 16) + 16) % 16);
 /* hieu ung tai cho nguoi ra chieu (PreCastSpr cua skills.txt) */
 function castFx(atk, caster) {
   const cst = caster || (typeof H !== 'undefined' ? H : { x: 0, y: 0 });
   const f = atk && atk.id && JFX.f && JFX.f[atk.id], c = f && f.pre && JFX.c && JFX.c[f.pre];
   if (!c || R.quiet || R.fx.length > FX_MAX) return;
-  R.fx.push({ k: 'boom', s: c, x: cst.x, y: cst.y - 6, t: 0, life: animDur(c), dir: 0 });
+  R.fx.push({ k: 'boom', s: c, x: cst.x, y: cst.y - 6, t: 0, life: animDur(c), dir: 0, scale: 1.6 });
 }
 function getSkillEffectDef(atk) {
   if (!atk) return null;
@@ -66,82 +83,165 @@ function skillFx(a, b, atk) {
   if (R.fx.length > FX_MAX) return;
   const x1 = a.x, y1 = a.y - 20, x2 = b.x, y2 = b.y - 14, dx = x2 - x1, dy = y2 - y1, d = Math.hypot(dx, dy) || 1;
   const form = f.form === undefined ? 1 : f.form, n = clamp(f.num || 1, 1, 8), ang = Math.atan2(dy, dx);
-  const boom = (s, x, y, delay = 0) => { if (s) R.fx.push({ k: 'boom', s, x, y, t: -delay, life: animDur(s), dir: dir16(dx, dy) }); };
-  const mis = (s, hit, tx, ty, delay = 0, spd = (m.spd || 350)) => { if (s) R.fx.push({ k: 'mis', s, hit, x1, y1, x2: tx, y2: ty, t: -delay, life: Math.min(0.65, Math.hypot(tx - x1, ty - y1) / spd), dir: dir16(tx - x1, ty - y1) }); };
+
+  let atkEl = 'phys';
+  if (atk && atk.parts) {
+    let maxV = 0;
+    for (const e in atk.parts) if (atk.parts[e] > maxV) { maxV = atk.parts[e]; atkEl = e; }
+  }
+  const sparkColor = ELEM_COL[atkEl] || '#ffd700';
+
+  const boom = (s, x, y, delay = 0, scale = FX_SCALE, shake = 0, sparks = 0, sparkCol = sparkColor) => {
+    if (!s) return;
+    R.fx.push({ k: 'boom', s, x, y, t: -delay, life: animDur(s), dir: dir16(dx, dy), scale, shake, sparks, sparkCol });
+    if (shake && delay === 0) shakeCamera(shake, 0.16);
+    if (sparks && delay === 0) addSparks(x, y, sparkCol, sparks, 150);
+  };
+  const mis = (s, hit, tx, ty, delay = 0, spd = (m.spd || 350), opts = {}) => {
+    if (!s) return;
+    const sx = opts.fromX !== undefined ? opts.fromX : x1;
+    const sy = opts.fromY !== undefined ? opts.fromY : y1;
+    const dist = Math.hypot(tx - sx, ty - sy) || 1;
+    const life = Math.min(0.85, dist / spd);
+    R.fx.push({
+      k: 'mis',
+      s,
+      hit,
+      x1: sx,
+      y1: sy,
+      x2: tx,
+      y2: ty,
+      t: -delay,
+      life,
+      dir: dir16(tx - sx, ty - sy),
+      scale: opts.scale || FX_SCALE,
+      wave: opts.wave,
+      waveFreq: opts.waveFreq,
+      wavePhase: opts.wavePhase,
+      arc: opts.arc,
+      trail: opts.trail !== false,
+      shake: opts.shake || 0,
+      sparks: opts.sparks || 0,
+      sparkCol: opts.sparkCol || sparkColor
+    });
+  };
 
   // -------------------------------------------------------------
-  // HIỆU ỨNG ĐẶC BIỆT CHI TIẾT TỪNG MÔN PHÁI & TRẤN PHÁI / 90 / 120 / 150
+  // HIỆU ỨNG ĐẶC BIỆT CHI TIẾT TỪNG MÔN PHÁI CHUẨN NGUYÊN TÁC VLTK 1
   // -------------------------------------------------------------
   const sid = atk ? Number(atk.id) : 0;
 
-  // 1. CÁI BANG (Chưởng & Bổng: Rồng lửa phi lượn, Bổng pháp cuồng vũ)
-  // Phi Long Tại Thiên (sid 357) - Đàn rồng lửa vàng rực phi kích xuyên phá
+  // 1. CÁI BANG (Chưởng & Bổng)
+  // Phi Long Tại Thiên (sid 357) - 4 con rồng vàng uốn lượn hình sin sóng, nổ rung chuyển màn hình
   if (sid === 357) {
     const dragonSprite = (JFX.m && JFX.m[166] && JFX.m[166].fly);
     const dragonHit = (JFX.m && JFX.m[166] && JFX.m[166].hit) || (JFX.m && JFX.m[45] && JFX.m[45].hit);
     for (let i = 0; i < 4; i++) {
-      const g = ang + (i - 1.5) * 0.16;
+      const g = ang + (i - 1.5) * 0.15;
       const tx = x1 + Math.cos(g) * d, ty = y1 + Math.sin(g) * d;
-      mis(dragonSprite, dragonHit, tx, ty, i * 0.06, 480);
+      mis(dragonSprite, dragonHit, tx, ty, i * 0.05, 460, {
+        scale: 1.85,
+        wave: 28,
+        waveFreq: Math.PI * 3.5,
+        wavePhase: (i - 1.5) * 1.5,
+        trail: true,
+        shake: 5,
+        sparks: 8,
+        sparkCol: '#f59e0b'
+      });
     }
-    if (dragonHit) boom(dragonHit, x2, y2, 0.18);
+    boom(dragonHit, x2, y2, 0.16, 1.9, 4, 10, '#f97316');
     return;
   }
-  // Kháng Long Hữu Hối (sid 128) - Rồng lửa uốn lượn bay tỏa quạt
+  // Kháng Long Hữu Hối (sid 128) - 3 con rồng đỏ uốn lượn tỏa quạt
   if (sid === 128) {
     const dFly = (JFX.m && JFX.m[48] && JFX.m[48].fly);
     const dHit = (JFX.m && JFX.m[48] && JFX.m[48].hit) || (JFX.m && JFX.m[45] && JFX.m[45].hit);
     for (let i = 0; i < 3; i++) {
       const g = ang + (i - 1) * 0.22;
       const tx = x1 + Math.cos(g) * d, ty = y1 + Math.sin(g) * d;
-      mis(dFly, dHit, tx, ty, i * 0.05, 360);
+      mis(dFly, dHit, tx, ty, i * 0.05, 380, {
+        scale: 1.8,
+        wave: 22,
+        waveFreq: Math.PI * 3,
+        wavePhase: (i - 1) * 1.6,
+        trail: true,
+        shake: 4,
+        sparks: 6,
+        sparkCol: '#ef4444'
+      });
     }
     return;
   }
-  // Thiên Hạ Vô Cẩu (sid 359) - Đả cẩu bổng khí chém liên hoàn bủa vây
+  // Thiên Hạ Vô Cẩu (sid 359) - Bát phương bổng khí tỏa tròn 360 độ từ thân người chơi
   if (sid === 359) {
     const stickFly = (JFX.m && JFX.m[168] && JFX.m[168].fly);
     const stickHit = (JFX.m && JFX.m[168] && JFX.m[168].hit);
-    for (let i = 0; i < 4; i++) {
-      const g = ang + (i - 1.5) * 0.2;
-      const tx = x1 + Math.cos(g) * d, ty = y1 + Math.sin(g) * d;
-      mis(stickFly, stickHit, tx, ty, i * 0.05, 520);
+    for (let i = 0; i < 8; i++) {
+      const g = (i / 8) * Math.PI * 2;
+      const tx = x1 + Math.cos(g) * 160, ty = y1 + Math.sin(g) * 160;
+      mis(stickFly, stickHit, tx, ty, i * 0.015, 520, {
+        scale: 1.7,
+        trail: true,
+        shake: 3,
+        sparks: 5,
+        sparkCol: '#10b981'
+      });
     }
-    if (stickHit) boom(stickHit, x2, y2, 0.15);
+    boom(stickHit, x2, y2, 0.1, 1.7, 4, 8, '#34d399');
     return;
   }
-  // Bổng Đả Ác Cẩu (sid 125) - Vòng tròn bổng kình tỏa 8 hướng
+  // Bổng Đả Ác Cẩu (sid 125) - 5 bóng bổng quét vòng cung
   if (sid === 125) {
     const stickFly = (JFX.m && JFX.m[47] && JFX.m[47].fly);
     const stickHit = (JFX.m && JFX.m[47] && JFX.m[47].hit);
-    for (let i = 0; i < 6; i++) {
-      const g = ang + (i / 6) * Math.PI * 2;
-      mis(stickFly, stickHit, x1 + Math.cos(g) * 140, y1 + Math.sin(g) * 140, i * 0.03, 500);
+    for (let i = 0; i < 5; i++) {
+      const g = ang + (i - 2) * 0.2;
+      const tx = x1 + Math.cos(g) * d, ty = y1 + Math.sin(g) * d;
+      mis(stickFly, stickHit, tx, ty, i * 0.03, 500, {
+        scale: 1.6,
+        trail: true,
+        shake: 3,
+        sparks: 5,
+        sparkCol: '#3b82f6'
+      });
     }
+    return;
+  }
+  // Diên Môn Thác Bát (sid 119) & Kiến Nhân Thần Thủ (sid 122)
+  if (sid === 119 || sid === 122) {
+    const fSprite = (JFX.m && JFX.m[45] && JFX.m[45].fly) || (JFX.m && JFX.m[46] && JFX.m[46].fly);
+    const hSprite = (JFX.m && JFX.m[45] && JFX.m[45].hit) || (JFX.m && JFX.m[46] && JFX.m[46].hit);
+    mis(fSprite, hSprite, x2, y2, 0, 520, { scale: 1.6, wave: 15, trail: true, shake: 3, sparks: 6, sparkCol: '#f97316' });
     return;
   }
 
-  // 2. VÕ ĐANG (Kiếm & Khí: Thái cực kiếm trận, lôi kiếm giáng thế)
-  // Thiên Địa Vô Cực (sid 365) - Vòng xoáy âm dương bát quái trận uy chấn thiên hạ
+  // 2. VÕ ĐANG (Kiếm & Khí)
+  // Thiên Địa Vô Cực (sid 365) - Vòng xoáy Thái Cực Bát Quái trận xoay tròn + 3 đợt lôi kiếm giáng từ trên xuống
   if (sid === 365) {
     const taijiStorm = (JFX.m && JFX.m[173] && JFX.m[173].fly);
     const taijiHit = (JFX.m && JFX.m[110] && JFX.m[110].hit) || (JFX.m && JFX.m[24] && JFX.m[24].hit);
+    const swordFly = (JFX.m && JFX.m[175] && JFX.m[175].fly) || (JFX.m && JFX.m[110] && JFX.m[110].fly);
     if (taijiStorm) {
-      boom(taijiStorm, x2, y2, 0);
-      boom(taijiStorm, x2 + rnd(-28, 28), y2 + rnd(-20, 20), 0.12);
+      boom(taijiStorm, x2, y2, 0, 2.0);
+      boom(taijiStorm, x2, y2, 0.28, 2.0);
+      boom(taijiStorm, x2, y2, 0.56, 2.0);
     }
-    if (taijiHit) boom(taijiHit, x2, y2, 0.16);
+    mis(swordFly, taijiHit, x2, y2, 0.1, 1050, { fromX: x2, fromY: y2 - 220, scale: 1.7, shake: 4, sparks: 8, sparkCol: '#60a5fa' });
+    mis(swordFly, taijiHit, x2 + rnd(-22, 22), y2 + rnd(-16, 16), 0.3, 1050, { fromX: x2 + rnd(-22, 22), fromY: y2 - 220, scale: 1.7, shake: 4, sparks: 8, sparkCol: '#60a5fa' });
+    mis(swordFly, taijiHit, x2 + rnd(-22, 22), y2 + rnd(-16, 16), 0.5, 1050, { fromX: x2 + rnd(-22, 22), fromY: y2 - 220, scale: 1.8, shake: 5, sparks: 10, sparkCol: '#93c5fd' });
     return;
   }
-  // Nhân Kiếm Hợp Nhất (sid 368) - Thần kiếm phi thấu lôi đình cắm thẳng mục tiêu
+  // Nhân Kiếm Hợp Nhất (sid 368) - Thần kiếm phi thấu lôi đình cắm thẳng mục tiêu + cột lôi kiếm
   if (sid === 368) {
     const swordFly = (JFX.m && JFX.m[175] && JFX.m[175].fly) || (JFX.m && JFX.m[110] && JFX.m[110].fly);
-    const swordHit = (JFX.m && JFX.m[110] && JFX.m[110].hit) || (JFX.m && JFX.m[24] && JFX.m[24].hit);
-    mis(swordFly, swordHit, x2, y2, 0, 720);
-    mis(swordFly, swordHit, x2, y2, 0.06, 750);
-    if (swordHit) {
-      boom(swordHit, x2, y2, 0.1);
-      boom(swordHit, x2 + rnd(-16, 16), y2 + rnd(-12, 12), 0.2);
+    const swordHit = (JFX.m && JFX.m[176] && JFX.m[176].hit) || (JFX.m && JFX.m[110] && JFX.m[110].hit);
+    const swordPillar = (JFX.m && JFX.m[176] && JFX.m[176].fly);
+    mis(swordFly, swordHit, x2, y2, 0, 780, { scale: 1.75, trail: true, shake: 5, sparks: 8, sparkCol: '#93c5fd' });
+    mis(swordFly, swordHit, x2, y2, 0.06, 820, { scale: 1.75, trail: true, shake: 5, sparks: 8, sparkCol: '#93c5fd' });
+    if (swordPillar) {
+      boom(swordPillar, x2, y2, 0.08, 1.8);
+      boom(swordPillar, x2 + rnd(-18, 18), y2 + rnd(-12, 12), 0.18, 1.8);
     }
     return;
   }
@@ -152,87 +252,117 @@ function skillFx(a, b, atk) {
     for (let i = 0; i < 3; i++) {
       const g = ang + (i - 1) * 0.18;
       const tx = x1 + Math.cos(g) * d, ty = y1 + Math.sin(g) * d;
-      mis(sFly, sHit, tx, ty, i * 0.04, 520);
+      mis(sFly, sHit, tx, ty, i * 0.03, 560, { scale: 1.6, trail: true, sparks: 5, sparkCol: '#60a5fa' });
     }
     return;
   }
-  // Tam Hoàn Thao Nguyệt (sid 267) - 3 vòng kiếm khí bọc trảm
-  if (sid === 267) {
-    const sFly = (JFX.m && JFX.m[110] && JFX.m[110].fly);
-    const sHit = (JFX.m && JFX.m[110] && JFX.m[110].hit);
-    mis(sFly, sHit, x2, y2, 0, 600);
-    mis(sFly, sHit, x2, y2, 0.08, 620);
+  // Tam Hoàn Thao Nguyệt (sid 267) & Kiếm Phi Kinh Thiên (sid 158)
+  if (sid === 267 || sid === 158) {
+    const sFly = (JFX.m && JFX.m[110] && JFX.m[110].fly) || (JFX.m && JFX.m[26] && JFX.m[26].fly);
+    const sHit = (JFX.m && JFX.m[110] && JFX.m[110].hit) || (JFX.m && JFX.m[26] && JFX.m[26].hit);
+    mis(sFly, sHit, x2, y2, 0, 640, { scale: 1.7, trail: true, shake: 3, sparks: 7, sparkCol: '#60a5fa' });
+    mis(sFly, sHit, x2, y2, 0.07, 680, { scale: 1.7, trail: true, shake: 3, sparks: 7, sparkCol: '#60a5fa' });
     return;
   }
 
-  // 3. CÔN LÔN (Đao gió, Lôi kiếm ngũ lôi oanh đè)
-  // Lôi Động Cửu Thiên (sid 375) - Sét đánh từ 9 tầng mây cuồng nộ giáng xuống
+  // 3. CÔN LÔN (Đao gió & Lôi kiếm)
+  // Lôi Động Cửu Thiên (sid 375) - 3 tia sét giáng thẳng từ cửu thiên (đỉnh trời) xuống đầu mục tiêu
   if (sid === 375) {
     const bolt = (JFX.m && JFX.m[181] && JFX.m[181].fly) || (JFX.m && JFX.m[18] && JFX.m[18].fly);
     const boltHit = (JFX.m && JFX.m[181] && JFX.m[181].hit) || (JFX.m && JFX.m[18] && JFX.m[18].hit);
     for (let i = 0; i < 3; i++) {
-      const ox = rnd(-32, 32), oy = rnd(-20, 20);
-      boom(bolt, x2 + ox, y2 + oy, i * 0.08);
-      boom(boltHit, x2 + ox, y2 + oy, i * 0.08 + 0.04);
+      const ox = rnd(-28, 28), oy = rnd(-18, 18);
+      const tx = x2 + ox, ty = y2 + oy;
+      mis(bolt, boltHit, tx, ty, i * 0.08, 1200, {
+        fromX: tx,
+        fromY: ty - 260,
+        scale: 1.85,
+        trail: true,
+        shake: 5,
+        sparks: 10,
+        sparkCol: '#fbbf24'
+      });
     }
     return;
   }
-  // Ngũ Lôi Chánh Pháp (sid 182) - Trụ lôi đình giáng xuống tâm mục tiêu
+  // Ngũ Lôi Chánh Pháp (sid 182) - 3 trụ lôi đình giáng từ trời xuống
   if (sid === 182) {
     const thunder = (JFX.m && JFX.m[18] && JFX.m[18].fly);
     const thunderHit = (JFX.m && JFX.m[18] && JFX.m[18].hit);
-    boom(thunder, x2, y2, 0);
-    boom(thunderHit, x2, y2, 0.04);
-    boom(thunder, x2 + rnd(-24, 24), y2 + rnd(-16, 16), 0.1);
+    for (let i = 0; i < 3; i++) {
+      const ox = rnd(-24, 24), oy = rnd(-16, 16);
+      const tx = x2 + ox, ty = y2 + oy;
+      mis(thunder, thunderHit, tx, ty, i * 0.07, 1100, {
+        fromX: tx,
+        fromY: ty - 250,
+        scale: 1.8,
+        trail: true,
+        shake: 4,
+        sparks: 8,
+        sparkCol: '#fbbf24'
+      });
+    }
     return;
   }
-  // Ngạo Tuyết Tiêu Phong (sid 372) - Cuồng phong tuyết trảm xoáy quét
-  if (sid === 372) {
-    const stormFly = (JFX.m && JFX.m[178] && JFX.m[178].fly);
-    const stormHit = (JFX.m && JFX.m[178] && JFX.m[178].hit);
+  // Ngạo Tuyết Tiêu Phong (sid 372) & Cuồng Phong Sậu Điện (sid 176)
+  if (sid === 372 || sid === 176) {
+    const stormFly = (JFX.m && JFX.m[178] && JFX.m[178].fly) || (JFX.m && JFX.m[16] && JFX.m[16].fly);
+    const stormHit = (JFX.m && JFX.m[178] && JFX.m[178].hit) || (JFX.m && JFX.m[16] && JFX.m[16].hit);
     for (let i = 0; i < 3; i++) {
-      const g = ang + (i - 1) * 0.14;
+      const g = ang + (i - 1) * 0.15;
       const tx = x1 + Math.cos(g) * d, ty = y1 + Math.sin(g) * d;
-      mis(stormFly, stormHit, tx, ty, i * 0.04, 580);
+      mis(stormFly, stormHit, tx, ty, i * 0.04, 600, { scale: 1.7, trail: true, shake: 3, sparks: 6, sparkCol: '#93c5fd' });
     }
     return;
   }
 
-  // 4. THIÊN NHẪN (Mâu lửa & Ma đạo: Thiên thạch rực lửa, biển lửa Vân Long Kích)
-  // Thiên Ngoại Lưu Tinh (sid 362) - Sao băng thiên thạch khổng lồ rơi từ trời xuống
+  // 4. THIÊN NHẪN (Mâu lửa & Ma đạo)
+  // Thiên Ngoại Lưu Tinh (sid 362) - Sao băng thiên thạch lao chéo từ trên trời xuống bùng nổ biển lửa
   if (sid === 362) {
     const meteor = (JFX.m && JFX.m[171] && JFX.m[171].fly);
     const meteorHit = (JFX.m && JFX.m[171] && JFX.m[171].hit) || (JFX.m && JFX.m[56] && JFX.m[56].hit);
-    for (let i = 0; i < 3; i++) {
-      const ox = rnd(-36, 36), oy = rnd(-24, 24);
-      boom(meteor, x2 + ox, y2 + oy, i * 0.09);
-      boom(meteorHit, x2 + ox, y2 + oy, i * 0.09 + 0.05);
+    const fireSea = (JFX.m && JFX.m[82] && JFX.m[82].fly);
+    for (let i = 0; i < 2; i++) {
+      const ox = rnd(-24, 24), oy = rnd(-16, 16);
+      const tx = x2 + ox, ty = y2 + oy;
+      mis(meteor, meteorHit, tx, ty, i * 0.1, 880, {
+        fromX: tx - 130,
+        fromY: ty - 260,
+        scale: 1.85,
+        trail: true,
+        shake: 6,
+        sparks: 12,
+        sparkCol: '#f97316'
+      });
+    }
+    if (fireSea) {
+      boom(fireSea, x2, y2, 0.18, 1.8);
+      boom(fireSea, x2 + rnd(-20, 20), y2 + rnd(-14, 14), 0.28, 1.8);
     }
     return;
   }
-  // Vân Long Kích (sid 361) - Rồng lửa đâm xuyên thấu
+  // Vân Long Kích (sid 361) - Rồng lửa đâm xuyên thấu 2 đợt
   if (sid === 361) {
     const fireSpear = (JFX.m && JFX.m[169] && JFX.m[169].fly);
     const fireHit = (JFX.m && JFX.m[169] && JFX.m[169].hit) || (JFX.m && JFX.m[54] && JFX.m[54].hit);
-    mis(fireSpear, fireHit, x2, y2, 0, 680);
-    mis(fireSpear, fireHit, x2, y2, 0.07, 720);
-    if (fireHit) boom(fireHit, x2, y2, 0.12);
+    mis(fireSpear, fireHit, x2, y2, 0, 720, { scale: 1.8, trail: true, shake: 4, sparks: 8, sparkCol: '#ef4444' });
+    mis(fireSpear, fireHit, x2, y2, 0.06, 750, { scale: 1.8, trail: true, shake: 4, sparks: 8, sparkCol: '#ef4444' });
     return;
   }
-  // Ma Diệm Thất Sát (sid 148) - 7 cột lửa ma quỷ bốc cháy rực góc đất
+  // Ma Diệm Thất Sát (sid 148) - 5 cột lửa ma đạo bùng cháy dưới chân mục tiêu
   if (sid === 148) {
     const firePillar = (JFX.m && JFX.m[82] && JFX.m[82].fly);
     const firePillarHit = (JFX.m && JFX.m[82] && JFX.m[82].hit);
     for (let i = 0; i < 5; i++) {
       const ox = rnd(-32, 32), oy = rnd(-20, 20);
-      boom(firePillar, x2 + ox, y2 + oy, i * 0.06);
-      if (firePillarHit) boom(firePillarHit, x2 + ox, y2 + oy, i * 0.06 + 0.04);
+      boom(firePillar, x2 + ox, y2 + oy, i * 0.05, 1.75, 2, 4, '#f97316');
+      if (firePillarHit) boom(firePillarHit, x2 + ox, y2 + oy, i * 0.05 + 0.03, 1.6, 2, 4, '#ef4444');
     }
     return;
   }
 
-  // 5. NGA MY (Kiếm băng, chưởng pháp phật quang, Phong Sương Toái Ảnh)
-  // Phong Sương Toái Ảnh (sid 380) - Kiếm băng phi vụt + bão tuyết mịt mù
+  // 5. NGA MY (Kiếm băng & Bão tuyết)
+  // Phong Sương Toái Ảnh (sid 380) - Kiếm băng phi vụt + mưa bão tuyết rơi trắng xóa + băng nổ tung tóe
   if (sid === 380) {
     const swordSprite = (JFX.m && JFX.m[142] && JFX.m[142].fly) || (JFX.m && JFX.m[2] && JFX.m[2].fly);
     const hitSprite = (JFX.m && JFX.m[186] && JFX.m[186].hit) || (JFX.m && JFX.m[142] && JFX.m[142].hit);
@@ -240,217 +370,239 @@ function skillFx(a, b, atk) {
     for (let i = 0; i < 3; i++) {
       const g = ang + (i - 1) * 0.16;
       const tx = x1 + Math.cos(g) * d, ty = y1 + Math.sin(g) * d;
-      mis(swordSprite, hitSprite, tx, ty, i * 0.05, 520);
+      mis(swordSprite, hitSprite, tx, ty, i * 0.04, 560, { scale: 1.7, trail: true, sparks: 6, sparkCol: '#67e8f9' });
     }
     if (snowStorm) {
-      boom(snowStorm, x2, y2, 0.02);
-      boom(snowStorm, x2 + rnd(-24, 24), y2 + rnd(-16, 16), 0.12);
+      boom(snowStorm, x2, y2, 0.04, 1.85, 3, 8, '#bae6fd');
+      boom(snowStorm, x2 + rnd(-24, 24), y2 + rnd(-16, 16), 0.14, 1.85, 3, 8, '#bae6fd');
     }
-    if (hitSprite) boom(hitSprite, x2, y2, 0.08);
+    boom(hitSprite, x2, y2, 0.1, 1.7, 3, 10, '#38bdf8');
     return;
   }
-  // Tam Nga Tề Tuyết (sid 328) - 3 tia băng hà song hành tuyết ảnh
+  // Tam Nga Tề Tuyết (sid 328) - 3 tia băng tuyết song hành
   if (sid === 328) {
     const snowFly = (JFX.m && JFX.m[142] && JFX.m[142].fly);
     const snowHit = (JFX.m && JFX.m[142] && JFX.m[142].hit);
     for (let i = 0; i < 3; i++) {
-      const g = ang + (i - 1) * 0.14;
+      const g = ang + (i - 1) * 0.13;
       const tx = x1 + Math.cos(g) * d, ty = y1 + Math.sin(g) * d;
-      mis(snowFly, snowHit, tx, ty, i * 0.04, 580);
+      mis(snowFly, snowHit, tx, ty, i * 0.03, 620, { scale: 1.7, trail: true, sparks: 6, sparkCol: '#67e8f9' });
     }
     return;
   }
 
-  // 6. THÚY YÊN (Băng Tung Vô Ảnh, Băng Tâm Tiên Tử)
-  // Băng Tung Vô Ảnh (sid 336) - Mưa hoa tiêu băng tuyết bắn tỏa quạt
+  // 6. THÚY YÊN (Đao băng & Băng tinh)
+  // Băng Tung Vô Ảnh (sid 336) - 5 sóng đao tuyết xanh bay hình cánh quạt
   if (sid === 336) {
     const iceFly = (JFX.m && JFX.m[146] && JFX.m[146].fly);
     const iceHit = (JFX.m && JFX.m[146] && JFX.m[146].hit);
     for (let i = 0; i < 5; i++) {
       const g = ang + (i - 2) * 0.16;
       const tx = x1 + Math.cos(g) * d, ty = y1 + Math.sin(g) * d;
-      mis(iceFly, iceHit, tx, ty, i * 0.03, 600);
+      mis(iceFly, iceHit, tx, ty, i * 0.025, 620, { scale: 1.75, trail: true, wave: 12, wavePhase: i, sparks: 6, sparkCol: '#67e8f9' });
     }
     return;
   }
-  // Băng Tâm Tiên Tử (sid 337) - Băng tinh xuyên tâm vỡ tung
+  // Băng Tâm Tiên Tử (sid 337) - Quả cầu băng tinh bay tới bung nở hoa sen tuyết
   if (sid === 337) {
     const iceFly = (JFX.m && JFX.m[147] && JFX.m[147].fly);
     const iceHit = (JFX.m && JFX.m[147] && JFX.m[147].hit);
-    mis(iceFly, iceHit, x2, y2, 0, 580);
-    mis(iceFly, iceHit, x2, y2, 0.06, 620);
-    if (iceHit) boom(iceHit, x2, y2, 0.12);
+    mis(iceFly, iceHit, x2, y2, 0, 620, { scale: 1.75, trail: true, shake: 3, sparks: 8, sparkCol: '#e0f2fe' });
+    boom(iceHit, x2, y2, 0.12, 1.85, 4, 10, '#bae6fd');
     return;
   }
 
-  // 7. THIẾU LÂM (Đạt Ma Độ Giang, Vô Tướng Trảm, Hoành Tảo Thiên Quân)
-  // Đạt Ma Độ Giang (sid 318) - Côn kình kim cang trượng uy vũ chấn nhiếp
-  if (sid === 318) {
-    const monkFly = (JFX.m && JFX.m[134] && JFX.m[134].fly);
-    const monkHit = (JFX.m && JFX.m[134] && JFX.m[134].hit);
-    mis(monkFly, monkHit, x2, y2, 0, 520);
-    mis(monkFly, monkHit, x2, y2, 0.08, 540);
-    if (monkHit) boom(monkHit, x2, y2, 0.14);
-    return;
-  }
-  // Vô Tướng Trảm (sid 321) - Đao khí vô tướng xé toạc cự ly
+  // 7. THIẾU LÂM (Kim Cang côn & Vô Tướng đao)
+  // Vô Tướng Trảm (sid 321) - Đao khí chữ thập vàng kim xé toạc cự ly
   if (sid === 321) {
     const slashFly = (JFX.m && JFX.m[136] && JFX.m[136].fly);
     const slashHit = (JFX.m && JFX.m[136] && JFX.m[136].hit);
-    mis(slashFly, slashHit, x2, y2, 0, 650);
-    if (slashHit) boom(slashHit, x2, y2, 0.1);
+    mis(slashFly, slashHit, x2, y2, 0, 720, { scale: 1.85, trail: true, shake: 5, sparks: 10, sparkCol: '#ffd700' });
+    mis(slashFly, slashHit, x2, y2, 0.06, 760, { scale: 1.85, trail: true, shake: 5, sparks: 10, sparkCol: '#ffd700' });
     return;
   }
-  // Hoành Tảo Thiên Quân (sid 319) - Kim quang bộc phát quét sạch bốn bề
+  // Đạt Ma Độ Giang (sid 318) - Côn kình trượng vàng giáng uy vũ
+  if (sid === 318) {
+    const monkFly = (JFX.m && JFX.m[134] && JFX.m[134].fly);
+    const monkHit = (JFX.m && JFX.m[134] && JFX.m[134].hit);
+    mis(monkFly, monkHit, x2, y2, 0, 580, { scale: 1.75, trail: true, shake: 4, sparks: 8, sparkCol: '#fbbf24' });
+    boom(monkHit, x2, y2, 0.12, 1.8, 4, 10, '#ffd700');
+    return;
+  }
+  // Hoành Tảo Thiên Quân (sid 319) - Kim quang bộc phát quét 360 độ
   if (sid === 319) {
     const sweep = (JFX.m && JFX.m[135] && JFX.m[135].fly);
     const sweepHit = (JFX.m && JFX.m[135] && JFX.m[135].hit);
-    boom(sweep, x1, y1, 0);
-    boom(sweepHit, x2, y2, 0.08);
+    boom(sweep, x1, y1, 0, 1.9, 4, 10, '#ffd700');
+    boom(sweepHit, x2, y2, 0.08, 1.7, 3, 8, '#fbbf24');
+    return;
+  }
+  // Sư Tử Hống (sid 20) - Sóng âm chấn động
+  if (sid === 20) {
+    const lionRoar = (JFX.c && JFX.c[1]);
+    if (lionRoar) boom(lionRoar, x1, y1, 0, 1.9, 6, 12, '#ffd700');
+    shakeCamera(6, 0.2);
     return;
   }
 
-  // 8. THIÊN VƯƠNG (Phá Thiên Trảm, Truy Tinh Trục Nguyệt, Truy Phong Quyết)
-  if ([322, 323, 325, 324, 40, 41].includes(sid)) {
-    const hitSprite = (def.m && def.m.hit) || (JFX.m && JFX.m[225] && JFX.m[225].hit) || (JFX.m && JFX.m[63] && JFX.m[63].hit);
-    const flySprite = def.m && def.m.fly;
-    if (flySprite) {
-      mis(flySprite, hitSprite, x2, y2, 0, 580);
-      mis(flySprite, hitSprite, x2, y2, 0.06, 620);
-    }
-    if (hitSprite) {
-      boom(hitSprite, x2, y2, 0.05);
-      boom(hitSprite, x2 + rnd(-16, 16), y2 + rnd(-12, 12), 0.12);
+  // 8. THIÊN VƯƠNG (Thương đao cận chiến)
+  // Huyết Chiến Bát Phương (sid 41) - Đao thương tỏa 8 hướng
+  if (sid === 41) {
+    const hitSprite = (JFX.m && JFX.m[225] && JFX.m[225].hit) || (JFX.m && JFX.m[63] && JFX.m[63].hit);
+    const flySprite = (JFX.m && JFX.m[225] && JFX.m[225].fly);
+    for (let i = 0; i < 8; i++) {
+      const g = (i / 8) * Math.PI * 2;
+      mis(flySprite || hitSprite, hitSprite, x1 + Math.cos(g) * 150, y1 + Math.sin(g) * 150, i * 0.015, 560, { scale: 1.65, trail: true, shake: 3, sparks: 6, sparkCol: '#fbbf24' });
     }
     return;
   }
+  // Phá Thiên Trảm (sid 322), Truy Tinh Trục Nguyệt (sid 323), Thừa Long Quyết (sid 324), Truy Phong Quyết (sid 325), Đoạn Hồn Thích (sid 40)
+  if ([322, 323, 324, 325, 40].includes(sid)) {
+    const flySprite = (sid === 322 && JFX.m && JFX.m[326] && JFX.m[326].fly) || (sid === 323 && JFX.m && JFX.m[327] && JFX.m[327].fly) || (def.m && def.m.fly);
+    const hitSprite = (sid === 322 && JFX.m && JFX.m[326] && JFX.m[326].hit) || (sid === 323 && JFX.m && JFX.m[327] && JFX.m[327].hit) || (def.m && def.m.hit);
+    mis(flySprite, hitSprite, x2, y2, 0, 680, { scale: 1.8, trail: true, shake: 5, sparks: 10, sparkCol: '#ffd700' });
+    mis(flySprite, hitSprite, x2, y2, 0.06, 720, { scale: 1.8, trail: true, shake: 5, sparks: 10, sparkCol: '#ffd700' });
+    return;
+  }
 
-  // 9. NGŨ ĐỘC (Âm Phong Thực Cốt, Huyền Âm Trảm, Thiên Cương Địa Sát)
-  // Âm Phong Thực Cốt (sid 353) - Cột khói độc u minh ăn mòn xương tủy
+  // 9. NGŨ ĐỘC (Độc khí & Huyền Âm Đao)
+  // Âm Phong Thực Cốt (sid 353) - Cột khói độc u minh từ lòng đất bốc lên
   if (sid === 353) {
     const poisonPillar = (JFX.m && JFX.m[163] && JFX.m[163].fly);
     const poisonHit = (JFX.m && JFX.m[33] && JFX.m[33].hit) || (JFX.m && JFX.m[30] && JFX.m[30].hit);
-    boom(poisonPillar, x2, y2, 0);
-    boom(poisonPillar, x2 + rnd(-24, 24), y2 + rnd(-16, 16), 0.1);
-    if (poisonHit) boom(poisonHit, x2, y2, 0.15);
+    boom(poisonPillar, x2, y2, 0, 1.85, 3, 8, '#10b981');
+    boom(poisonPillar, x2 + rnd(-22, 22), y2 + rnd(-16, 16), 0.12, 1.85, 3, 8, '#10b981');
+    boom(poisonHit, x2, y2, 0.15, 1.7, 3, 10, '#34d399');
     return;
   }
-  // Huyền Âm Trảm (sid 355) - Đao khí lục sắc độc sát bay nhanh chém rách đối phương
+  // Huyền Âm Trảm (sid 355) - Đao khí lục sắc độc sát chém đôi kẻ thù
   if (sid === 355) {
     const slashFly = (JFX.m && JFX.m[165] && JFX.m[165].fly);
     const slashHit = (JFX.m && JFX.m[165] && JFX.m[165].hit);
     for (let i = 0; i < 2; i++) {
-      mis(slashFly, slashHit, x2 + rnd(-10, 10), y2 + rnd(-8, 8), i * 0.05, 620);
+      mis(slashFly, slashHit, x2 + rnd(-10, 10), y2 + rnd(-8, 8), i * 0.05, 680, { scale: 1.75, trail: true, shake: 4, sparks: 8, sparkCol: '#10b981' });
     }
     return;
   }
 
-  // 10. HOA SƠN (Độc Cô Cửu Kiếm, Thái Nhạc Tam Thanh Phong, Khí Quán Trường Hồng)
+  // 10. HOA SƠN (Kiếm pháp)
+  // Độc Cô Cửu Kiếm (sid 1368) - 9 thanh kiếm thần từ 9 hướng bao vây cùng lao vào tâm mục tiêu
   if (sid === 1368) {
-    // Độc Cô Cửu Kiếm: 9 thanh kiếm thần bay lượn vòng tròn xung trận
-    const swordFly = (JFX.m && JFX.m[173] && JFX.m[173].fly) || (JFX.m && JFX.m[175] && JFX.m[175].fly) || (JFX.m && JFX.m[110] && JFX.m[110].fly);
-    const swordHit = (JFX.m && JFX.m[110] && JFX.m[110].hit);
+    const swordFly = (JFX.m && JFX.m[175] && JFX.m[175].fly) || (JFX.m && JFX.m[173] && JFX.m[173].fly) || (JFX.m && JFX.m[110] && JFX.m[110].fly);
+    const swordHit = (JFX.m && JFX.m[110] && JFX.m[110].hit) || (JFX.m && JFX.m[176] && JFX.m[176].hit);
     for (let i = 0; i < 9; i++) {
-      const g = ang + (i / 9) * Math.PI * 2;
-      mis(swordFly, swordHit, x1 + Math.cos(g) * 150, y1 + Math.sin(g) * 150, i * 0.03, 520);
+      const g = (i / 9) * Math.PI * 2;
+      const fx = x2 + Math.cos(g) * 160, fy = y2 + Math.sin(g) * 160;
+      mis(swordFly, swordHit, x2, y2, i * 0.025, 680, {
+        fromX: fx,
+        fromY: fy,
+        scale: 1.65,
+        trail: true,
+        shake: 3,
+        sparks: 5,
+        sparkCol: '#60a5fa'
+      });
     }
-    boom(swordFly, x2, y2, 0.1);
+    boom(swordHit, x2, y2, 0.22, 1.9, 6, 12, '#93c5fd');
+    return;
+  }
+  // Thái Nhạc Tam Thanh Phong (sid 1363)
+  if (sid === 1363) {
+    const swordFly = (JFX.m && JFX.m[110] && JFX.m[110].fly);
+    const swordHit = (JFX.m && JFX.m[110] && JFX.m[110].hit);
+    for (let i = 0; i < 3; i++) {
+      const g = ang + (i - 1) * 0.16;
+      const tx = x1 + Math.cos(g) * d, ty = y1 + Math.sin(g) * d;
+      mis(swordFly, swordHit, tx, ty, i * 0.04, 620, { scale: 1.7, trail: true, sparks: 6, sparkCol: '#60a5fa' });
+    }
     return;
   }
 
-  // 11. ĐƯỜNG MÔN (Bạo Vũ Lê Hoa, Mạn Thiên Hoa Vũ, Tiểu Lý Phi Đao, Cửu Cung Phi Tinh...)
+  // 11. ĐƯỜNG MÔN (Ám khí & Cạm bẫy)
+  // Bạo Vũ Lê Hoa (sid 302) - Cơn mưa 12 mũi kim bạc xé gió 2 đợt
   if (sid === 302) {
     const needleSprite = (JFX.m && JFX.m[96] && JFX.m[96].fly) || (JFX.m && JFX.m[152] && JFX.m[152].fly);
     const hitSprite = (JFX.m && JFX.m[152] && JFX.m[152].hit) || (JFX.m && JFX.m[35] && JFX.m[35].hit);
-    for (let i = 0; i < 6; i++) {
-      const tx = x2 + rnd(-28, 28), ty = y2 + rnd(-20, 20);
-      mis(needleSprite, hitSprite, tx, ty, i * 0.04, 620);
+    for (let i = 0; i < 12; i++) {
+      const delay = Math.floor(i / 6) * 0.08 + (i % 6) * 0.015;
+      const tx = x2 + rnd(-24, 24), ty = y2 + rnd(-16, 16);
+      mis(needleSprite, hitSprite, tx, ty, delay, 720, { scale: 1.45, trail: true, sparks: 3, sparkCol: '#cbd5e1' });
     }
-    if (hitSprite) {
-      boom(hitSprite, x2, y2, 0.15);
-      boom(hitSprite, x2 + rnd(-16, 16), y2 + rnd(-12, 12), 0.25);
-    }
+    boom(hitSprite, x2, y2, 0.15, 1.6, 4, 8, '#e2e8f0');
     return;
   }
+  // Mạn Thiên Hoa Vũ (sid 54) - Bão kim rơi trùm kín mục tiêu
   if (sid === 54) {
     const stormSprite = (JFX.m && JFX.m[38] && JFX.m[38].fly);
     const hitSprite = (JFX.m && JFX.m[35] && JFX.m[35].hit) || (JFX.m && JFX.m[151] && JFX.m[151].hit);
     if (stormSprite) {
-      boom(stormSprite, x2, y2 - 30, 0);
-      boom(stormSprite, x2 + rnd(-35, 35), y2 + rnd(-25, 25) - 30, 0.1);
+      boom(stormSprite, x2, y2 - 25, 0, 1.85);
+      boom(stormSprite, x2 + rnd(-30, 30), y2 + rnd(-20, 20) - 25, 0.1, 1.85);
     }
-    if (hitSprite) {
-      boom(hitSprite, x2, y2, 0.12);
-      boom(hitSprite, x2 + rnd(-20, 20), y2 + rnd(-16, 16), 0.22);
-    }
+    boom(hitSprite, x2, y2, 0.12, 1.65, 4, 8, '#cbd5e1');
     return;
   }
+  // Tiểu Lý Phi Đao (sid 249) - Phi đao hạ thủ vô hình tốc độ cực cao
   if (sid === 249) {
     const knifeSprite = (JFX.m && JFX.m[37] && JFX.m[37].fly) || (JFX.m && JFX.m[149] && JFX.m[149].fly);
     const hitSprite = (JFX.m && JFX.m[106] && JFX.m[106].hit) || (JFX.m && JFX.m[35] && JFX.m[35].hit);
-    mis(knifeSprite, hitSprite, x2, y2, 0, 750);
-    mis(knifeSprite, hitSprite, x2, y2, 0.05, 800);
-    if (hitSprite) boom(hitSprite, x2, y2, 0.1);
+    mis(knifeSprite, hitSprite, x2, y2, 0, 850, { scale: 1.7, trail: true, shake: 4, sparks: 8, sparkCol: '#ffd700' });
+    mis(knifeSprite, hitSprite, x2, y2, 0.05, 880, { scale: 1.7, trail: true, shake: 4, sparks: 8, sparkCol: '#ffd700' });
     return;
   }
-  if (sid === 342) {
-    const starSprite = (JFX.m && JFX.m[152] && JFX.m[152].fly);
-    const hitSprite = (JFX.m && JFX.m[152] && JFX.m[152].hit);
+  // Cửu Cung Phi Tinh (sid 342) & Tán Hoa Tiêu (sid 341)
+  if (sid === 342 || sid === 341) {
+    const starSprite = (JFX.m && JFX.m[152] && JFX.m[152].fly) || (JFX.m && JFX.m[151] && JFX.m[151].fly);
+    const hitSprite = (JFX.m && JFX.m[152] && JFX.m[152].hit) || (JFX.m && JFX.m[151] && JFX.m[151].hit);
     for (let i = 0; i < 5; i++) {
-      const g = ang + (i - 2) * 0.18;
+      const g = ang + (i - 2) * 0.16;
       const tx = x1 + Math.cos(g) * d, ty = y1 + Math.sin(g) * d;
-      mis(starSprite, hitSprite, tx, ty, i * 0.03, 620);
+      mis(starSprite, hitSprite, tx, ty, i * 0.025, 640, { scale: 1.6, trail: true, sparks: 4, sparkCol: '#94a3b8' });
     }
     return;
   }
-  if (sid === 341) {
-    const dartSprite = (JFX.m && JFX.m[151] && JFX.m[151].fly);
-    const hitSprite = (JFX.m && JFX.m[151] && JFX.m[151].hit);
-    for (let i = 0; i < 5; i++) {
-      const g = ang + (i - 2) * 0.15;
-      const tx = x1 + Math.cos(g) * d, ty = y1 + Math.sin(g) * d;
-      mis(dartSprite, hitSprite, tx, ty, i * 0.02, 580);
-    }
-    return;
-  }
+  // Thiên La Địa Võng (sid 58)
   if (sid === 58) {
     const netSprite = (JFX.m && JFX.m[67] && JFX.m[67].fly);
     const hitSprite = (JFX.m && JFX.m[35] && JFX.m[35].hit) || (JFX.m && JFX.m[106] && JFX.m[106].hit);
     for (let i = 0; i < 3; i++) {
       const g = ang + (i - 1) * 0.14;
       const tx = x1 + Math.cos(g) * d, ty = y1 + Math.sin(g) * d;
-      mis(netSprite, hitSprite, tx, ty, i * 0.04, 480);
+      mis(netSprite, hitSprite, tx, ty, i * 0.04, 520, { scale: 1.6, trail: true, sparks: 5, sparkCol: '#a855f7' });
     }
-    if (hitSprite) boom(hitSprite, x2, y2, 0.15);
+    if (hitSprite) boom(hitSprite, x2, y2, 0.15, 1.7, 3, 6, '#c084fc');
     return;
   }
+  // Đoạt Hồn Tiêu (sid 47)
   if (sid === 47) {
     const dartSprite = (JFX.m && JFX.m[116] && JFX.m[116].fly);
     const hitSprite = (JFX.m && JFX.m[35] && JFX.m[35].hit);
-    mis(dartSprite, hitSprite, x2, y2, 0, 480);
+    mis(dartSprite, hitSprite, x2, y2, 0, 560, { scale: 1.6, trail: true, shake: 2, sparks: 5, sparkCol: '#94a3b8' });
     return;
   }
+  // Truy Tâm Tiễn (sid 50) & Nhiếp Hồn Nguyệt Ảnh (sid 339)
   if (sid === 50 || sid === 339) {
     const arrowSprite = (sid === 50 && JFX.m && JFX.m[37] && JFX.m[37].fly) || (JFX.m && JFX.m[149] && JFX.m[149].fly);
     const hitSprite = (JFX.m && JFX.m[106] && JFX.m[106].hit) || (JFX.m && JFX.m[35] && JFX.m[35].hit);
-    mis(arrowSprite, hitSprite, x2, y2, 0, 580);
-    if (sid === 50) mis(arrowSprite, hitSprite, x2 + rnd(-12, 12), y2 + rnd(-8, 8), 0.08, 580);
+    mis(arrowSprite, hitSprite, x2, y2, 0, 640, { scale: 1.65, trail: true, shake: 3, sparks: 6, sparkCol: '#ffd700' });
+    if (sid === 50) mis(arrowSprite, hitSprite, x2 + rnd(-12, 12), y2 + rnd(-8, 8), 0.08, 640, { scale: 1.65, trail: true, shake: 3, sparks: 6, sparkCol: '#ffd700' });
     return;
   }
+  // Cạm bẫy Đường Môn (sid 347 Địa Diệm Hỏa, 303 Độc Thích Cốt, 343 Xuyên Tâm Thích, 345 Hàn Băng Thích, 349 Lôi Kích Thuật, 351 Loạn Hoàn Kích)
   if ([347, 303, 343, 345, 349, 351].includes(sid)) {
     const trapM = def && def.m;
     const trapSprite = trapM && (trapM.hit || trapM.fly);
     const hitSprite = (JFX.m && JFX.m[35] && JFX.m[35].hit) || (JFX.m && JFX.m[106] && JFX.m[106].hit);
     if (trapSprite) {
-      boom(trapSprite, x2, y2, 0);
-      boom(trapSprite, x2 + rnd(-16, 16), y2 + rnd(-12, 12), 0.08);
+      boom(trapSprite, x2, y2, 0, 1.75, 3, 6, sparkColor);
+      boom(trapSprite, x2 + rnd(-16, 16), y2 + rnd(-12, 12), 0.08, 1.75, 3, 6, sparkColor);
     }
-    if (hitSprite) boom(hitSprite, x2, y2, 0.12);
+    if (hitSprite) boom(hitSprite, x2, y2, 0.12, 1.65, 4, 8, sparkColor);
     return;
   }
 
   // 1. Chiêu dạng hào quang quanh người ra chiêu
-  if (form === 7) { boom(m.hit || m.fly, x1, y1 + 8); return; }
+  if (form === 7) { boom(m.hit || m.fly, x1, y1 + 8, 0, 1.8, 3, 8, sparkColor); return; }
 
   // 2. Chiêu nổ diện rộng tại mục tiêu hoặc chiêu giáng từ trời xuống
   if (form === 6) {
@@ -458,46 +610,139 @@ function skillFx(a, b, atk) {
       const ox = (n > 1 ? rnd(-36, 36) : 0);
       const oy = (n > 1 ? rnd(-24, 24) : 0);
       const delay = i * 0.07;
-      if (m.fly) boom(m.fly, x2 + ox, y2 + oy, delay);       // Hoạt ảnh giáng xuống (sấm sét, tuyết, thiên thạch)
-      if (m.hit) boom(m.hit, x2 + ox, y2 + oy, delay + 0.04); // Vụ nổ mặt đất
+      if (m.fly) boom(m.fly, x2 + ox, y2 + oy, delay, 1.75, 3, 6, sparkColor);
+      if (m.hit) boom(m.hit, x2 + ox, y2 + oy, delay + 0.04, 1.7, 3, 6, sparkColor);
     }
     return;
   }
 
   // 3. Có đạn bay (Missiles):
   if (!m.fly) {
-    boom(m.hit, x2, y2);
+    boom(m.hit, x2, y2, 0, 1.75, 3, 6, sparkColor);
     return;
   }
-  if (form === 3) { for (let i = 0; i < n; i++) { const g = ang + i / n * Math.PI * 2; mis(m.fly, m.hit, x1 + Math.cos(g) * 130, y1 + Math.sin(g) * 130); } return; } // Vòng quanh người
-  if (form === 2) { for (let i = 0; i < n; i++) { const g = ang + (i - (n - 1) / 2) * 0.26; mis(m.fly, m.hit, x1 + Math.cos(g) * d, y1 + Math.sin(g) * d); } return; } // Quạt
-  if (form === 0) { const px = -dy / d, py = dx / d; for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * 34; mis(m.fly, m.hit, x2 + px * o, y2 + py * o); } return; } // Tường đạn
-  // Dạng 1, dạng 8, 10, 11, 12: Đạn bay thẳng tới mục tiêu (nếu cự ly đủ lớn) hoặc nổ chém liên tiếp
-  for (let i = 0; i < n; i++) mis(m.fly, m.hit, x2, y2, i * 0.08);
+  if (form === 3) {
+    for (let i = 0; i < n; i++) {
+      const g = ang + (i / n) * Math.PI * 2;
+      mis(m.fly, m.hit, x1 + Math.cos(g) * 140, y1 + Math.sin(g) * 140, 0, m.spd || 350, { scale: 1.65, trail: true, shake: 2, sparks: 5, sparkCol: sparkColor });
+    }
+    return;
+  }
+  if (form === 2) {
+    for (let i = 0; i < n; i++) {
+      const g = ang + (i - (n - 1) / 2) * 0.24;
+      mis(m.fly, m.hit, x1 + Math.cos(g) * d, y1 + Math.sin(g) * d, 0, m.spd || 350, { scale: 1.65, trail: true, shake: 2, sparks: 5, sparkCol: sparkColor });
+    }
+    return;
+  }
+  if (form === 0) {
+    const px = -dy / d, py = dx / d;
+    for (let i = 0; i < n; i++) {
+      const o = (i - (n - 1) / 2) * 36;
+      mis(m.fly, m.hit, x2 + px * o, y2 + py * o, 0, m.spd || 350, { scale: 1.65, trail: true, shake: 2, sparks: 5, sparkCol: sparkColor });
+    }
+    return;
+  }
+  // Dạng 1, dạng 8, 10, 11, 12: Đạn bay thẳng tới mục tiêu
+  for (let i = 0; i < n; i++) {
+    mis(m.fly, m.hit, x2, y2, i * 0.08, m.spd || 350, { scale: 1.65, trail: true, shake: 2, sparks: 5, sparkCol: sparkColor });
+  }
 }
 const animDur = s => Math.min(1.2, s.n * s.ms / 1000);
-function drawFxSprite(s, dir, t, x, y, loop) {
+function drawFxSprite(s, dir, t, x, y, loop, scale = FX_SCALE, alpha = 1) {
   const im = img(s.f); if (!im || !im.complete || !im.naturalWidth) return false;
   const fr = loop ? Math.floor(t * 1000 / s.ms) % s.n : Math.min(s.n - 1, Math.floor(t * 1000 / s.ms));
   const row = s.d > 1 ? Math.round(dir * s.d / 16) % s.d : 0;
-  const prevOp = CX.globalCompositeOperation;
-  CX.globalCompositeOperation = 'lighter';
-  CX.drawImage(im, fr * s.w, row * s.h, s.w, s.h, x - s.ax * FX_SCALE, y - s.ay * FX_SCALE, s.w * FX_SCALE, s.h * FX_SCALE);
-  CX.globalCompositeOperation = prevOp;
+  const sc = scale || FX_SCALE;
+  const dw = s.w * sc, dh = s.h * sc;
+  const dx = x - s.ax * sc, dy = y - s.ay * sc;
+
+  const prevAlpha = CX.globalAlpha;
+  CX.globalAlpha = clamp(alpha * prevAlpha, 0, 1);
+  CX.drawImage(im, fr * s.w, row * s.h, s.w, s.h, dx, dy, dw, dh);
+
+  // Hiệu ứng hào quang phát sáng (glow layer) nhẹ nhàng tôn màu sắc võ lâm
+  if (!S.lowFx && (s.f.includes('hit') || sc >= 1.65)) {
+    CX.globalCompositeOperation = 'lighter';
+    CX.globalAlpha = clamp(0.32 * alpha * prevAlpha, 0, 1);
+    CX.drawImage(im, fr * s.w, row * s.h, s.w, s.h, dx, dy, dw, dh);
+    CX.globalCompositeOperation = 'source-over';
+  }
+  CX.globalAlpha = prevAlpha;
   return true;
 }
 function stepFx(f, dt) { // tra ve false khi het; dan toi dich thi doi sang no
   f.t += dt; if (f.t < 0) return true;     // dang cho (phat dan lien tiep)
-  if (f.k === 'mis' && f.t >= f.life) {
-    if (f.hit) { Object.assign(f, { k: 'boom', s: f.hit, x: f.x2, y: f.y2, t: 0, life: animDur(f.hit) }); return true; }
-    return false;
+  if (f.k === 'mis') {
+    // Luu lich su toa do cho tan anh (ghost trail)
+    if (f.trail && f.curX !== undefined) {
+      if (!f.history) f.history = [];
+      f.history.unshift({ x: f.curX, y: f.curY, dir: f.curDir !== undefined ? f.curDir : f.dir, t: f.t });
+      if (f.history.length > 4) f.history.pop();
+    }
+    if (f.t >= f.life) {
+      if (f.hit) {
+        Object.assign(f, {
+          k: 'boom',
+          s: f.hit,
+          x: f.x2,
+          y: f.y2,
+          t: 0,
+          life: animDur(f.hit),
+          scale: f.scale || FX_SCALE
+        });
+        if (f.shake) shakeCamera(f.shake, 0.16);
+        if (f.sparks) addSparks(f.x2, f.y2, f.sparkCol || '#ffd700', f.sparks, 150);
+        return true;
+      }
+      return false;
+    }
   }
   return f.t < f.life;
 }
 function drawFx(f) {
   if (f.t < 0) return false;
-  if (f.k === 'mis') { const k = clamp(f.t / f.life, 0, 1); return drawFxSprite(f.s, f.dir, f.t, f.x1 + (f.x2 - f.x1) * k, f.y1 + (f.y2 - f.y1) * k, true); }
-  return drawFxSprite(f.s, f.dir, f.t, f.x, f.y, false);
+  if (f.k === 'mis') {
+    const k = clamp(f.t / f.life, 0, 1);
+    let curX = f.x1 + (f.x2 - f.x1) * k;
+    let curY = f.y1 + (f.y2 - f.y1) * k;
+    let curDir = f.dir;
+
+    // 1. Quỹ đạo sóng uốn lượn (sin-wave) cho rồng Cái Bang / ám khí
+    if (f.wave) {
+      const ang = Math.atan2(f.y2 - f.y1, f.x2 - f.x1);
+      const perpX = -Math.sin(ang), perpY = Math.cos(ang);
+      const wPhase = (f.wavePhase || 0) + k * (f.waveFreq || (Math.PI * 4));
+      const envelope = Math.sin(k * Math.PI);
+      const offset = Math.sin(wPhase) * f.wave * envelope;
+      curX += perpX * offset;
+      curY += perpY * offset;
+      if (f.curX !== undefined && (Math.abs(curX - f.curX) > 0.5 || Math.abs(curY - f.curY) > 0.5)) {
+        curDir = dir16(curX - f.curX, curY - f.curY);
+      }
+    }
+
+    // 2. Quỹ đạo cung tròn (arc) cho lựu đạn / bẫy ném
+    if (f.arc) {
+      curY -= Math.sin(k * Math.PI) * f.arc;
+    }
+
+    f.curX = curX;
+    f.curY = curY;
+    f.curDir = curDir;
+
+    // 3. Vẽ tàn ảnh (ghost trail)
+    if (f.trail && f.history && f.history.length > 0) {
+      for (let h = 0; h < f.history.length; h++) {
+        const hist = f.history[h];
+        const hAlpha = 0.32 / (h + 1.2);
+        drawFxSprite(f.s, hist.dir, hist.t, hist.x, hist.y, true, (f.scale || FX_SCALE) * 0.96, hAlpha);
+      }
+    }
+
+    return drawFxSprite(f.s, curDir, f.t, curX, curY, true, f.scale || FX_SCALE, 1);
+  }
+  return drawFxSprite(f.s, f.dir, f.t, f.x, f.y, false, f.scale || FX_SCALE, 1);
 }
 /* Giao dien di dong thu nho 20% (UI_SCALE_MOBILE): #app co width / height lon 1/0.8 lan roi transform: scale(0.8) (style.css, body.mob).
    Toa do trong game theo px bo cuc (offsetWidth / Height, khong bi transform); DPR hieu dung nhan them he so thu nho de net. */
@@ -512,16 +757,37 @@ function resizeArena() {
   snapCamera();
 }
 /* ---------- camera chay theo nhan vat, khong ra ngoai mep ban do ---------- */
-const CAM = { x: 0, y: 0 };
+/* ---------- camera chay theo nhan vat, khong ra ngoai mep ban do ---------- */
+const CAM = { x: 0, y: 0, sx: 0, sy: 0, shakeT: 0, shakeDur: 0, shakeMag: 0 };
 const camTarget = () => [clamp(H.x - AR.w / 2, 0, Math.max(0, WORLD.w - AR.w)), clamp(H.y - AR.h * 0.55, 0, Math.max(0, WORLD.h - AR.h))];
-function snapCamera() { [CAM.x, CAM.y] = camTarget(); }
-function updateCamera(dt) { const [tx, ty] = camTarget(), k = Math.min(1, dt * 6); CAM.x += (tx - CAM.x) * k; CAM.y += (ty - CAM.y) * k; }
+function snapCamera() { [CAM.x, CAM.y] = camTarget(); CAM.sx = 0; CAM.sy = 0; }
+function updateCamera(dt) {
+  const [tx, ty] = camTarget(), k = Math.min(1, dt * 6);
+  CAM.x += (tx - CAM.x) * k;
+  CAM.y += (ty - CAM.y) * k;
+  if (CAM.shakeT > 0) {
+    CAM.shakeT -= dt;
+    const progress = Math.max(0, CAM.shakeT / (CAM.shakeDur || 0.15));
+    const curMag = CAM.shakeMag * progress;
+    CAM.sx = (Math.random() - 0.5) * 2 * curMag;
+    CAM.sy = (Math.random() - 0.5) * 2 * curMag;
+  } else {
+    CAM.sx = 0;
+    CAM.sy = 0;
+  }
+}
+function shakeCamera(mag = 4, dur = 0.15) {
+  if (typeof S !== 'undefined' && S && S.lowFx) return;
+  CAM.shakeMag = Math.max(CAM.shakeMag || 0, mag);
+  CAM.shakeDur = dur;
+  CAM.shakeT = dur;
+}
 /* ---------- nen ban do: anh 3x3 vung that (BG_TILE diem) lat guong xen ke -> ghep lien, khong thay mep, the gioi rong tuy y ---------- */
 const BG_TILE = 1536;
 function drawTiledBg(c, bg) {
-  if (!(bg && bg.complete && bg.naturalWidth)) { c.fillStyle = '#26301f'; c.fillRect(CAM.x - 2, CAM.y - 2, AR.w + 4, AR.h + 4); return; }
+  if (!(bg && bg.complete && bg.naturalWidth)) { c.fillStyle = '#26301f'; c.fillRect(CAM.x - 40, CAM.y - 40, AR.w + 80, AR.h + 80); return; }
   if (OBS.g) { c.drawImage(bg, 0, 0, WORLD.w, WORLD.h); return; }          // ban do that rong, khong lat guong
-  const T = BG_TILE, i0 = Math.floor(CAM.x / T), i1 = Math.floor((CAM.x + AR.w) / T), j0 = Math.floor(CAM.y / T), j1 = Math.floor((CAM.y + AR.h) / T);
+  const T = BG_TILE, i0 = Math.floor((CAM.x - 40) / T), i1 = Math.floor((CAM.x + AR.w + 40) / T), j0 = Math.floor((CAM.y - 40) / T), j1 = Math.floor((CAM.y + AR.h + 40) / T);
   for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
     const fx = i & 1, fy = j & 1;
     if (!fx && !fy) { c.drawImage(bg, i * T, j * T, T, T); continue; }
@@ -768,7 +1034,7 @@ function drawHorseMount(c, x, y, dir, act, actT, mountData) {
 function draw(dt) {
   const c = CX; c.setTransform(DPR, 0, 0, DPR, 0, 0); c.clearRect(0, 0, AR.w, AR.h);
   updateCamera(dt);
-  c.setTransform(DPR, 0, 0, DPR, -Math.round(CAM.x) * DPR, -Math.round(CAM.y) * DPR);
+  c.setTransform(DPR, 0, 0, DPR, -Math.round(CAM.x + (CAM.sx || 0)) * DPR, -Math.round(CAM.y + (CAM.sy || 0)) * DPR);
   const bg = R.bgImg || (typeof zoneOf === 'function' && typeof S !== 'undefined' && S ? (R.bgImg = img(zoneOf(S.stage || 1).bg)) : null);
   drawTiledBg(c, bg);
   // do roi tren dat: vien theo do hiem, ten cho do khop bo loc / mon dang chon
@@ -970,9 +1236,27 @@ function draw(dt) {
     if (e.poison > 0) { c.fillStyle = '#8fe34a'; c.fillRect(e.x - 22, top + 5, 44 * e.poison / 3, 2); }
   }
   // hieu ung
-  R.fx = R.fx.filter(f => { if (f.k !== 'mis' && f.k !== 'boom') return true; const ok = stepFx(f, dt); if (ok) drawFx(f); return ok; });
+  R.fx = R.fx.filter(f => {
+    if (f.k === 'spark') {
+      f.life -= dt;
+      f.x += f.vx * dt;
+      f.y += f.vy * dt;
+      f.vy += 150 * dt; // gia toc roi nhe
+      const a = clamp(f.life / f.max, 0, 1);
+      c.globalAlpha = a;
+      c.fillStyle = f.color;
+      c.beginPath();
+      c.arc(f.x, f.y, Math.max(0.6, f.size * a), 0, Math.PI * 2);
+      c.fill();
+      return f.life > 0;
+    }
+    if (f.k !== 'mis' && f.k !== 'boom') return true;
+    const ok = stepFx(f, dt);
+    if (ok) drawFx(f);
+    return ok;
+  });
   for (const f of R.fx) {
-    if (f.k === 'mis' || f.k === 'boom') continue;
+    if (f.k === 'mis' || f.k === 'boom' || f.k === 'spark') continue;
     f.life -= dt; const a = clamp(f.life / f.max, 0, 1);
     c.globalAlpha = a; c.strokeStyle = f.color;
     if (f.k === 'line') { c.lineWidth = 3; c.beginPath(); c.moveTo(f.x1, f.y1); c.lineTo(f.x2, f.y2); c.stroke(); }
