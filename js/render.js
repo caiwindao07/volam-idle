@@ -905,209 +905,120 @@ const enemyName = e => `${e.n} · Lv${e.L}`;
 function bar(x, y, w, h, f, col) { CX.fillStyle = '#000a'; CX.fillRect(x, y, w, h); CX.fillStyle = col; CX.fillRect(x, y, w * clamp(f, 0, 1), h); }
 
 /* ---------- HOẠT ẢNH & HIỂN THỊ CHIẾN MÃ (MOUNT RES) ---------- */
+function getHorseResId(tier) {
+  tier = tier || 1;
+  switch (tier) {
+    case 1: return '009'; // Túc Sương (Bạch Mã)
+    case 2: return '010'; // Tuyệt Ảnh
+    case 3: return '010'; // Ô Vân Đạp Tuyết
+    case 4: return '009'; // Đích Lô
+    case 5: return '036'; // Xích Thố
+    case 6: return '009'; // Chiếu Dạ Ngọc Sư Tử
+    case 7: return '013'; // Phi Vân
+    case 8: return '011'; // Bôn Tiêu
+    case 9: return '012'; // Phiên Vũ
+    case 10: return '012'; // Siêu Quang
+    case 11:
+    default: return '036'; // Xích Long Câu
+  }
+}
+
+function preloadHorseSprites() {
+  const ids = ['009', '010', '011', '012', '013', '036'];
+  const acts = ['st', 'run'];
+  acts.forEach(a => {
+    img('img/horse/rider_legs_' + a + '.png');
+    ids.forEach(id => {
+      img('img/horse/horse_' + id + '_back_' + a + '.png');
+      img('img/horse/horse_' + id + '_front_' + a + '.png');
+    });
+  });
+}
+if (typeof window !== 'undefined') {
+  setTimeout(preloadHorseSprites, 500);
+}
+
 function drawHorseMount(c, x, y, dir, act, actT, mountData) {
   const tier = (mountData && mountData.tier) || (typeof S !== 'undefined' && S && S.mount ? S.mount.tier : 1);
-  const cfg = (typeof PVK_MOUNTS !== 'undefined' && PVK_MOUNTS[tier - 1]) ? PVK_MOUNTS[tier - 1] : {
-    col: '#ffd700', horseCol: '#ca8a04', maneCol: '#fef08a'
-  };
-
   const isMoving = act === 'run';
-  const gallopT = (actT || 0) * (isMoving ? 14 : 3);
-  const bob = isMoving ? Math.sin(gallopT) * 3 : Math.sin(gallopT) * 1;
-  const legCycle = isMoving ? Math.sin(gallopT) * 7 : Math.sin(gallopT) * 1.5;
-  const flip = (dir >= 1 && dir <= 3); // Huong mat sang trai
-
-  c.save();
-  c.translate(x, y);
-  if (flip) c.scale(-1, 1);
+  const actKey = isMoving ? 'run' : 'st';
+  const fps = isMoving ? 12 : 6;
+  const frameIdx = Math.floor((actT || 0) * fps) % 8;
+  const dirIdx = (((dir || 0) % 8) + 8) % 8;
+  const bob = isMoving ? Math.sin((actT || 0) * 12) * 2.5 : Math.sin((actT || 0) * 3) * 0.8;
 
   // 1. Bóng ngựa dưới chân
   c.fillStyle = '#0008';
   c.beginPath();
-  c.ellipse(0, 4, 22, 9, 0, 0, Math.PI * 2);
+  c.ellipse(x, y + 2, 22, 9, 0, 0, Math.PI * 2);
   c.fill();
 
   // 2. Vòng hào quang huyền ảo theo bậc ngựa (Tier >= 7)
   if (tier >= 7) {
     const auraCol = tier >= 11 ? '#f43f5e' : (tier >= 10 ? '#fb923c' : (tier >= 9 ? '#eab308' : (tier >= 8 ? '#f97316' : '#a855f7')));
+    const pulse = Math.sin((actT || 0) * 5);
+    c.save();
     c.strokeStyle = auraCol;
     c.lineWidth = 2;
-    c.globalAlpha = 0.6 + Math.sin(gallopT * 0.5) * 0.3;
+    c.globalAlpha = 0.5 + pulse * 0.25;
     c.beginPath();
-    c.ellipse(0, 4, 26 + (tier >= 9 ? 3 : 0), 10 + (tier >= 9 ? 2 : 0), 0, 0, Math.PI * 2);
+    c.ellipse(x, y + 2, 28 + (tier >= 9 ? 4 : 0), 11 + (tier >= 9 ? 2 : 0), 0, 0, Math.PI * 2);
     c.stroke();
-    // Vệt hào quang móng ngựa
-    c.fillStyle = auraCol;
-    c.beginPath();
-    c.arc(-14 + legCycle * 0.5, 4, 2.5, 0, Math.PI * 2);
-    c.arc(14 - legCycle * 0.5, 4, 2.5, 0, Math.PI * 2);
-    c.fill();
-    c.globalAlpha = 1;
+    // Vệt hào quang móng ngựa khi di chuyển
+    if (isMoving) {
+      c.fillStyle = auraCol;
+      c.globalAlpha = 0.7;
+      const legW = Math.sin((actT || 0) * 14) * 12;
+      c.beginPath();
+      c.arc(x - 14 + legW * 0.4, y + 3, 2.5, 0, Math.PI * 2);
+      c.arc(x + 14 - legW * 0.4, y + 3, 2.5, 0, Math.PI * 2);
+      c.fill();
+    }
+    c.restore();
   }
 
-  // 3. Chân sau xa & trước xa
-  c.strokeStyle = cfg.horseCol;
-  c.lineWidth = 3.8;
-  c.lineCap = 'round';
-  c.beginPath();
-  c.moveTo(-11, -3 + bob);
-  c.lineTo(-13 - legCycle, 4);
-  c.stroke();
-  c.beginPath();
-  c.moveTo(10, -3 + bob);
-  c.lineTo(12 + legCycle, 4);
-  c.stroke();
+  // 3. Lớp thân sau ngựa (Sprite Sheet JX1 - Layer 1 Back)
+  const horseId = getHorseResId(tier);
+  const backImg = img('img/horse/horse_' + horseId + '_back_' + actKey + '.png');
+  const sx = frameIdx * 128;
+  const sy = dirIdx * 128;
+  const sw = 128, sh = 128;
+  const dx = x - 64;
+  const dy = y - 74;
 
-  // 4. Thân ngựa (Body)
-  c.fillStyle = cfg.horseCol;
-  c.beginPath();
-  c.ellipse(0, -5 + bob, 17, 8.5, -0.05, 0, Math.PI * 2);
-  c.fill();
+  if (backImg && backImg.complete && backImg.naturalWidth) {
+    c.drawImage(backImg, sx, sy, sw, sh, dx, dy, sw, sh);
+  }
 
-  // 5. Chân sau gần & trước gần
-  c.beginPath();
-  c.moveTo(-7, -3 + bob);
-  c.lineTo(-7 + legCycle, 4);
-  c.stroke();
-  c.beginPath();
-  c.moveTo(13, -3 + bob);
-  c.lineTo(13 - legCycle, 4);
-  c.stroke();
-
-  // Móng ngựa
-  c.fillStyle = tier >= 4 ? '#ffd700' : '#475569';
-  c.fillRect(-7 + legCycle - 2, 2.5, 4, 2.5);
-  c.fillRect(13 - legCycle - 2, 2.5, 4, 2.5);
-
-  // 6. Cổ & Đầu ngựa
-  c.beginPath();
-  c.moveTo(9, -7 + bob);
-  c.lineTo(17, -19 + bob);
-  c.lineTo(23, -17 + bob);
-  c.lineTo(15, -3 + bob);
-  c.closePath();
-  c.fill();
-
-  // Đầu ngựa
-  c.beginPath();
-  c.ellipse(20, -18 + bob, 5.5, 3.8, 0.4, 0, Math.PI * 2);
-  c.fill();
-
-  // Bờm ngựa
-  c.strokeStyle = cfg.maneCol;
-  c.lineWidth = 3.2;
-  c.beginPath();
-  c.moveTo(11, -9 + bob);
-  c.lineTo(16, -21 + bob);
-  c.stroke();
-
-  // Tai ngựa
-  c.fillStyle = cfg.maneCol;
-  c.beginPath();
-  c.moveTo(16, -22 + bob);
-  c.lineTo(18, -26 + bob);
-  c.lineTo(20, -21 + bob);
-  c.fill();
-
-  // Đuôi ngựa
-  c.strokeStyle = cfg.maneCol;
-  c.lineWidth = 3.5;
-  c.beginPath();
-  c.moveTo(-15, -5 + bob);
-  c.quadraticCurveTo(-23 - (isMoving ? 8 : 2), -3 + bob, -20 - (isMoving ? 6 : 0), 3 + bob);
-  c.stroke();
-
-  // 7. Yên cương
-  c.fillStyle = '#b45309';
-  c.beginPath();
-  if (c.roundRect) c.roundRect(-7, -12 + bob, 14, 7, 2);
-  else c.rect(-7, -12 + bob, 14, 7);
-  c.fill();
-  c.strokeStyle = '#ffd700';
-  c.lineWidth = 0.9;
-  c.stroke();
-
-  c.restore();
   return bob;
 }
 
-/* Vẽ các chi tiết phía trước của ngựa (cổ, đầu, bờm, dây cương, yên) phủ lên trước người cưỡi */
+/* Vẽ các chi tiết phía trước của ngựa (Layer 3: Chân kỵ mã & Thân trước, đầu, cổ, yên, bàn đạp) phủ lên trước người cưỡi */
 function drawHorseForeground(c, x, y, dir, act, actT, mountData) {
   const tier = (mountData && mountData.tier) || (typeof S !== 'undefined' && S && S.mount ? S.mount.tier : 1);
-  const cfg = (typeof PVK_MOUNTS !== 'undefined' && PVK_MOUNTS[tier - 1]) ? PVK_MOUNTS[tier - 1] : {
-    col: '#ffd700', horseCol: '#ca8a04', maneCol: '#fef08a'
-  };
-
+  const horseId = getHorseResId(tier);
   const isMoving = act === 'run';
-  const gallopT = (actT || 0) * (isMoving ? 14 : 3);
-  const bob = isMoving ? Math.sin(gallopT) * 3 : Math.sin(gallopT) * 1;
-  const flip = (dir >= 1 && dir <= 3);
+  const actKey = isMoving ? 'run' : 'st';
+  const fps = isMoving ? 12 : 6;
+  const frameIdx = Math.floor((actT || 0) * fps) % 8;
+  const dirIdx = (((dir || 0) % 8) + 8) % 8;
+  const sx = frameIdx * 128;
+  const sy = dirIdx * 128;
+  const sw = 128, sh = 128;
+  const dx = x - 64;
+  const dy = y - 74;
 
-  c.save();
-  c.translate(x, y);
-  if (flip) c.scale(-1, 1);
+  // 1. Chân kỵ mã (Rider Legs gác trên bàn đạp ngựa) phủ lên che chân đứng của avatar
+  const legsImg = img('img/horse/rider_legs_' + actKey + '.png');
+  if (legsImg && legsImg.complete && legsImg.naturalWidth) {
+    c.drawImage(legsImg, sx, sy, sw, sh, dx, dy, sw, sh);
+  }
 
-  // 1. Cổ & Đầu ngựa đè lên trước
-  c.fillStyle = cfg.horseCol;
-  c.beginPath();
-  c.moveTo(9, -7 + bob);
-  c.lineTo(17, -19 + bob);
-  c.lineTo(23, -17 + bob);
-  c.lineTo(15, -3 + bob);
-  c.closePath();
-  c.fill();
-
-  // Đầu ngựa
-  c.beginPath();
-  c.ellipse(20, -18 + bob, 5.5, 3.8, 0.4, 0, Math.PI * 2);
-  c.fill();
-
-  // Mắt ngựa
-  c.fillStyle = '#0f172a';
-  c.beginPath();
-  c.arc(21, -19 + bob, 1.2, 0, Math.PI * 2);
-  c.fill();
-  c.fillStyle = '#ffd700';
-  c.beginPath();
-  c.arc(21.3, -19.3 + bob, 0.4, 0, Math.PI * 2);
-  c.fill();
-
-  // Bờm ngựa
-  c.strokeStyle = cfg.maneCol;
-  c.lineWidth = 3.2;
-  c.beginPath();
-  c.moveTo(11, -9 + bob);
-  c.lineTo(16, -21 + bob);
-  c.stroke();
-
-  // Tai ngựa
-  c.fillStyle = cfg.maneCol;
-  c.beginPath();
-  c.moveTo(16, -22 + bob);
-  c.lineTo(18, -26 + bob);
-  c.lineTo(20, -21 + bob);
-  c.fill();
-
-  // 2. Dây cương vàng (vắt từ đầu ngựa về phía yên người cưỡi)
-  c.strokeStyle = '#fef08a';
-  c.lineWidth = 1.2;
-  c.beginPath();
-  c.moveTo(18, -17 + bob);
-  c.quadraticCurveTo(8, -10 + bob, -1, -9 + bob);
-  c.stroke();
-
-  // 3. Đai yên cương và bàn đạp chân
-  c.strokeStyle = '#78350f';
-  c.lineWidth = 2.2;
-  c.beginPath();
-  c.moveTo(-3, -8 + bob);
-  c.lineTo(-1, 0 + bob);
-  c.stroke();
-  // Bàn đạp kim loại
-  c.fillStyle = '#ffd700';
-  c.fillRect(-2.5, -1 + bob, 4, 2);
-
-  c.restore();
+  // 2. Lớp thân trước & đầu & yên ngựa (MA_HT + MA_HH)
+  const frontImg = img('img/horse/horse_' + horseId + '_front_' + actKey + '.png');
+  if (frontImg && frontImg.complete && frontImg.naturalWidth) {
+    c.drawImage(frontImg, sx, sy, sw, sh, dx, dy, sw, sh);
+  }
 }
 
 function draw(dt) {
@@ -1210,7 +1121,7 @@ function draw(dt) {
       let heroY = H.y;
       if (S && S.mounted) {
         const bob = drawHorseMount(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, S.mount);
-        heroY = H.y - 11 + bob;
+        heroY = H.y - 14 + bob;
       } else {
         c.fillStyle = '#0007'; c.beginPath(); c.ellipse(H.x, H.y, 16, 6, 0, 0, 7); c.fill();
       }

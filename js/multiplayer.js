@@ -828,7 +828,7 @@ function drawSingleOtherPlayer(c, dt, p) {
     if (typeof drawHorseMount === 'function') {
       const mData = p.mount || { tier: p.mountTier || 1 };
       const bob = drawHorseMount(c, p.x, p.y, p.dir || 0, p.act || 'st', p.actT || 0, mData);
-      playerY = p.y - 11 + bob;
+      playerY = p.y - 14 + bob;
     }
   } else {
     // 1. Bóng dưới chân
@@ -874,6 +874,12 @@ function drawSingleOtherPlayer(c, dt, p) {
   // 4. Vẽ Res Ngoại Trang phụ trợ nếu Paperdoll chưa vẽ
   if (!dollH && typeof drawHeroEquipment === 'function' && p.eq) {
     drawHeroEquipment(c, p.x, playerY, p.dir || 0, p.face || 1, p.act || 'st', p.actT || 0, p.eq, p.series || 0);
+  }
+
+  // 5. Vẽ chi tiết phía trước của Chiến Mã cho người chơi khác
+  if (p.mounted && typeof drawHorseForeground === 'function') {
+    const mData = p.mount || { tier: p.mountTier || 1 };
+    drawHorseForeground(c, p.x, p.y, p.dir || 0, p.act || 'st', p.actT || 0, mData);
   }
 
   // 3. Tên & Đẳng cấp & VIP trên đầu
