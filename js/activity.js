@@ -81,11 +81,11 @@
 
     // Bắt đầu chuyến đi thuyền Phong Lăng Độ (PLD)
     startPLD() {
-      if ((S.gold || 0) < 20000) {
-        if (typeof toast === 'function') toast('❌ Cần 20,000 Vàng tiền đò qua bến Phong Lăng Độ!');
+      if ((S.gold || 0) < 400000) {
+        if (typeof toast === 'function') toast('❌ Cần 400,000 Vàng tiền đò qua bến Phong Lăng Độ!');
         return;
       }
-      S.gold -= 20000;
+      S.gold -= 400000;
 
       if (typeof toast === 'function') toast('🚢 Bạn đã lên thuyền Phong Lăng Độ sang bờ Bắc! Thủy tặc đang kéo tới!');
       if (typeof log === 'function') log('<b style="color:#38bdf8;">🚢 Thuyền Phong Lăng Độ rẽ sóng ra giữa dòng! Cảnh giới Thủy Tặc Đầu Lĩnh tập kích!</b>');
@@ -120,11 +120,11 @@
 
     // Bắt đầu Vận Tiêu Liên Thành
     startEscort() {
-      if ((S.gold || 0) < 30000) {
-        if (typeof toast === 'function') toast('❌ Cần 30,000 Vàng tiền thế chấp nhận Tiêu Xa Long Môn!');
+      if ((S.gold || 0) < 600000) {
+        if (typeof toast === 'function') toast('❌ Cần 600,000 Vàng tiền thế chấp nhận Tiêu Xa Long Môn!');
         return;
       }
-      S.gold -= 30000;
+      S.gold -= 600000;
 
       if (typeof toast === 'function') toast('🚩 Nhận Tiêu Xa Long Môn! Áp tải vượt qua các đợt cướp tiêu!');
       if (typeof log === 'function') log('<b style="color:#ffd700;">🚩 Tiêu Cục Long Môn: Khởi hành vận tiêu từ Biện Kinh! Hãy bảo vệ tiêu xa an toàn!</b>');
@@ -141,8 +141,8 @@
 
       // Thưởng khi hoàn thành tiêu diệt hết sơn tặc
       setTimeout(() => {
-        const rewardGold = 100000;
-        const rewardExp = 250000;
+        const rewardGold = 2000000;
+        const rewardExp = 5000000;
         S.gold += rewardGold;
         if (typeof addExp === 'function') addExp(rewardExp);
         if (typeof toast === 'function') toast(`🎉 Vận tiêu đại thành công! +${rewardGold.toLocaleString()} Vàng, +${rewardExp.toLocaleString()} EXP!`);
@@ -197,7 +197,7 @@
               Lên thuyền tại Bến Phong Lăng Độ sang bờ Bắc Trường Giang. Trên sông sẽ gặp phải các toán Thủy Tặc Lãng Khách và Thủy Tặc Đầu Lĩnh phục kích.<br>
               <span style="color:#ffd700;">Phần thưởng:</span> Lam Thủy Tinh, Tử Thủy Tinh, Lục Thủy Tinh (nguyên liệu hợp thành và tinh luyện trang bị).
             </p>
-            <div style="font-size:12px;color:#aaa;margin-bottom:14px;">Phí đò qua sông: <b style="color:#ffd700;">20,000 Vàng</b></div>
+            <div style="font-size:12px;color:#aaa;margin-bottom:14px;">Phí đò qua sông: <b style="color:#ffd700;">400,000 Vàng</b></div>
             <button onclick="ACTIVITY_SYSTEM.startPLD()" 
               style="background:#205081;border:1px solid #4a90e2;color:#fff;padding:8px 24px;border-radius:4px;font-weight:bold;font-size:13px;cursor:pointer;">
               Lên Thuyền Khởi Hành
@@ -210,9 +210,9 @@
             <b style="color:#ffd700;font-size:15px;display:block;margin-bottom:8px;">🚩 VẬN TIÊU LIÊN THÀNH (TIÊU CỤC LONG MÔN)</b>
             <p style="font-size:12px;color:#ccc;line-height:1.6;margin-bottom:14px;">
               Nhận Tiêu Xa từ Xa Phu Biện Kinh áp tải về Tương Dương. Trên đường thiên lý sẽ liên tục bị các toán Sơn Tặc Cướp Tiêu bao vây phục kích.<br>
-              <span style="color:#ffd700;">Phần thưởng hoàn thành:</span> <b style="color:#4ade80;">100,000 Vàng + 250,000 EXP</b> cùng Rương Tiêu Xa.
+              <span style="color:#ffd700;">Phần thưởng hoàn thành:</span> <b style="color:#4ade80;">2,000,000 Vàng + 5,000,000 EXP</b> cùng Rương Tiêu Xa.
             </p>
-            <div style="font-size:12px;color:#aaa;margin-bottom:14px;">Tiền bảo lãnh tiêu xa: <b style="color:#ffd700;">30,000 Vàng</b></div>
+            <div style="font-size:12px;color:#aaa;margin-bottom:14px;">Tiền bảo lãnh tiêu xa: <b style="color:#ffd700;">600,000 Vàng</b></div>
             <button onclick="ACTIVITY_SYSTEM.startEscort()" 
               style="background:#7d5e2a;border:1px solid #ffd700;color:#fff;padding:8px 24px;border-radius:4px;font-weight:bold;font-size:13px;cursor:pointer;">
               Nhận Tiêu Xa Vận Tiêu

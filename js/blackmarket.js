@@ -9,15 +9,15 @@
   'use strict';
 
   const BLACK_MARKET_ITEMS = [
-    { id: 1, name: 'Huyền Tinh Cấp 6', desc: 'Dùng để nâng cấp trang bị lên +12', priceGold: 80000, priceKnb: 10, limit: 3, icon: '💎' },
-    { id: 2, name: 'Huyền Tinh Cấp 7', desc: 'Dùng để nâng cấp trang bị lên +14', priceGold: 180000, priceKnb: 25, limit: 2, icon: '💠' },
-    { id: 3, name: 'Lam Thủy Tinh', desc: 'Khắc phục dòng thuộc tính ẩn trang bị', priceGold: 60000, priceKnb: 8, limit: 5, icon: '🔷' },
-    { id: 4, name: 'Tử Thủy Tinh', desc: 'Tinh luyện trang bị Hoàng Kim', priceGold: 90000, priceKnb: 12, limit: 3, icon: '🔮' },
-    { id: 5, name: 'Tẩy Tủy Đan', desc: 'Tẩy toàn bộ điểm tiềm năng để cộng lại', priceGold: 50000, priceKnb: 5, limit: 2, icon: '💊' },
-    { id: 6, name: 'Võ Lâm Mật Tịch', desc: 'Đọc xong vĩnh viễn nhận +1 Điểm Kỹ Năng', priceGold: 250000, priceKnb: 35, limit: 1, icon: '📜' },
-    { id: 7, name: 'Tẩy Tủy Kinh', desc: 'Đọc xong vĩnh viễn nhận +5 Điểm Tiềm Năng', priceGold: 300000, priceKnb: 40, limit: 1, icon: '📕' },
-    { id: 8, name: 'Bách Niên Linh Chi', desc: 'Quà tặng quý hiếm cho Bạn Đồng Hành (+50 Thân Mật, +500 EXP)', priceGold: 40000, priceKnb: 5, limit: 10, icon: '🍄' },
-    { id: 9, name: 'Chiếu Dạ Ngọc Sư Tử', desc: 'Thần mã cực phẩm tăng 40% Tốc chạy và 1000 Sinh lực', priceGold: 500000, priceKnb: 60, limit: 1, icon: '🐎' }
+    { id: 1, name: 'Huyền Tinh Cấp 6', desc: 'Dùng để nâng cấp trang bị lên +12', priceGold: 2400000, priceKnb: 10, limit: 3, icon: '💎' },
+    { id: 2, name: 'Huyền Tinh Cấp 7', desc: 'Dùng để nâng cấp trang bị lên +14', priceGold: 5400000, priceKnb: 25, limit: 2, icon: '💠' },
+    { id: 3, name: 'Lam Thủy Tinh', desc: 'Khắc phục dòng thuộc tính ẩn trang bị', priceGold: 1800000, priceKnb: 8, limit: 5, icon: '🔷' },
+    { id: 4, name: 'Tử Thủy Tinh', desc: 'Tinh luyện trang bị Hoàng Kim', priceGold: 2700000, priceKnb: 12, limit: 3, icon: '🔮' },
+    { id: 5, name: 'Tẩy Tủy Đan', desc: 'Tẩy toàn bộ điểm tiềm năng để cộng lại', priceGold: 1500000, priceKnb: 5, limit: 2, icon: '💊' },
+    { id: 6, name: 'Võ Lâm Mật Tịch', desc: 'Đọc xong vĩnh viễn nhận +1 Điểm Kỹ Năng', priceGold: 7500000, priceKnb: 35, limit: 1, icon: '📜' },
+    { id: 7, name: 'Tẩy Tủy Kinh', desc: 'Đọc xong vĩnh viễn nhận +5 Điểm Tiềm Năng', priceGold: 9000000, priceKnb: 40, limit: 1, icon: '📕' },
+    { id: 8, name: 'Bách Niên Linh Chi', desc: 'Quà tặng quý hiếm cho Bạn Đồng Hành (+50 Thân Mật, +500 EXP)', priceGold: 1200000, priceKnb: 5, limit: 10, icon: '🍄' },
+    { id: 9, name: 'Chiếu Dạ Ngọc Sư Tử', desc: 'Thần mã cực phẩm tăng 40% Tốc chạy và 1000 Sinh lực', priceGold: 15000000, priceKnb: 60, limit: 1, icon: '🐎' }
   ];
 
   const BLACK_MARKET = {
@@ -104,9 +104,9 @@
 
     // Làm mới hàng Chợ Đen
     refreshShop() {
-      const cost = 20000;
+      const cost = 600000;
       if ((S.gold || 0) < cost) {
-        if (typeof toast === 'function') toast('❌ Cần 20,000 Vàng để làm mới Chợ Đen!');
+        if (typeof toast === 'function') toast('❌ Cần 600,000 Vàng để làm mới Chợ Đen!');
         return;
       }
       S.gold -= cost;
@@ -163,7 +163,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
             <span style="font-size:12px;color:#aaa;">Vật phẩm quý hiếm giới hạn mỗi ngày</span>
             <button onclick="BLACK_MARKET.refreshShop()" style="background:#4a3820;border:1px solid #b89040;color:#ffd700;font-size:11px;padding:4px 8px;border-radius:3px;cursor:pointer;">
-              🔄 Làm Mới (2 Vạn)
+              🔄 Làm Mới (60 Vạn)
             </button>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;">
