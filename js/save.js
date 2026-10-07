@@ -40,7 +40,13 @@ function defaultAutoSettings() {
     followLeader: false,
     autoLoot: true,
     autoEquip: false,
-    autoSellWhite: true
+    autoSellWhite: true,
+    autoPush: true,
+    autoTower: true,
+    autoDatau: true,
+    autoDungeon: true,
+    autoWorldBoss: true,
+    autoClaimReward: true
   };
 }
 

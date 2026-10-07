@@ -525,6 +525,7 @@ function tick(dt) {
   if (typeof MAP_EXPANSION !== 'undefined' && MAP_EXPANSION.maintainCampMobs) MAP_EXPANSION.maintainCampMobs(dt);
   if (typeof campTick === 'function') campTick(dt);
   if (typeof autoBuffTick === 'function') autoBuffTick(dt);
+  if (typeof autoOmniTick === 'function') autoOmniTick(dt);
   if (typeof autoPartyFollowTick === 'function') autoPartyFollowTick(dt);
   if (typeof autoPartyInviteTick === 'function') autoPartyInviteTick(dt);
   if (typeof teambarFollowTick === 'function') teambarFollowTick(dt);
@@ -558,7 +559,8 @@ function tick(dt) {
           H.x = sx; H.y = sy;
         }
       }
-    } else if ((!alive().length || !R.moveTo) && S.auto && S.auto.on && !manual()) {
+    } else if (!alive().length && S.auto && S.auto.on && !manual()) {
+      // Chỉ tuần tra tìm quái khi trên bản đồ không còn quái nào sống
       autoPatrol(dt);
       if (R.serverMobsActive && typeof requestZoneMobs === 'function') requestZoneMobs();
     }

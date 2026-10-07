@@ -36,7 +36,13 @@ function initAutoSettings() {
       followLeader: false,
       autoLoot: true,
       autoEquip: false,
-      autoSellWhite: true
+      autoSellWhite: true,
+      autoPush: true,
+      autoTower: true,
+      autoDatau: true,
+      autoDungeon: true,
+      autoWorldBoss: true,
+      autoClaimReward: true
     };
   }
 }
@@ -77,10 +83,11 @@ function renderAutoWin(targetContainer) {
         </button>
       </div>
 
-      <!-- 5 Sub-tabs Navigation -->
+      <!-- 6 Sub-tabs Navigation -->
       <div class="auto-subtabs">
         <button class="auto-stab ${curAutoTab === 'heal' ? 'on' : ''}" data-atab="heal">❤️ Phục Hồi</button>
         <button class="auto-stab ${curAutoTab === 'combat' ? 'on' : ''}" data-atab="combat">⚔️ Chiến Đấu</button>
+        <button class="auto-stab ${curAutoTab === 'activity' ? 'on' : ''}" data-atab="activity">📜 Hoạt Động</button>
         <button class="auto-stab ${curAutoTab === 'buff' ? 'on' : ''}" data-atab="buff">✨ Tự Buff</button>
         <button class="auto-stab ${curAutoTab === 'party' ? 'on' : ''}" data-atab="party">👥 Tổ Đội</button>
         <button class="auto-stab ${curAutoTab === 'loot' ? 'on' : ''}" data-atab="loot">🎒 Tiện Ích</button>
@@ -94,6 +101,8 @@ function renderAutoWin(targetContainer) {
     html += renderAutoHealTab(cfg);
   } else if (curAutoTab === 'combat') {
     html += renderAutoCombatTab(cfg);
+  } else if (curAutoTab === 'activity') {
+    html += renderAutoActivityTab(cfg);
   } else if (curAutoTab === 'buff') {
     html += renderAutoBuffTab(cfg);
   } else if (curAutoTab === 'party') {
@@ -226,6 +235,62 @@ function renderAutoCombatTab(cfg) {
         <label class="auto-radio-label">
           <input type="radio" name="autoPrio" value="boss" ${cfg.targetPrio === 'boss' ? 'checked' : ''}>
           <span>Ưu tiên Boss & Tinh Anh</span>
+        </label>
+      </div>
+    </div>
+  `;
+}
+
+function renderAutoActivityTab(cfg) {
+  return `
+    <div class="auto-card">
+      <div class="auto-card-title">⚔️ VƯỢT ẢI & THÁP THỬ THÁCH</div>
+      <div class="auto-row">
+        <label>
+          <input type="checkbox" id="chkAutoPush" ${cfg.autoPush !== false ? 'checked' : ''}>
+          <span>Tự động Vượt Ải (tiến đánh từng đợt & diệt Trùm Ải)</span>
+        </label>
+      </div>
+      <div class="auto-row" style="margin-top:6px;">
+        <label>
+          <input type="checkbox" id="chkAutoTower" ${cfg.autoTower !== false ? 'checked' : ''}>
+          <span>Tự động Leo Tháp Thử Thách khi đủ điều kiện</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="auto-card">
+      <div class="auto-card-title">📜 NHIỆM VỤ DÃ TẨU CHUẨN VLTK</div>
+      <div class="auto-row">
+        <label>
+          <input type="checkbox" id="chkAutoDatau" ${cfg.autoDatau !== false ? 'checked' : ''}>
+          <span>Tự động nhận nhiệm vụ, kiểm tra tiến độ và trả thưởng Dã Tẩu</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="auto-card">
+      <div class="auto-card-title">🏰 PHÓ BẢN & BOSS HOÀNG KIM</div>
+      <div class="auto-row">
+        <label>
+          <input type="checkbox" id="chkAutoDungeon" ${cfg.autoDungeon !== false ? 'checked' : ''}>
+          <span>Tự động vào Phó Bản khi có lượt (Thiên Lao, Vạn Hoa Cốc...)</span>
+        </label>
+      </div>
+      <div class="auto-row" style="margin-top:6px;">
+        <label>
+          <input type="checkbox" id="chkAutoWorldBoss" ${cfg.autoWorldBoss !== false ? 'checked' : ''}>
+          <span>Tự động khiêu chiến Boss Hoàng Kim Thế Giới khi có vé</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="auto-card">
+      <div class="auto-card-title">🎁 PHÚC LỢI & THÀNH TỰU</div>
+      <div class="auto-row">
+        <label>
+          <input type="checkbox" id="chkAutoClaimReward" ${cfg.autoClaimReward !== false ? 'checked' : ''}>
+          <span>Tự động nhận Điểm danh ngày, Mốc cấp, Nhiệm vụ ngày và Phúc lợi VIP</span>
         </label>
       </div>
     </div>
@@ -480,6 +545,12 @@ function bindAutoEvents(box) {
     };
   }
   bindChk('#chkAutoSellWhite', 'autoSellWhite');
+  bindChk('#chkAutoPush', 'autoPush');
+  bindChk('#chkAutoTower', 'autoTower');
+  bindChk('#chkAutoDatau', 'autoDatau');
+  bindChk('#chkAutoDungeon', 'autoDungeon');
+  bindChk('#chkAutoWorldBoss', 'autoWorldBoss');
+  bindChk('#chkAutoClaimReward', 'autoClaimReward');
 
   const chkForge = box.querySelector('#chkAutoForge');
   if (chkForge) chkForge.onchange = e => { S.autoForge = e.target.checked; if (S.autoForge) autoForge(); save(); };
@@ -704,6 +775,121 @@ function autoPartyInviteTick(dt) {
     if (others.length > 0) {
       const target = others[Math.floor(Math.random() * others.length)];
       sendPartyInvite(target.id);
+    }
+  }
+}
+
+/* ==========================================
+   TỰ ĐỘNG HÓA TOÀN DIỆN (OMNI-AUTO SYSTEM)
+   Vượt ải, Leo tháp, Dã tẩu, Phó bản, Boss, Phúc lợi
+   ========================================== */
+let _omniDatauTimer = 2;
+let _omniTowerTimer = 10;
+let _omniDungeonTimer = 15;
+let _omniBossTimer = 20;
+let _omniRewardTimer = 5;
+let _omniPushTimer = 2;
+
+function autoOmniTick(dt) {
+  if (!S || !S.auto || !S.auto.on) return;
+  if (typeof R === 'undefined' || !R || R.town || R.deadT > 0) return;
+
+  // 1. Tự động Vượt Ải (Auto Push Stage)
+  _omniPushTimer -= dt;
+  if (_omniPushTimer <= 0) {
+    _omniPushTimer = 3;
+    if (S.auto.autoPush !== false && !R.tower && !R.dungeon) {
+      if (!S.push) {
+        if (typeof togglePushMode === 'function') {
+          togglePushMode(true);
+        } else {
+          S.push = true;
+        }
+      }
+    }
+  }
+
+  // 2. Tự động làm Dã Tẩu (Auto Dã Tẩu Quest)
+  _omniDatauTimer -= dt;
+  if (_omniDatauTimer <= 0) {
+    _omniDatauTimer = 4;
+    if (S.auto.autoDatau !== false && typeof DATAU !== 'undefined') {
+      if (DATAU.completed) {
+        DATAU.claim('exp');
+      } else if (!DATAU.curTask) {
+        DATAU.accept();
+      } else if (DATAU.curTask) {
+        DATAU.check();
+      }
+    }
+  }
+
+  // 3. Tự động Leo Tháp (Auto Tower)
+  _omniTowerTimer -= dt;
+  if (_omniTowerTimer <= 0) {
+    _omniTowerTimer = 15;
+    if (S.auto.autoTower !== false && !R.tower && !R.dungeon && R.P && (R.life > R.P.life * 0.6)) {
+      if (S.lvl >= 10 && typeof towerStart === 'function') {
+        towerStart();
+      }
+    }
+  }
+
+  // 4. Tự động Phó Bản (Auto Dungeon)
+  _omniDungeonTimer -= dt;
+  if (_omniDungeonTimer <= 0) {
+    _omniDungeonTimer = 20;
+    if (S.auto.autoDungeon !== false && !R.tower && !R.dungeon && R.P && (R.life > R.P.life * 0.7)) {
+      if (typeof getDungeonState === 'function' && typeof DUNGEONS !== 'undefined' && typeof dungeonStart === 'function') {
+        const ds = getDungeonState();
+        if (ds && ds.tickets > 0) {
+          const availDungeons = DUNGEONS.filter(d => S.lvl >= d.reqLvl).sort((a, b) => b.reqLvl - a.reqLvl);
+          if (availDungeons.length > 0) {
+            dungeonStart(availDungeons[0].id);
+          }
+        }
+      }
+    }
+  }
+
+  // 5. Tự động Săn Boss Hoàng Kim Thế Giới (Auto World Boss)
+  _omniBossTimer -= dt;
+  if (_omniBossTimer <= 0) {
+    _omniBossTimer = 25;
+    if (S.auto.autoWorldBoss !== false && !R.tower && !R.dungeon && R.P && (R.life > R.P.life * 0.7)) {
+      if (typeof pvkEnsureBoss === 'function' && typeof PVK_WORLD_BOSSES !== 'undefined' && typeof bossChallenge === 'function') {
+        pvkEnsureBoss();
+        if (S.bossState && S.bossState.tickets > 0) {
+          const availBosses = PVK_WORLD_BOSSES.filter(b => S.lvl >= b.reqLvl).sort((a, b) => b.lvl - a.lvl);
+          if (availBosses.length > 0) {
+            bossChallenge(availBosses[0].id);
+          }
+        }
+      }
+    }
+  }
+
+  // 6. Tự động Nhận Thưởng (Auto Claim Daily, Milestones, VIP)
+  _omniRewardTimer -= dt;
+  if (_omniRewardTimer <= 0) {
+    _omniRewardTimer = 15;
+    if (S.auto.autoClaimReward !== false && typeof RW === 'function') {
+      if (typeof claimLogin === 'function') claimLogin();
+      if (typeof lvMsReady === 'function' && typeof claimLvMs === 'function') {
+        const ready = lvMsReady();
+        if (ready && ready.length) {
+          ready.forEach(m => claimLvMs(m[0]));
+        }
+      }
+      if (typeof dailyQuests === 'function' && typeof claimQuest === 'function') {
+        const dq = dailyQuests();
+        if (dq && dq.list) {
+          dq.list.forEach((q, idx) => {
+            if (!q.done && q.have >= q.need) claimQuest(idx);
+          });
+        }
+      }
+      if (typeof claimDailyVip === 'function') claimDailyVip();
     }
   }
 }

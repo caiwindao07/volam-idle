@@ -5,7 +5,7 @@
 const dayKey = d => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 const today = () => dayKey(new Date());
 const GB_EVERY = 1800, GB_RETRY = 300;     // trum Hoang Kim: moi 30 phut choi; thua thi 5 phut sau quay lai
-const REBORN_LV = 100, REBORN_MAX = 5;   // chuyen sinh tu cap 100
+const REBORN_LV = 200, REBORN_MAX = 10;   // chuyen sinh tu cap 200
 const FD_COST = 10;
 function RW() { // trang thai phan thuong trong file luu (tao / bo sung truong khi nap file cu)
   const r = S.rw || (S.rw = {});
@@ -177,23 +177,107 @@ function towerExit(dead) {
   R.tower = null; R.enemies = []; S.wave = 1; R.spawnT = 0.5; R.zoneShown = null;
 }
 
-/* ---------- 7. chuyen sinh (level_exp.txt co 5 cot chuyen sinh -> toi da 5 lan) ---------- */
-function rebornBonus() { const n = S.rw && S.rw.stat ? S.rw.stat.reborn || 0 : 0; return { xp: 0.2 * n, dmg: 0.1 * n }; }
+/* ---------- 7. chuyen sinh (Chuyen sinh tu cap 200, toi da 10 lan) ---------- */
+function rebornBonus() {
+  const n = S.rw && S.rw.stat ? S.rw.stat.reborn || 0 : 0;
+  return { xp: 0.25 * n, dmg: 0.15 * n };
+}
+
+function grantRebornRewards(n) {
+  const rewList = [];
+  // 1. Điểm tiềm năng: 100 điểm * n
+  const bonusPts = n * 100;
+  S.attrPts = (S.attrPts || 0) + bonusPts;
+  rewList.push(`+${bonusPts} Điểm Tiềm Năng`);
+
+  // 2. Ngân Lượng: 100,000 lượng * n
+  const bonusGold = n * 100000;
+  S.gold = (S.gold || 0) + bonusGold;
+  rewList.push(`${fmt(bonusGold)} Lượng`);
+
+  // 3. Phúc Duyên: 100 * n
+  const bonusFd = n * 100;
+  if (typeof RW === 'function') RW().fd = (RW().fd || 0) + bonusFd;
+  rewList.push(`+${bonusFd} Phúc Duyên`);
+
+  // 4. Cỏ Linh Chi bồi dưỡng Thần Thú: 50 * n
+  if (typeof pvkEnsureMount === 'function') pvkEnsureMount();
+  if (S.mount) {
+    const fodder = n * 50;
+    S.mount.fodder = (S.mount.fodder || 0) + fodder;
+    rewList.push(`+${fodder} Cỏ Linh Chi`);
+  }
+
+  // 5. Huyền Tinh Cấp Cao & Thủy Tinh
+  // Lần 1: Cấp 6 x3; Lần 2: Cấp 7 x3; Lần 3: Cấp 8 x3; Lần 4: Cấp 9 x3; Lần 5+: Cấp 10 x3
+  const htLvl = Math.min(10, 5 + n);
+  if (typeof matAdd === 'function') {
+    matAdd('ht', htLvl, 3);
+    matAdd('misc', 'wc', n * 5);
+  }
+  rewList.push(`3x Huyền Tinh Cấp ${htLvl}`, `${n * 5}x Thủy Tinh`);
+
+  // 6. Trang bị cực phẩm Hoàng Kim / Bạch Kim
+  // Lần >= 3 thưởng đồ Bạch Kim, lần 1-2 thưởng đồ Hoàng Kim hoàn mỹ
+  const isPlatina = n >= 3;
+  const setKind = isPlatina ? 'platina' : 'gold';
+  let setItem = null;
+  if (typeof J !== 'undefined' && J.sets && J.sets[setKind] && typeof makeSetItem === 'function') {
+    const fid = (typeof FAC !== 'undefined' && FAC[S.fac]) ? FAC[S.fac].id : -1;
+    const reqOf = (r, id) => (r.req.find(q => q[0] === id) || [0, -1])[1];
+    let pool = J.sets[setKind].filter(r => typeof sexReqOk === 'function' ? sexReqOk(r.req) : true);
+    const mine = pool.filter(r => reqOf(r, 39) === fid);
+    if (mine.length) pool = mine;
+    if (pool.length) {
+      setItem = makeSetItem(setKind, pick(pool), 10);
+      if (setItem && typeof addItem === 'function') addItem(setItem, true, true);
+    }
+  }
+  if (setItem) {
+    rewList.push(`Trang bị <b style="color:${RAR_COL[setItem.r] || '#ffd700'}">${esc(setItem.n)}</b>`);
+  }
+
+  // 7. Thăng cấp Phi Phong
+  if (S.cloak) {
+    S.cloak.tier = Math.min(10, Math.max(S.cloak.tier || 0, n));
+    rewList.push(`Phi Phong Bậc ${S.cloak.tier}`);
+  }
+
+  return rewList;
+}
+
 function doReborn() {
   const r = RW();
-  if (S.lvl < REBORN_LV || r.stat.reborn >= REBORN_MAX) return;
-  if (!confirm('Chuyển sinh: về cấp 1, giữ trang bị và võ công. Tiếp tục?')) return;
+  if (S.lvl < REBORN_LV || r.stat.reborn >= REBORN_MAX) {
+    if (S.lvl < REBORN_LV && typeof toast === 'function') {
+      toast(`Chưa đạt cấp ${REBORN_LV} để chuyển sinh!`);
+    }
+    return;
+  }
+  const nextN = r.stat.reborn + 1;
+  if (!confirm(`Chuyển sinh lần ${nextN}: Nhân vật sẽ trở về cấp 1, giữ nguyên toàn bộ trang bị và võ công, nhận lượng lớn điểm tiềm năng và BẢO VẬT QUÝ HIẾM theo số lần chuyển sinh! Tiếp tục?`)) return;
+
   r.stat.reborn++;
   window._legitLevelTransition = true;
   window._legitExpGain = true;
   try {
-    S.lvl = 1; S.xp = 0; S.attr = { str: 0, dex: 0, vit: 0, eng: 0 }; S.attrPts = r.stat.reborn * 50;
+    S.lvl = 1;
+    S.xp = 0;
+    S.attr = { str: 0, dex: 0, vit: 0, eng: 0 };
   } finally {
     window._legitLevelTransition = false;
     window._legitExpGain = false;
   }
+
+  const rewList = grantRebornRewards(r.stat.reborn);
+
   S.stage = 1; S.wave = 1; S.push = true; R.tower = null; R.enemies = []; R.dirty = true; R.zoneShown = null;
-  log(`<b class="up">Chuyển sinh lần ${r.stat.reborn}!</b> +${r.stat.reborn * 20}% kinh nghiệm, +${r.stat.reborn * 10}% sát thương`);
+  log(`<b class="up" style="color:#f59e0b;font-size:13px;">🎉 CHUYỂN SINH LẦN ${r.stat.reborn} THÀNH CÔNG!</b>`);
+  log(`<span style="color:#ffd700;">🎁 Thưởng Chuyển Sinh lần ${r.stat.reborn}: ${rewList.join(', ')}.</span>`);
+  log(`<span style="color:#4ade80;">Vĩnh viễn tăng +${r.stat.reborn * 25}% kinh nghiệm và +${r.stat.reborn * 15}% sát thương.</span>`);
+  if (typeof toast === 'function') toast(`🎉 Chuyển sinh lần ${r.stat.reborn} thành công!`);
+  if (typeof uiSfx === 'function') uiSfx('levelup');
+
   if (S.autoPts === true) autoSpendAttrs();
   achCheck(); closeModal(true); refresh(); save();
 }
@@ -415,9 +499,31 @@ function giftBody(r) {
     `;
   }
   const bo = rebornBonus(), full = r.stat.reborn >= REBORN_MAX;
-  return `<p class="desc">Từ cấp ${REBORN_LV} (tối đa): về cấp 1, giữ trang bị và võ công, nhận 50 điểm tiềm năng × số lần chuyển sinh, thưởng vĩnh viễn +20% kinh nghiệm và +10% sát thương mỗi lần (tối đa ${REBORN_MAX} lần).</p>
-      <p>Đã chuyển sinh: <b>${r.stat.reborn}</b> lần · hiện +${Math.round(bo.xp * 100)}% kinh nghiệm, +${Math.round(bo.dmg * 100)}% sát thương.</p>
-      <div class="btnrow"><button class="btn red" id="gReborn" ${S.lvl >= REBORN_LV && !full ? '' : 'disabled'}>${full ? 'Đã chuyển sinh tối đa' : S.lvl >= REBORN_LV ? 'Chuyển sinh' : `Cần cấp ${REBORN_LV}`}</button></div>`;
+  const nextN = r.stat.reborn + 1;
+  return `
+    <div style="background:var(--panel2);border:1px solid #5a4425;border-radius:8px;padding:12px;margin-bottom:10px;">
+      <h3 style="color:#ffd700;margin:0 0 6px 0;font-size:14px;text-align:center;">🌟 THẦN VÕ CHUYỂN SINH (CẤP 200)</h3>
+      <p class="desc" style="font-size:12px;line-height:1.5;color:#e2d9c8;margin-bottom:8px;">
+        Đạt đỉnh phong <b>Đẳng cấp ${REBORN_LV}</b> có thể tiến hành Chuyển Sinh: Nhân vật quay về Cấp 1, giữ nguyên toàn bộ trang bị, kỹ năng võ công. Mỗi lần chuyển sinh nhận lượng lớn <b>Bảo Vật Quý Hiếm</b> theo số lần chuyển sinh và thuộc tính vĩnh viễn (tối đa ${REBORN_MAX} lần).
+      </p>
+      <div style="font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#15100a;padding:8px;border-radius:6px;margin-bottom:8px;">
+        <div>Đã chuyển sinh: <b style="color:#fbbf24;">${r.stat.reborn} / ${REBORN_MAX} lần</b></div>
+        <div>Tăng EXP vĩnh viễn: <b style="color:#4ade80;">+${Math.round(bo.xp * 100)}%</b></div>
+        <div>Tăng Sát thương: <b style="color:#ef4444;">+${Math.round(bo.dmg * 100)}%</b></div>
+        <div>Cấp hiện tại: <b style="color:${S.lvl >= REBORN_LV ? '#4ade80' : '#f87171'};">${S.lvl} / ${REBORN_LV}</b></div>
+      </div>
+      ${!full ? `
+        <div style="font-size:11px;color:#a39276;margin-bottom:8px;">
+          🎁 <b>Quà Chuyển Sinh lần ${nextN}:</b> +${nextN * 100} Điểm Tiềm Năng, ${fmt(nextN * 100000)} Lượng, +${nextN * 100} Phúc Duyên, 3x Huyền Tinh Cấp ${Math.min(10, 5 + nextN)}, ${nextN * 50} Cỏ Linh Chi, Trang bị ${nextN >= 3 ? 'Bạch Kim' : 'Hoàng Kim'}, Phi Phong Bậc ${nextN}.
+        </div>
+      ` : ''}
+    </div>
+    <div class="btnrow" style="text-align:center;">
+      <button class="btn red" id="gReborn" ${S.lvl >= REBORN_LV && !full ? '' : 'disabled'} style="font-size:13px;padding:8px 24px;">
+        ${full ? 'Đã Chuyển Sinh Tối Đa' : S.lvl >= REBORN_LV ? `⚡ Chuyển Sinh Lần ${nextN} Ngay` : `Chưa Đạt Cấp ${REBORN_LV} (${S.lvl}/${REBORN_LV})`}
+      </button>
+    </div>
+  `;
 }
 function giftModal() {
   if (!S.fac) return;

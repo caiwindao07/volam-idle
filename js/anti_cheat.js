@@ -15,7 +15,7 @@
   function secureObjectState(obj) {
     if (!obj || typeof obj !== 'object' || obj._securedState) return obj;
 
-    let _realLvl = Math.max(1, Math.min(150, Math.floor(Number(obj.lvl) || 1)));
+    let _realLvl = Math.max(1, Math.min(200, Math.floor(Number(obj.lvl) || 1)));
     let _realXp = Math.max(0, Math.floor(Number(obj.xp) || 0));
 
     try {
@@ -27,7 +27,7 @@
           const targetVal = Math.floor(Number(val) || 1);
           // Chỉ cho phép thay đổi nếu có cờ xác thực hợp lệ từ hệ thống game (chiến đấu / chuyển sinh / đồng bộ server)
           if (window._legitLevelTransition) {
-            _realLvl = Math.max(1, Math.min(150, targetVal));
+            _realLvl = Math.max(1, Math.min(200, targetVal));
             return;
           }
           // Can thiệp trái phép từ DevTools / F10 / F12 console

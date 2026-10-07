@@ -346,9 +346,9 @@ function createInitialHeroState(heroName, fac) {
 // ANTI-CHEAT & SERVER-AUTHORITATIVE LOGIC
 // ==========================================
 function getMaxAllowedDamage(lvl) {
-  const L = Math.max(1, Math.min(99, Number(lvl) || 1));
+  const L = Math.max(1, Math.min(200, Number(lvl) || 1));
   // Công thức sát thương tối đa cho phép mỗi đòn đánh của người chơi ở cấp L
-  // Cấp 1: tối đa ~500, Cấp 50: ~35,000, Cấp 99: ~250,000
+  // Cấp 1: tối đa ~500, Cấp 50: ~35,000, Cấp 99: ~250,000, Cấp 200: ~1,500,000
   return Math.max(500, Math.round((70 + L * 95 + Math.pow(L, 1.85) * 18) * 3.5));
 }
 
@@ -357,8 +357,8 @@ function sanitizeAndValidateState(serverState, incomingState, username) {
   if (!incomingState || typeof incomingState !== 'object') return serverState;
 
   // 1. Cấp độ & Kinh nghiệm: Chấp nhận tiến trình hợp lệ từ server, chặn hoàn toàn hack F10/F12
-  const currentSrvLvl = Math.max(1, Math.min(150, Number(serverState.lvl) || 1));
-  const incLvl = Math.max(1, Math.min(150, Number(incomingState.lvl) || currentSrvLvl));
+  const currentSrvLvl = Math.max(1, Math.min(200, Number(serverState.lvl) || 1));
+  const incLvl = Math.max(1, Math.min(200, Number(incomingState.lvl) || currentSrvLvl));
   if (incLvl > currentSrvLvl) {
     console.warn(`[Anti-Cheat] Tài khoản "${username}" cố tình lưu cấp độ nhảy vọt: Lv.${incLvl} (Server: Lv.${currentSrvLvl}). Đã khôi phục về Lv.${currentSrvLvl}.`);
     incomingState.lvl = currentSrvLvl;
@@ -1630,7 +1630,7 @@ wss.on('connection', (ws) => {
             // Áp đặt thông tin nhân vật từ cơ sở dữ liệu server
             const uState = db.users[uKey].state;
             if (uState) {
-              p.lvl = Math.max(1, Math.min(99, Number(uState.lvl) || 1));
+              p.lvl = Math.max(1, Math.min(200, Number(uState.lvl) || 1));
               if (uState.name) p.name = String(uState.name).slice(0, 20);
               if (uState.fac) p.fac = String(uState.fac);
             }
@@ -2000,11 +2000,11 @@ wss.on('connection', (ws) => {
             if (p.uKey && db.users[p.uKey] && db.users[p.uKey].state) {
               const uState = db.users[p.uKey].state;
               uState.gold = (uState.gold || 0) + goldDrop;
-              const curLvl = Math.max(1, Math.min(99, Number(uState.lvl) || 1));
+              const curLvl = Math.max(1, Math.min(200, Number(uState.lvl) || 1));
               const expNeeded = (JX && JX.exp && JX.exp[curLvl - 1]) ? JX.exp[curLvl - 1] : (curLvl * 1000);
               uState.xp = (uState.xp || 0) + expGain;
               let didLevelUp = false;
-              while (uState.lvl < 99 && uState.xp >= expNeeded) {
+              while (uState.lvl < 200 && uState.xp >= expNeeded) {
                 uState.xp -= expNeeded;
                 uState.lvl++;
                 uState.attrPts = (uState.attrPts || 0) + 5;
