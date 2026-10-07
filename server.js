@@ -173,30 +173,68 @@ async function initMongo() {
   return false;
 }
 
+function escapeRegex(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+async function findDbUser(uKey) {
+  if (!uKey) return null;
+  const key = String(uKey).trim().toLowerCase();
+  if (db.users[key]) return db.users[key];
+  if (mongoUsersCol) {
+    try {
+      const doc = await mongoUsersCol.findOne({
+        username: { $regex: new RegExp('^' + escapeRegex(key) + '$', 'i') }
+      });
+      if (doc) {
+        const u = {
+          username: doc.username,
+          passwordHash: doc.passwordHash,
+          heroName: doc.heroName || (doc.state && doc.state.name) || doc.username,
+          fac: doc.fac || (doc.state && doc.state.fac) || 'shaolin',
+          createdAt: doc.createdAt,
+          lastLogin: doc.lastLogin,
+          state: doc.state,
+          token: doc.token
+        };
+        db.users[key] = u;
+        if (u.token) sessions.set(u.token, key);
+        return u;
+      }
+    } catch (e) {
+      console.error('[DB] Lỗi truy vấn người dùng từ MongoDB:', e.message);
+    }
+  }
+  return null;
+}
+
+async function persistUser(user) {
+  if (!user || !user.username) return;
+  const uKey = String(user.username).trim().toLowerCase();
+  db.users[uKey] = user;
+  if (mongoUsersCol) {
+    try {
+      await mongoUsersCol.updateOne(
+        { username: user.username },
+        { $set: user },
+        { upsert: true }
+      );
+    } catch (e) {
+      console.error('[DB] Lỗi lưu người dùng lên Mongo:', e.message);
+    }
+  } else {
+    saveDb();
+  }
+}
+
 async function loadDb() {
   try {
     // 1. Kết nối MongoDB Atlas
     const connected = await initMongo();
     if (connected && mongoUsersCol) {
-      // Khi chạy online bằng MongoDB: dữ liệu tách biệt hoàn toàn, CHỈ lấy từ MongoDB Atlas
       db = { users: {} };
-      const userDocs = await mongoUsersCol.find({}).toArray();
-      for (const doc of userDocs) {
-        const uKey = String(doc.username || '').trim().toLowerCase();
-        if (uKey) {
-          db.users[uKey] = {
-            username: doc.username,
-            passwordHash: doc.passwordHash,
-            heroName: doc.heroName || (doc.state && doc.state.name) || doc.username,
-            fac: doc.fac || (doc.state && doc.state.fac) || 'shaolin',
-            createdAt: doc.createdAt,
-            lastLogin: doc.lastLogin,
-            state: doc.state,
-            token: doc.token
-          };
-        }
-      }
-      console.log(`[DB] Đang hoạt động chế độ Online (MongoDB Atlas). Số tài khoản: ${userDocs.length}.`);
+      const totalCount = await mongoUsersCol.countDocuments();
+      console.log(`[DB] Đang hoạt động chế độ Online (MongoDB Atlas). Tổng số tài khoản: ${totalCount}.`);
     } else {
       // Chế độ Offline/Local khi không có Mongo: nạp từ db.json
       if (!fs.existsSync(DATA_DIR)) {
@@ -207,67 +245,39 @@ async function loadDb() {
         db = JSON.parse(raw);
         if (!db.users) db.users = {};
       }
-      console.log(`[DB] Đang hoạt động chế độ Cục bộ (db.json). Số tài khoản: ${Object.keys(db.users).length}.`);
-    }
-
-    for (const uKey in db.users) {
-      if (db.users[uKey].token) {
-        sessions.set(db.users[uKey].token, uKey);
+      for (const uKey in db.users) {
+        if (db.users[uKey].token) {
+          sessions.set(db.users[uKey].token, uKey);
+        }
       }
+      console.log(`[DB] Đang hoạt động chế độ Cục bộ (db.json). Số tài khoản: ${Object.keys(db.users).length}.`);
     }
   } catch (e) {
     console.error('[DB] Lỗi load database:', e);
   }
 }
 
-let _isSavingMongo = false;
-let _pendingMongoSave = false;
-
-async function syncToMongo() {
-  if (!mongoUsersCol || _isSavingMongo) {
-    if (!mongoUsersCol) return;
-    _pendingMongoSave = true;
+function saveDb() {
+  if (mongoUsersCol) {
+    const list = Object.values(db.users);
+    if (!list.length) return;
+    const ops = list.map(u => ({
+      updateOne: {
+        filter: { username: u.username },
+        update: { $set: u },
+        upsert: true
+      }
+    }));
+    mongoUsersCol.bulkWrite(ops).catch(e => console.error('[DB] Lỗi sync active users sang MongoDB:', e.message));
     return;
   }
-  _isSavingMongo = true;
-  try {
-    const ops = [];
-    for (const [username, userData] of Object.entries(db.users)) {
-      ops.push({
-        updateOne: {
-          filter: { username },
-          update: { $set: userData },
-          upsert: true
-        }
-      });
-    }
-    if (ops.length > 0) {
-      await mongoUsersCol.bulkWrite(ops);
-    }
-  } catch (err) {
-    console.error('[DB] Lỗi khi lưu vào MongoDB Atlas:', err.message);
-  } finally {
-    _isSavingMongo = false;
-    if (_pendingMongoSave) {
-      _pendingMongoSave = false;
-      syncToMongo();
-    }
-  }
-}
-
-function saveDb() {
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
+    fs.writeFileSync(DB_FILE, JSON.stringify(db), 'utf8');
   } catch (e) {
     console.error('[DB] Lỗi ghi database cục bộ:', e);
-  }
-
-  // Tự động ghi đồng bộ lên MongoDB online
-  if (mongoUsersCol) {
-    syncToMongo();
   }
 }
 
@@ -472,6 +482,36 @@ function getAuthUser(req) {
   return { username, user: db.users[username], token };
 }
 
+async function getAuthUserAsync(req) {
+  const auth = req.headers['authorization'];
+  if (!auth) return null;
+  const token = auth.replace(/^Bearer\s+/i, '').trim();
+  let uKey = sessions.get(token);
+  let user = uKey ? db.users[uKey] : null;
+  if (!user && mongoUsersCol) {
+    try {
+      const doc = await mongoUsersCol.findOne({ token: token });
+      if (doc) {
+        uKey = String(doc.username).trim().toLowerCase();
+        user = {
+          username: doc.username,
+          passwordHash: doc.passwordHash,
+          heroName: doc.heroName || (doc.state && doc.state.name) || doc.username,
+          fac: doc.fac || (doc.state && doc.state.fac) || 'shaolin',
+          createdAt: doc.createdAt,
+          lastLogin: doc.lastLogin,
+          state: doc.state,
+          token: doc.token
+        };
+        db.users[uKey] = user;
+        sessions.set(token, uKey);
+      }
+    } catch (e) {}
+  }
+  if (!uKey || !user) return null;
+  return { username: uKey, user, token };
+}
+
 const server = http.createServer((req, res) => {
   // CORS Preflight
   if (req.method === 'OPTIONS') {
@@ -491,18 +531,26 @@ const server = http.createServer((req, res) => {
   if (pathname.startsWith('/api/')) {
     // 0. Kiểm tra trạng thái cơ sở dữ liệu (Database Health / Diagnostic)
     if (pathname === '/api/db-status' && req.method === 'GET') {
-      return sendJson(res, 200, {
-        ok: true,
-        ...global._mongoStatus,
-        accountsCount: Object.keys(db.users || {}).length,
-        help: !global._mongoStatus.connected ? 'Vào MongoDB Atlas -> Network Access -> Add IP Address -> chọn Allow Access From Anywhere (0.0.0.0/0)' : 'Đã kết nối MongoDB Atlas thành công'
-      });
+      const getCount = async () => {
+        let count = Object.keys(db.users || {}).length;
+        if (mongoUsersCol) {
+          try { count = await mongoUsersCol.countDocuments(); } catch(e){}
+        }
+        return sendJson(res, 200, {
+          ok: true,
+          ...global._mongoStatus,
+          accountsCount: count,
+          help: !global._mongoStatus.connected ? 'Vào MongoDB Atlas -> Network Access -> Add IP Address -> chọn Allow Access From Anywhere (0.0.0.0/0)' : 'Đã kết nối MongoDB Atlas thành công'
+        });
+      };
+      getCount();
+      return;
     }
 
     // 1. Đăng ký tài khoản
     if (pathname === '/api/register' && req.method === 'POST') {
-      parseJsonBody(req, (err, data) => {
-        if (err || !data.username || !data.password) {
+      parseJsonBody(req, async (err, data) => {
+        if (err || !data || !data.username || !data.password) {
           return sendJson(res, 400, { ok: false, error: 'Thiếu tên tài khoản hoặc mật khẩu!' });
         }
         const uKey = String(data.username).trim().toLowerCase();
@@ -512,7 +560,8 @@ const server = http.createServer((req, res) => {
         if (data.password.length < 4) {
           return sendJson(res, 400, { ok: false, error: 'Mật khẩu phải từ 4 ký tự trở lên!' });
         }
-        if (db.users[uKey]) {
+        const existing = await findDbUser(uKey);
+        if (existing) {
           return sendJson(res, 400, { ok: false, error: 'Tên tài khoản này đã được sử dụng!' });
         }
 
@@ -534,7 +583,7 @@ const server = http.createServer((req, res) => {
 
         db.users[uKey] = newUser;
         sessions.set(token, uKey);
-        saveDb();
+        await persistUser(newUser);
 
         console.log(`[Auth] Đăng ký thành công tài khoản: ${newUser.username} (${heroName})`);
         return sendJson(res, 200, {
@@ -553,12 +602,12 @@ const server = http.createServer((req, res) => {
 
     // 2. Đăng nhập tài khoản
     if (pathname === '/api/login' && req.method === 'POST') {
-      parseJsonBody(req, (err, data) => {
-        if (err || !data.username || !data.password) {
+      parseJsonBody(req, async (err, data) => {
+        if (err || !data || !data.username || !data.password) {
           return sendJson(res, 400, { ok: false, error: 'Thiếu tên tài khoản hoặc mật khẩu!' });
         }
         const uKey = String(data.username).trim().toLowerCase();
-        const u = db.users[uKey];
+        const u = await findDbUser(uKey);
         if (!u) {
           return sendJson(res, 400, { ok: false, error: 'Tài khoản không tồn tại! Vui lòng đăng ký mới.' });
         }
@@ -572,7 +621,8 @@ const server = http.createServer((req, res) => {
         u.token = token;
         u.lastLogin = Date.now();
         sessions.set(token, uKey);
-        saveDb();
+        db.users[uKey] = u;
+        await persistUser(u);
 
         console.log(`[Auth] Đăng nhập thành công: ${u.username}`);
         return sendJson(res, 200, {
@@ -591,42 +641,45 @@ const server = http.createServer((req, res) => {
 
     // 3. Lấy thông tin tài khoản hiện tại qua token
     if (pathname === '/api/me' && req.method === 'GET') {
-      const session = getAuthUser(req);
-      if (!session) {
-        return sendJson(res, 401, { ok: false, error: 'Chưa đăng nhập hoặc phiên đã hết hạn' });
-      }
-      return sendJson(res, 200, {
-        ok: true,
-        user: {
-          username: session.user.username,
-          heroName: session.user.heroName,
-          fac: session.user.fac
-        },
-        state: session.user.state
+      getAuthUserAsync(req).then(session => {
+        if (!session) {
+          return sendJson(res, 401, { ok: false, error: 'Chưa đăng nhập hoặc phiên đã hết hạn' });
+        }
+        return sendJson(res, 200, {
+          ok: true,
+          user: {
+            username: session.user.username,
+            heroName: session.user.heroName,
+            fac: session.user.fac
+          },
+          state: session.user.state
+        });
       });
+      return;
     }
 
     // 4. Lưu dữ liệu nhân vật lên máy chủ (Cloud Save)
     if (pathname === '/api/save' && req.method === 'POST') {
-      const session = getAuthUser(req);
-      if (!session) {
-        return sendJson(res, 401, { ok: false, error: 'Chưa đăng nhập!' });
-      }
-
-      parseJsonBody(req, (err, data) => {
-        if (err || !data || !data.state) {
-          return sendJson(res, 400, { ok: false, error: 'Dữ liệu không hợp lệ!' });
+      getAuthUserAsync(req).then(session => {
+        if (!session) {
+          return sendJson(res, 401, { ok: false, error: 'Chưa đăng nhập!' });
         }
-        // Xác thực và chuẩn hóa toàn bộ dữ liệu lưu theo thẩm quyền của Server
-        session.user.state = sanitizeAndValidateState(session.user.state, data.state, session.username);
-        if (session.user.state.name) session.user.heroName = session.user.state.name;
-        if (session.user.state.fac) session.user.fac = session.user.state.fac;
-        session.user.lastSave = Date.now();
-        saveDb();
-        return sendJson(res, 200, {
-          ok: true,
-          msg: 'Đã lưu đám mây thành công',
-          state: session.user.state
+
+        parseJsonBody(req, async (err, data) => {
+          if (err || !data || !data.state) {
+            return sendJson(res, 400, { ok: false, error: 'Dữ liệu không hợp lệ!' });
+          }
+          // Xác thực và chuẩn hóa toàn bộ dữ liệu lưu theo thẩm quyền của Server
+          session.user.state = sanitizeAndValidateState(session.user.state, data.state, session.username);
+          if (session.user.state.name) session.user.heroName = session.user.state.name;
+          if (session.user.state.fac) session.user.fac = session.user.state.fac;
+          session.user.lastSave = Date.now();
+          await persistUser(session.user);
+          return sendJson(res, 200, {
+            ok: true,
+            msg: 'Đã lưu đám mây thành công',
+            state: session.user.state
+          });
         });
       });
       return;
@@ -634,17 +687,15 @@ const server = http.createServer((req, res) => {
 
     // 5. Đăng xuất
     if (pathname === '/api/logout' && req.method === 'POST') {
-      const auth = req.headers['authorization'];
-      if (auth) {
-        const token = auth.replace(/^Bearer\s+/i, '').trim();
-        const uKey = sessions.get(token);
-        if (uKey && db.users[uKey]) {
-          delete db.users[uKey].token;
-          saveDb();
+      getAuthUserAsync(req).then(session => {
+        if (session) {
+          delete session.user.token;
+          sessions.delete(session.token);
+          persistUser(session.user);
         }
-        sessions.delete(token);
-      }
-      return sendJson(res, 200, { ok: true });
+        return sendJson(res, 200, { ok: true, msg: 'Đã đăng xuất' });
+      });
+      return;
     }
 
     return sendJson(res, 404, { ok: false, error: 'API không tồn tại' });
@@ -1645,12 +1696,35 @@ wss.on('connection', (ws) => {
       if (data.type === 'auth' || data.type === 'profile') {
         const wasInit = p.initialized;
         if (data.token) {
-          const uKey = sessions.get(data.token);
-          if (uKey && db.users[uKey]) {
-            p.username = db.users[uKey].username;
+          let uKey = sessions.get(data.token);
+          let uObj = uKey ? db.users[uKey] : null;
+          if (!uObj && mongoUsersCol) {
+            mongoUsersCol.findOne({ token: data.token }).then(doc => {
+              if (doc) {
+                uKey = String(doc.username).trim().toLowerCase();
+                uObj = {
+                  username: doc.username,
+                  passwordHash: doc.passwordHash,
+                  heroName: doc.heroName || (doc.state && doc.state.name) || doc.username,
+                  fac: doc.fac || (doc.state && doc.state.fac) || 'shaolin',
+                  state: doc.state,
+                  token: doc.token
+                };
+                db.users[uKey] = uObj;
+                sessions.set(data.token, uKey);
+                p.username = uObj.username;
+                p.uKey = uKey;
+                if (uObj.state) {
+                  p.lvl = Math.max(1, Math.min(200, Number(uObj.state.lvl) || 1));
+                  if (uObj.state.name) p.name = String(uObj.state.name).slice(0, 20);
+                  if (uObj.state.fac) p.fac = String(uObj.state.fac);
+                }
+              }
+            }).catch(() => {});
+          } else if (uObj) {
+            p.username = uObj.username;
             p.uKey = uKey;
-            // Áp đặt thông tin nhân vật từ cơ sở dữ liệu server
-            const uState = db.users[uKey].state;
+            const uState = uObj.state;
             if (uState) {
               p.lvl = Math.max(1, Math.min(200, Number(uState.lvl) || 1));
               if (uState.name) p.name = String(uState.name).slice(0, 20);

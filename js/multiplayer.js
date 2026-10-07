@@ -846,7 +846,17 @@ function drawSingleOtherPlayer(c, dt, p) {
 
   // 3. Hoạt ảnh nhân vật
   let drawn = false;
-  if (typeof drawAnim === 'function') {
+  let dollH = 0;
+  if (typeof drawDoll === 'function') {
+    const fakeState = {
+      eq: p.eq || {},
+      fac: p.fac,
+      sex: (p.fac === 'emei' || p.fac === 'cuiyan' || p.sex === 1) ? 1 : 0
+    };
+    dollH = drawDoll(c, p.x, playerY, p.act || 'st', p.dir || 0, p.actT || 0, (typeof HERO_DOLL_SCALE !== 'undefined' ? HERO_DOLL_SCALE : (1 / 0.6)), 1, fakeState);
+    if (dollH > 0) drawn = dollH;
+  }
+  if (!drawn && typeof drawAnim === 'function') {
     drawn = drawAnim(animKey, p.act || 'st', p.dir || 0, p.actT || 0, p.x, playerY, (typeof HERO_SCALE !== 'undefined' ? HERO_SCALE : 1.35));
   }
   if (!drawn && heroCfg && typeof drawSprite === 'function' && typeof img === 'function') {
@@ -861,8 +871,8 @@ function drawSingleOtherPlayer(c, dt, p) {
     drawn = 30;
   }
 
-  // 4. Vẽ Res Ngoại Trang: Vũ Khí, Chiến Giáp, Khôi Giáp của người chơi khác và Bot
-  if (typeof drawHeroEquipment === 'function' && p.eq) {
+  // 4. Vẽ Res Ngoại Trang phụ trợ nếu Paperdoll chưa vẽ
+  if (!dollH && typeof drawHeroEquipment === 'function' && p.eq) {
     drawHeroEquipment(c, p.x, playerY, p.dir || 0, p.face || 1, p.act || 'st', p.actT || 0, p.eq, p.series || 0);
   }
 

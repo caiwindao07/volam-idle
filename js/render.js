@@ -649,7 +649,13 @@ function draw(dt) {
       }
 
       let drawn = false;
-      if (hw && hw.anim && typeof drawAnim === 'function') {
+      let dollH = 0;
+      if (typeof drawDoll === 'function') {
+        const dollScale = (typeof HERO_DOLL_SCALE !== 'undefined') ? HERO_DOLL_SCALE : (1 / 0.6);
+        dollH = drawDoll(c, H.x, heroY, H.act || 'st', H.dir || 0, H.actT || 0, dollScale, R.deadT > 0 ? 0.45 : 1, S);
+        if (dollH > 0) drawn = dollH;
+      }
+      if (!drawn && hw && hw.anim && typeof drawAnim === 'function') {
         drawn = drawAnim(hw.anim, H.act || 'st', H.dir || 0, H.actT || 0, H.x, heroY, HERO_SCALE);
       }
       if (!drawn && hw && typeof drawSprite === 'function' && typeof img === 'function') {
@@ -663,8 +669,8 @@ function draw(dt) {
         drawn = 30;
       }
 
-      // Vẽ Res Ngoại Trang: Vũ Khí, Chiến Giáp, Khôi Giáp, Hào quang Thần Binh
-      if (typeof drawHeroEquipment === 'function' && typeof S !== 'undefined' && S && S.eq) {
+      // Vẽ Res Ngoại Trang phụ trợ (nếu Paperdoll chưa vẽ)
+      if (!dollH && typeof drawHeroEquipment === 'function' && typeof S !== 'undefined' && S && S.eq) {
         drawHeroEquipment(c, H.x, heroY, H.dir || 0, H.face || 1, H.act || 'st', H.actT || 0, S.eq, (typeof heroSeries === 'function' ? heroSeries() : 0));
       }
 

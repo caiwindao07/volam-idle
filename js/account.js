@@ -286,7 +286,10 @@ function showAuthModal(onSuccess) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: u, password: p })
       })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok && r.status >= 500) throw new Error('Máy chủ đang khởi động hoặc quá tải (' + r.status + '). Vui lòng thử lại sau giây lát!');
+        return r.json();
+      })
       .then(res => {
         if (!res.ok) {
           if (err) {
@@ -355,7 +358,10 @@ function showAuthModal(onSuccess) {
           fac: fac
         })
       })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok && r.status >= 500) throw new Error('Máy chủ đang khởi động hoặc quá tải (' + r.status + '). Vui lòng thử lại sau giây lát!');
+        return r.json();
+      })
       .then(res => {
         if (!res.ok) {
           if (err) {
