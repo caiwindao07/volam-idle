@@ -362,6 +362,7 @@ function dotGift() { const b = $('#giftBtn'); if (b) b.classList.toggle('on', gi
 
 /* ---------- giao dien: nut 🎁 ---------- */
 let giftTab = 'login';
+function openRebornTab() { giftTab = 'reborn'; giftModal(); }
 function refreshGift() { if (!$('#modal').classList.contains('hidden') && $('#giftTabs')) giftModal(); dotGift(); }
 function giftText(g) {
   const p = [];

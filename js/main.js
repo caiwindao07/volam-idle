@@ -165,6 +165,7 @@ function init() {
   const campBtn = $('#campBtn'); if (campBtn) campBtn.onclick = () => { uiSfx('click'); campModal(); };
   const mountBtn = $('#mountBtn'); if (mountBtn) mountBtn.onclick = () => { uiSfx('click'); mountModal(); };
   const bossBtn = $('#bossBtn'); if (bossBtn) bossBtn.onclick = () => { uiSfx('click'); bossModal(); };
+  const rebornBtn = $('#rebornBtn'); if (rebornBtn) rebornBtn.onclick = () => { if (S && S.fac) { uiSfx('click'); openRebornTab(); } else { if (typeof toast === 'function') toast('Chọn môn phái trước!'); } };
   $('#svPauseBtn').onclick = () => svPause();
   const ultBtn = $('#svUlt'); if (ultBtn) ultBtn.onclick = () => svCastUlt();
   const bombBtn = $('#svBomb'); if (bombBtn) bombBtn.onclick = () => svUseBomb();
