@@ -4,7 +4,7 @@
    Chong nhan doi: moi thao tac di chuyen mot lan, ghi ben "nguon" truoc roi moi ghi ben "dich"; ghi dich loi thi hoan lai nguon.
    Do vao kho giu nguyen trang thai (cuong hoa, Tim, Bach Kim, bo...); khi lay ra cap lai uid cua nhan vat hien tai. */
 'use strict';
-const STASH_KEY = 'jxidle_stash', STASH_MAX = 60, STASH_V = 1;
+const STASH_KEY = 'jxidle_stash', STASH_MAX = 200, STASH_V = 1;
 const stashNew = () => ({ v: STASH_V, id: Math.random().toString(36).slice(2, 10), rev: 0, gold: 0, items: [], mats: { ht: {}, ore: {}, shard: {}, misc: {} } });
 function stashClean(o) {                                  // lam sach noi dung doc tu may (mat khau / file co the hong)
   const st = stashNew(); if (!o || typeof o !== 'object') return st;

@@ -676,6 +676,15 @@ function renderInv() {
             <button class="jx-action-btn" id="btnExecuteMultiDismantle" style="width:100%;padding:3px 0;font-size:10.5px;font-weight:bold;background:#1e3a8a;border:1px solid #3b82f6;color:#93c5fd;display:none;">
               🔨 Rã Đồ Xanh đã chọn
             </button>
+            <button class="jx-action-btn" id="btnDismantleGold" style="width:100%;padding:3px 0;font-size:10.5px;font-weight:bold;background:#78350f;border:1px solid #fbbf24;color:#fde68a;">
+              💛 Phân rã → Mảnh Hoàng Kim (2~4/món)
+            </button>
+            <button class="jx-action-btn" id="btnCraftGold" style="width:100%;padding:3px 0;font-size:10.5px;font-weight:bold;background:#1a2e1a;border:1px solid #4ade80;color:#86efac;">
+              ✨ Ghép Mảnh HK → Đồ HK (10 mảnh/món)
+            </button>
+            <button class="jx-action-btn" id="btnStashSelected" style="width:100%;padding:3px 0;font-size:10.5px;font-weight:bold;background:#1e2a3a;border:1px solid #60a5fa;color:#93c5fd;">
+              📦 Gởi Kho Chung (max 200 ô)
+            </button>
           </div>
         </div>
 
@@ -751,6 +760,12 @@ function renderInv() {
   if (bExecSell) bExecSell.onclick = () => { if (window.ITEM_TOOLTIP) window.ITEM_TOOLTIP.executeSell(); };
   const bExecDis = q('#btnExecuteMultiDismantle');
   if (bExecDis) bExecDis.onclick = () => { if (window.EQUIP_SHARD) window.EQUIP_SHARD.dismantleSelected(); };
+  const bDisGold = q('#btnDismantleGold');
+  if (bDisGold) bDisGold.onclick = () => { if (window.ITEM_TOOLTIP) window.ITEM_TOOLTIP.dismantleGold(); };
+  const bCraftGold = q('#btnCraftGold');
+  if (bCraftGold) bCraftGold.onclick = () => { if (window.ITEM_TOOLTIP) window.ITEM_TOOLTIP.craftGold(); };
+  const bStashSel = q('#btnStashSelected');
+  if (bStashSel) bStashSel.onclick = () => { if (window.ITEM_TOOLTIP) window.ITEM_TOOLTIP.stashSelected(); };
 
   const bSw = q('#bSellWhite'); if (bSw) bSw.onclick = () => sellWhiteItems();
   const bDisAll = q('#bDisAllBlue'); if (bDisAll) bDisAll.onclick = () => { if (window.EQUIP_SHARD) window.EQUIP_SHARD.dismantleAll(); };

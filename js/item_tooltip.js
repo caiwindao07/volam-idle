@@ -394,16 +394,117 @@
 
   function selectAllInvItems() {
     if (!S || !S.inv) return;
+    // Tự bật chế độ chọn nhiều nếu chưa bật
+    if (!window.INV_SELECT_MODE) {
+      window.INV_SELECT_MODE = true;
+      if (typeof renderInv === 'function') renderInv();
+    }
     S.inv.forEach(it => {
-      if (it && !(typeof sellProtected === 'function' && sellProtected(it))) {
-        window.INV_SELECTED.add(it.uid);
-      }
+      if (it) window.INV_SELECTED.add(it.uid);
     });
     updateMultiSellStateUI();
   }
 
   function clearInvSelection() {
     window.INV_SELECTED.clear();
+    updateMultiSellStateUI();
+  }
+
+  // Phân rã đồ Hoàng Kim đã chọn → Mảnh Hoàng Kim (mỗi món 2~4 mảnh)
+  function dismantleSelectedGold() {
+    if (!S || !S.inv || !window.INV_SELECTED.size) {
+      if (typeof toast === 'function') toast('Chọn ít nhất 1 món đồ Hoàng Kim để phân rã!');
+      return;
+    }
+    const isGold = it => it && it.set && it.set.kind === 'gold';
+    const items = S.inv.filter(it => window.INV_SELECTED.has(it.uid) && isGold(it));
+    if (!items.length) {
+      if (typeof toast === 'function') toast('Không có đồ Hoàng Kim nào được chọn!');
+      return;
+    }
+    if (!confirm(`Phân rã ${items.length} đồ Hoàng Kim thành Mảnh Hoàng Kim? Không thể hoàn tác!`)) return;
+
+    let totalShards = 0;
+    items.forEach(it => {
+      const shards = 2 + Math.floor(Math.random() * 3); // 2~4 mảnh/món
+      totalShards += shards;
+      S.inv.splice(S.inv.indexOf(it), 1);
+    });
+
+    S.mats = S.mats || {};
+    S.mats.shard = S.mats.shard || {};
+    S.mats.shard.gold_shard = (S.mats.shard.gold_shard || 0) + totalShards;
+    if (typeof matAdd === 'function') matAdd('shard', 'gold_shard', 0); // sync
+
+    window.INV_SELECTED.clear();
+    window.invDirty = true;
+    if (typeof uiSfx === 'function') uiSfx('dropOther');
+    if (typeof toast === 'function') toast(`🔨 Phân rã ${items.length} Hoàng Kim → +${totalShards} Mảnh Hoàng Kim!`);
+    if (typeof save === 'function') save();
+    if (typeof renderInv === 'function') renderInv();
+  }
+
+  // Ghép Mảnh Hoàng Kim → đồ Hoàng Kim cấp cao (cần 10 mảnh)
+  function craftGoldFromShards() {
+    const SHARDS_NEEDED = 10;
+    if (!S) return;
+    S.mats = S.mats || {}; S.mats.shard = S.mats.shard || {};
+    const have = S.mats.shard.gold_shard || 0;
+    if (have < SHARDS_NEEDED) {
+      if (typeof toast === 'function') toast(`❌ Cần ${SHARDS_NEEDED} Mảnh Hoàng Kim (đang có: ${have})!`);
+      return;
+    }
+    if (!confirm(`Dùng ${SHARDS_NEEDED} Mảnh Hoàng Kim ghép 1 trang bị Hoàng Kim ngẫu nhiên?`)) return;
+
+    S.mats.shard.gold_shard -= SHARDS_NEEDED;
+
+    let newItem = null;
+    if (typeof makeSetItem === 'function' && typeof J !== 'undefined' && J.sets && J.sets.gold) {
+      const fid = (typeof FAC !== 'undefined' && FAC[S.fac]) ? FAC[S.fac].id : -1;
+      const reqOf = (r, id) => (r.req.find(q => q[0] === id) || [0, -1])[1];
+      let pool = J.sets.gold.filter(r => reqOf(r, 36) <= S.lvl + 10 && (typeof sexReqOk === 'function' ? sexReqOk(r.req) : true));
+      const mine = pool.filter(r => reqOf(r, 39) === fid);
+      if (mine.length) pool = mine;
+      if (pool.length) {
+        newItem = makeSetItem('gold', pool[Math.floor(Math.random() * pool.length)], 8);
+        if (newItem && typeof addItem === 'function') addItem(newItem, false, true);
+      }
+    }
+
+    window.invDirty = true;
+    if (typeof uiSfx === 'function') uiSfx('levelup');
+    if (typeof toast === 'function') {
+      toast(newItem ? `✨ Ghép thành công: ${newItem.n}!` : `✨ Ghép thành công 1 trang bị Hoàng Kim!`);
+    }
+    if (typeof save === 'function') save();
+    if (typeof renderInv === 'function') renderInv();
+  }
+
+  // Gởi tất cả đồ đã chọn vào kho chung
+  function stashSelectedItems() {
+    if (!S || !S.inv || !window.INV_SELECTED.size) {
+      if (typeof toast === 'function') toast('Chọn ít nhất 1 món đồ để gởi kho!');
+      return;
+    }
+    const items = S.inv.filter(it => window.INV_SELECTED.has(it.uid));
+    if (!items.length) { window.INV_SELECTED.clear(); updateMultiSellStateUI(); return; }
+
+    let success = 0, failFull = false;
+    for (const it of [...items]) {
+      if (typeof stashDeposit === 'function') {
+        const r = stashDeposit(it);
+        if (r && r.ok) { success++; window.INV_SELECTED.delete(it.uid); }
+        else if (r && r.msg && r.msg.includes('đầy')) { failFull = true; break; }
+      }
+    }
+
+    window.invDirty = true;
+    if (typeof uiSfx === 'function') uiSfx('dropOther');
+    let msg = `📦 Đã gởi ${success} món vào kho chung!`;
+    if (failFull) msg += ' (Kho đầy 200 ô)';
+    if (typeof toast === 'function') toast(msg);
+    if (typeof save === 'function') save();
+    if (typeof renderInv === 'function') renderInv();
     updateMultiSellStateUI();
   }
 
@@ -602,6 +703,9 @@
     selectAll: selectAllInvItems,
     clearSelection: clearInvSelection,
     executeSell: executeMultiSell,
+    dismantleGold: dismantleSelectedGold,
+    craftGold: craftGoldFromShards,
+    stashSelected: stashSelectedItems,
     updateUI: updateMultiSellStateUI
   };
 
