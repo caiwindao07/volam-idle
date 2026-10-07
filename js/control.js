@@ -115,6 +115,7 @@ function cyclePkMode(targetMode) {
     }));
   }
 
+  if (typeof updatePkModeBtn === 'function') updatePkModeBtn();
   if (typeof refresh === 'function') refresh();
   if (typeof save === 'function') save();
 }

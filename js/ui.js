@@ -486,7 +486,11 @@ function renderCharAttrib(targetEl) {
   const chkCharAe = el.querySelector('#chkCharAutoEquip');
   if (chkCharAe) chkCharAe.onchange = e => {
     S.autoEquip = e.target.checked;
-    if (S.auto) S.auto.autoEquip = S.autoEquip;
+    S.autoEquipExplicit = true;
+    if (S.auto) {
+      S.auto.autoEquip = S.autoEquip;
+      S.auto.autoEquipExplicit = true;
+    }
     save();
     toast(S.autoEquip ? 'Đã BẬT tự mặc đồ tốt hơn' : 'Đã TẮT tự mặc đồ tốt');
     renderCharAttrib(targetEl);
@@ -746,7 +750,11 @@ function renderInv() {
   const chkInvAe = q('#chkInvAutoEquip');
   if (chkInvAe) chkInvAe.onchange = e => {
     S.autoEquip = e.target.checked;
-    if (S.auto) S.auto.autoEquip = S.autoEquip;
+    S.autoEquipExplicit = true;
+    if (S.auto) {
+      S.auto.autoEquip = S.autoEquip;
+      S.auto.autoEquipExplicit = true;
+    }
     save();
     toast(S.autoEquip ? 'Đã BẬT tự mặc đồ tốt hơn' : 'Đã TẮT tự mặc đồ tốt');
   };
@@ -885,7 +893,11 @@ function renderMore() {
   m('#bImp').onclick = () => importFlow(m('#saveTxt').value, null);
   m('#cAuto').onchange = e => {
     S.autoEquip = e.target.checked;
-    if (S.auto) S.auto.autoEquip = S.autoEquip;
+    S.autoEquipExplicit = true;
+    if (S.auto) {
+      S.auto.autoEquip = S.autoEquip;
+      S.auto.autoEquipExplicit = true;
+    }
     save();
     toast(S.autoEquip ? 'Đã BẬT tự mặc đồ tốt hơn' : 'Đã TẮT tự mặc đồ tốt');
   };
@@ -1059,6 +1071,46 @@ function updateDots() {
   const ds = $('#dotSkill'); if (ds) ds.classList.toggle('on', S.skPts > 0 && FAC[S.fac] && FAC[S.fac].skills.some(id => canLearn(SK[id])));
 }
 
+function updatePkModeBtn() {
+  const pkMode = (typeof S !== 'undefined' && S && S.pkMode) || 'peace';
+  const btnPk = $('#btnPkMode');
+  if (btnPk) {
+    btnPk.className = `pk-mode-btn ${pkMode}`;
+    if (pkMode === 'peace') {
+      btnPk.innerHTML = '🛡️ Luyện công';
+      btnPk.title = '[Phím F9] Chế độ Luyện Công: Chỉ đánh quái, không đánh người';
+    } else if (pkMode === 'pk') {
+      btnPk.innerHTML = '⚔️ PK (F9)';
+      btnPk.title = '[Phím F9] Chế độ PK: Tuyên chiến, đánh người cùng bật PK';
+    } else if (pkMode === 'slaughter') {
+      btnPk.innerHTML = '🩸 Đồ sát';
+      btnPk.title = '[Phím F9] Chế độ Đồ Sát: Máu hồng, có thể tấn công bất kỳ ai!';
+    }
+  }
+  const pkChip = $('#pkChipBtn');
+  if (pkChip) {
+    if (pkMode === 'peace') {
+      pkChip.style.color = '#4ade80';
+      pkChip.innerHTML = '🛡️ Luyện công';
+    } else if (pkMode === 'pk') {
+      pkChip.style.color = '#fbbf24';
+      pkChip.innerHTML = '⚔️ PK (F9)';
+    } else if (pkMode === 'slaughter') {
+      pkChip.style.color = '#f472b6';
+      pkChip.innerHTML = '🩸 Đồ sát';
+    }
+  }
+  const hpB = $('#hpBar');
+  if (hpB) {
+    if (pkMode === 'slaughter') {
+      hpB.style.background = 'linear-gradient(180deg, #f472b6 0%, #ec4899 50%, #be185d 100%)';
+    } else {
+      hpB.style.background = '';
+    }
+  }
+}
+window.updatePkModeBtn = updatePkModeBtn;
+
 function updateTop() {
   if (!S || !S.fac) return;
   const P = R.P; if (!P) return;
@@ -1120,35 +1172,7 @@ function updateTop() {
   }
   const hpT = $('#hpTxt'); if (hpT) hpT.textContent = `${Math.round(R.life)} / ${Math.round(P.life)}`;
 
-  // PK Mode buttons indicator
-  const pkMode = (S && S.pkMode) || 'peace';
-  const btnPk = $('#btnPkMode');
-  if (btnPk) {
-    btnPk.className = `pk-mode-btn ${pkMode}`;
-    if (pkMode === 'peace') {
-      btnPk.innerHTML = '🛡️ Luyện công';
-      btnPk.title = '[Phím F9] Chế độ Luyện Công: Chỉ đánh quái, không đánh người';
-    } else if (pkMode === 'pk') {
-      btnPk.innerHTML = '⚔️ PK (F9)';
-      btnPk.title = '[Phím F9] Chế độ PK: Tuyên chiến, đánh người cùng bật PK';
-    } else if (pkMode === 'slaughter') {
-      btnPk.innerHTML = '🩸 Đồ sát';
-      btnPk.title = '[Phím F9] Chế độ Đồ Sát: Máu hồng, có thể tấn công bất kỳ ai!';
-    }
-  }
-  const pkChip = $('#pkChipBtn');
-  if (pkChip) {
-    if (pkMode === 'peace') {
-      pkChip.style.color = '#4ade80';
-      pkChip.innerHTML = '🛡️ Luyện công';
-    } else if (pkMode === 'pk') {
-      pkChip.style.color = '#fbbf24';
-      pkChip.innerHTML = '⚔️ PK (F9)';
-    } else if (pkMode === 'slaughter') {
-      pkChip.style.color = '#f472b6';
-      pkChip.innerHTML = '🩸 Đồ sát';
-    }
-  }
+  updatePkModeBtn();
 
   const mpPct = clamp((R.mana / P.mana) * 100, 0, 100);
   const mpB = $('#mpBar'); if (mpB) mpB.style.width = mpPct + '%';

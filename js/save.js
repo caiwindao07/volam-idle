@@ -39,7 +39,7 @@ function defaultAutoSettings() {
     autoPartyInvite: false,
     followLeader: false,
     autoLoot: true,
-    autoEquip: true,
+    autoEquip: false,
     autoSellWhite: true
   };
 }
@@ -47,7 +47,7 @@ function defaultAutoSettings() {
 function newSave() {
   return { v: SAVE_V, name: 'Tân thủ', fac: null, sex: 0, lvl: 1, xp: 0, gold: 0, attrPts: 0, attr: { str: 0, dex: 0, vit: 0, eng: 0 },
     skPts: 1, sk: {}, main: 0, eq: {}, inv: [], stage: 1, maxStage: 1, wave: 1, push: true, uid: 1, autoSell: 0,
-    kps: 0.2, totalKills: 0, autoEquip: true, autoPts: false, autoMap: true, diff: 1, autoForge: false, autoBuy: true, tut: 0, hints: {}, bakAt: 0, potOff: false, potUsed: 0, potStock: { life: {}, mana: {} }, ctrl: 'auto', joy: 'fixed', slots: [0, 0, 0, 0], snd: { on: true, vol: 0.7, music: true, mvol: 0.4 }, lootF: { minRar: 0, minLvl: 1, groups: [], series: [], auto: true }, ground: [], mats: { ht: {}, ore: {}, shard: {}, misc: {} }, auto: defaultAutoSettings(),
+    kps: 0.2, totalKills: 0, autoEquip: false, autoPts: false, autoMap: true, diff: 1, autoForge: false, autoBuy: true, tut: 0, hints: {}, bakAt: 0, potOff: false, potUsed: 0, potStock: { life: {}, mana: {} }, ctrl: 'auto', joy: 'fixed', slots: [0, 0, 0, 0], snd: { on: true, vol: 0.7, music: true, mvol: 0.4 }, lootF: { minRar: 0, minLvl: 1, groups: [], series: [], auto: true }, ground: [], mats: { ht: {}, ore: {}, shard: {}, misc: {} }, auto: defaultAutoSettings(),
     cloak: { tier: 1 },
     pkMode: 'peace',
     meridian: { qi: 1500, levels: { nham: 2, doc: 2, xung: 1, doi: 1, amduy: 1, duongduy: 1, amkieu: 1, duongkieu: 1 } },
@@ -126,7 +126,8 @@ function migrate(o) {
   const wrongSex = k => s.eq[k] && !sexReqOkFor(s.eq[k], s.sex);
   for (const k of Object.keys(s.eq || {})) if (!s.eq[k] || typeof s.eq[k] !== 'object') delete s.eq[k]; else if (wrongSex(k)) { if (s.inv.length < INV_MAX) s.inv.push(s.eq[k]); delete s.eq[k]; }   // trang phuc sai gioi tinh dang mac: thao ve tui
   s.auto = Object.assign(defaultAutoSettings(), o.auto || {});
-  s.autoEquip = o.autoEquip !== undefined ? !!o.autoEquip : (o.auto && o.auto.autoEquip !== undefined ? !!o.auto.autoEquip : true);
+  s.autoEquip = o.autoEquipExplicit ? !!o.autoEquip : false;
+  s.autoEquipExplicit = !!o.autoEquipExplicit;
   s.auto.autoEquip = s.autoEquip;
   s.cloak = o.cloak && typeof o.cloak === 'object' && o.cloak.tier ? o.cloak : { tier: 1 };
   s.pkMode = ['peace', 'pk', 'slaughter'].includes(o.pkMode) ? o.pkMode : 'peace';

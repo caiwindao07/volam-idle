@@ -462,6 +462,12 @@ function sendPartyTransfer(targetId) {
 
 function syncServerMobs(mobs) {
   if (!Array.isArray(mobs) || typeof makeEnemy !== 'function' || typeof R === 'undefined') return;
+  // Khi người chơi đang ở chế độ Vượt Ải (S.push), phó bản, tháp hoặc thành thị:
+  // Không đè danh sách quái riêng của người chơi để tránh hiện tượng quái ẩn hiện liên tục
+  if (typeof S !== 'undefined' && S && S.push) return;
+  if (typeof R !== 'undefined' && (R.tower || R.dungeon || R.town)) return;
+  if (!mobs.length && R.enemies && R.enemies.length > 0) return;
+
   const existingMap = new Map();
   for (const e of (R.enemies || [])) {
     if (e.isServerMob) existingMap.set(e.id, e);
@@ -488,11 +494,19 @@ function syncServerMobs(mobs) {
       newList.push(e);
     }
   }
+  // Giữ lại các boss đặc biệt (Boss Hoàng Kim / Boss thế giới / Trùm ải)
+  for (const e of (R.enemies || [])) {
+    if (!e.isServerMob && (e.goldBoss || e.stageBoss || e.worldBoss) && !e.dead) {
+      newList.push(e);
+    }
+  }
   R.enemies = newList;
 }
 
 function addServerMob(m) {
   if (!m || typeof makeEnemy !== 'function' || typeof R === 'undefined') return;
+  if (typeof S !== 'undefined' && S && S.push) return;
+  if (typeof R !== 'undefined' && (R.tower || R.dungeon || R.town)) return;
   if ((R.enemies || []).some(e => e.id === m.id)) return;
   let mx = m.x, my = m.y;
   if (typeof inWorld === 'function') {

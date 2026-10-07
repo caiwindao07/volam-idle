@@ -95,7 +95,7 @@ function spawnWave() {
   }
   if (!z) return;
 
-  if (R.serverMobsActive && typeof MP !== 'undefined' && MP.connected) {
+  if (!S.push && R.serverMobsActive && typeof MP !== 'undefined' && MP.connected) {
     if (typeof requestZoneMobs === 'function') requestZoneMobs();
     // Neu qua 2 giay ma server chua tra quai ve, tu dong sinh quai cuc bo de nguoi choi khong bi dung yen
     if (R.enemies && R.enemies.length > 0) return;

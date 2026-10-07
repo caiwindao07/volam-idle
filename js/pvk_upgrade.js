@@ -875,8 +875,8 @@ function pvkSelectFaction(key) {
     }
   }
 
-  // Tự động tìm và mặc trang bị tốt nhất phù hợp phái mới trong túi
-  if (typeof autoEquipAll === 'function') autoEquipAll(true);
+  // Tự động tìm và mặc trang bị tốt nhất phù hợp phái mới trong túi (nếu người chơi bật tự mặc đồ)
+  if (S && S.autoEquip && typeof autoEquipAll === 'function') autoEquipAll(true);
 
   closeModal(true);
   toast(`Gia nhập thành công môn phái: ${f.n}!`);

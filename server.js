@@ -173,7 +173,7 @@ function createInitialHeroState(heroName, fac) {
     autoSell: 0,
     kps: 0.2,
     totalKills: 0,
-    autoEquip: true,
+    autoEquip: false,
     autoPts: false,
     autoMap: true,
     diff: 1,

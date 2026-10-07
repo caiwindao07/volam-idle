@@ -232,13 +232,18 @@ function animLen(key, act) { const m = W.anim && W.anim[key] && W.anim[key][act]
 function drawAnim(key, act, dir, t, x, y, sc, alpha = 1) {
   const set = W.anim && W.anim[key]; if (!set) return false;
   const m = set[act] || set.st; if (!m) return false;
-  const im = img('img/a/' + m.f); if (!im.complete || !im.naturalWidth) return false;
+  const im = img('img/a/' + m.f); if (!im || !im.complete || !im.naturalWidth) return false;
   let fr = Math.floor(t * 1000 / m.ms); fr = ONCE[act] ? Math.min(fr, m.n - 1) : fr % m.n;
   const d = m.d >= 8 ? dir : Math.floor(dir * m.d / 8);
+  const sx = Math.min(fr * m.w, Math.max(0, im.naturalWidth - m.w));
+  const sy = Math.min(d * m.h, Math.max(0, im.naturalHeight - m.h));
+  const sw = Math.min(m.w, im.naturalWidth - sx);
+  const sh = Math.min(m.h, im.naturalHeight - sy);
+  if (sw <= 0 || sh <= 0) return false;
   CX.globalAlpha = alpha;
-  CX.drawImage(im, fr * m.w, d * m.h, m.w, m.h, x - m.ax * sc, y - m.ay * sc, m.w * sc, m.h * sc);
+  CX.drawImage(im, sx, sy, sw, sh, x - m.ax * sc, y - m.ay * sc, sw * sc, sh * sc);
   CX.globalAlpha = 1;
-  return m.h * sc;
+  return sh * sc;
 }
 function setAct(o, act) { if (o.act !== act) { o.act = act; o.actT = 0; } }
 function stepAct(o, dt, idle) { // het hoat anh mot lan (danh / trung don) -> ve trang thai nen
@@ -530,7 +535,23 @@ function draw(dt) {
         }
       }
 
-      const drawn = hw && hw.anim && drawAnim(hw.anim, H.act || 'st', H.dir || 0, H.actT || 0, H.x, heroY, HERO_SCALE);
+      let drawn = false;
+      if (hw && hw.anim && typeof drawAnim === 'function') {
+        drawn = drawAnim(hw.anim, H.act || 'st', H.dir || 0, H.actT || 0, H.x, heroY, HERO_SCALE);
+      }
+      if (!drawn && hw && typeof drawSprite === 'function' && typeof img === 'function') {
+        drawn = drawSprite(img(hw.img), hw.sz, H.x, heroY, 0.9, H.face < 0, R.deadT > 0 ? 0.35 : 1);
+      }
+      if (!drawn) {
+        c.fillStyle = (typeof SERIES_COL !== 'undefined' && typeof heroSeries === 'function') ? SERIES_COL[heroSeries()] : '#ffd700';
+        c.beginPath();
+        c.arc(H.x, heroY - 20, 14, 0, 7);
+        c.fill();
+        drawn = 30;
+      }
+      if (R.hurtT > 0) { c.fillStyle = '#f004'; c.beginPath(); c.arc(H.x, heroY - 24, 20, 0, 7); c.fill(); }
+
+      const heroLabelY = heroY - (drawn ? Math.min(drawn, 90) * 0.9 : 52) - 6;
       let heroBarCol = '#4fd04f';
       let heroTagPrefix = '';
       let heroTagCol = NAME_COL.hero;
@@ -543,7 +564,8 @@ function draw(dt) {
         heroTagPrefix = '[PK] ';
         heroTagCol = '#fbbf24';
       }
-      label(H.x, heroLabelY, `${heroTagPrefix}${S.name || (FAC[S.fac] && FAC[S.fac].n) || ''} · Lv${S.lvl}`, heroTagCol, 12, R.life / Math.max(1, R.P.life), heroBarCol);
+      const heroMaxLife = (R.P && R.P.life) ? Math.max(1, R.P.life) : 100;
+      label(H.x, heroLabelY, `${heroTagPrefix}${S.name || (FAC[S.fac] && FAC[S.fac].n) || ''} · Lv${S.lvl}`, heroTagCol, 12, R.life / heroMaxLife, heroBarCol);
 
       // Biển hiệu sạp hàng của bản thân (nếu đang bày bán)
       if (S.stall && S.stall.title) {
@@ -565,9 +587,6 @@ function draw(dt) {
         c.textBaseline = 'middle';
         c.fillText(stallText, H.x, badgeY + badgeH / 2);
       }
-
-      if (!drawn && !(hw && drawSprite(img(hw.img), hw.sz, H.x, heroY, 0.9, H.face < 0, R.deadT > 0 ? 0.35 : 1))) { c.fillStyle = SERIES_COL[heroSeries()]; c.beginPath(); c.arc(H.x, heroY - 20, 14, 0, 7); c.fill(); }
-      if (R.hurtT > 0) { c.fillStyle = '#f004'; c.beginPath(); c.arc(H.x, heroY - 24, 20, 0, 7); c.fill(); }
       continue;
     }
     const sc = e.cls === 'boss' ? 1.15 : e.cls === 'elite' ? 0.95 : 0.8;

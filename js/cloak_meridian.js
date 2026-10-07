@@ -330,7 +330,7 @@
         ctx.fill();
         ctx.stroke();
 
-        // Nếp gấp lụa và hoa văn lưng áo
+        // Nếp gấp lụa và hoa văn lưng áo (chỉ vẽ khi nhìn từ sau lưng)
         ctx.beginPath();
         ctx.moveTo(px, neckY + 2);
         ctx.quadraticCurveTo(px + driftX * 0.5, neckY + 22, midHemX, hemY);
@@ -338,62 +338,39 @@
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        if (tier >= 4) {
+        // Dải hoa văn tia sét (Kình Lôi) hoặc vảy rồng (Tiềm Long/Vô Song)
+        if (tier === 2) {
+          ctx.strokeStyle = '#7dd3fc';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(px - 3, neckY + 10);
+          ctx.lineTo(px - 1, neckY + 20);
+          ctx.lineTo(px - 4, neckY + 26);
+          ctx.lineTo(midHemX - 2, hemY - 3);
+          ctx.stroke();
+        } else if (tier >= 4) {
           ctx.fillStyle = '#fef08a';
           ctx.beginPath();
           ctx.arc(px + driftX * 0.3, neckY + 16, 2.5, 0, Math.PI * 2);
           ctx.arc(px + driftX * 0.3, neckY + 25, 2, 0, Math.PI * 2);
           ctx.fill();
         }
+
+        // Lớp lót nhung bên trong (cấp 5 & 6)
+        if (tier >= 5) {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(leftShoulderX + 2, neckY + 2);
+          ctx.quadraticCurveTo(px + driftX * 0.3, neckY + 20, midHemX, hemY + 2);
+          ctx.stroke();
+          ctx.restore();
+        }
       }
 
       ctx.shadowBlur = 0;
-
-      // 3. ĐƯỜNG VIỀN VẢI KIM TUYẾN THEO CẤP
-      ctx.strokeStyle = tier >= 4 ? '#fef08a' : (tier === 3 ? '#e9d5ff' : (tier === 2 ? '#bae6fd' : '#bbf7d0'));
-      ctx.lineWidth = tier >= 4 ? 1.6 : 1.2;
-      ctx.stroke();
-
-      // 4. LỚP LÓT NHUNG BÊN TRONG (CHO CẤP 5 & 6)
-      if (tier >= 5) {
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3, 3]);
-        ctx.beginPath();
-        ctx.moveTo(leftShoulderX + 2, neckY + 2);
-        ctx.quadraticCurveTo(px + driftX * 0.3, neckY + 20, midHemX, hemY + 2);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // 5. NẾP GẤP LỤA VÀ HOA VĂN GIỮA LƯNG (CAPE BACK CREASE & PATTERN)
-      ctx.beginPath();
-      ctx.moveTo(px, neckY + 2);
-      ctx.quadraticCurveTo(px + driftX * 0.5, neckY + 22, midHemX, hemY);
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Dải hoa văn tia sét (Kình Lôi) hoặc vảy rồng (Tiềm Long/Vô Song)
-      if (tier === 2) {
-        // Tia lôi điện phát sáng chạy dọc áo
-        ctx.strokeStyle = '#7dd3fc';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(px - 3, neckY + 10);
-        ctx.lineTo(px - 1, neckY + 20);
-        ctx.lineTo(px - 4, neckY + 26);
-        ctx.lineTo(midHemX - 2, hemY - 3);
-        ctx.stroke();
-      } else if (tier >= 4) {
-        // Hoa văn kim long thêu vàng giữa lưng
-        ctx.fillStyle = '#fef08a';
-        ctx.beginPath();
-        ctx.arc(px + driftX * 0.3, neckY + 16, 2.5, 0, Math.PI * 2);
-        ctx.arc(px + driftX * 0.3, neckY + 25, 2, 0, Math.PI * 2);
-        ctx.fill();
-      }
 
       // 6. NGÙ VAI KIM GIÁP & KHUYÊN CÀI ÁO (SHOULDER EPAULETS)
       const epauletR = 2.2 + tier * 0.4;

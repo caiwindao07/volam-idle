@@ -35,7 +35,7 @@ function initAutoSettings() {
       autoPartyInvite: false,
       followLeader: false,
       autoLoot: true,
-      autoEquip: true,
+      autoEquip: false,
       autoSellWhite: true
     };
   }
@@ -393,7 +393,7 @@ function renderAutoLootTab(cfg) {
       </div>
       <div class="auto-row">
         <label>
-          <input type="checkbox" id="chkAutoEquip" ${cfg.autoEquip !== false ? 'checked' : ''}>
+          <input type="checkbox" id="chkAutoEquip" ${cfg.autoEquip ? 'checked' : ''}>
           <span>Tự động thay mặc trang bị có chỉ số mạnh hơn</span>
         </label>
       </div>
@@ -467,10 +467,14 @@ function bindAutoEvents(box) {
   bindChk('#chkAutoFollowLeader', 'followLeader');
   const elEquip = box.querySelector('#chkAutoEquip');
   if (elEquip) {
-    elEquip.checked = S.autoEquip !== false;
+    elEquip.checked = !!S.autoEquip;
     elEquip.onchange = e => {
-      S.auto.autoEquip = e.target.checked;
       S.autoEquip = e.target.checked;
+      S.autoEquipExplicit = true;
+      if (S.auto) {
+        S.auto.autoEquip = S.autoEquip;
+        S.auto.autoEquipExplicit = true;
+      }
       save();
       toast(S.autoEquip ? 'Đã BẬT tự mặc đồ tốt hơn' : 'Đã TẮT tự mặc đồ tốt');
     };

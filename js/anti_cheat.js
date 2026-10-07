@@ -59,48 +59,11 @@
   window.addEventListener('contextmenu', blockContext, true);
   document.addEventListener('contextmenu', blockContext, true);
 
-  // 2. VÔ HIỆU HÓA TẤT CẢ CONSOLE ĐỂ KHÔNG THỂ CHẠY LỆNH HACK
-  const noop = function () {};
-  const consoleMethods = ['log', 'debug', 'info', 'warn', 'error', 'table', 'trace', 'dir', 'dirxml', 'group', 'groupCollapsed', 'groupEnd', 'time', 'timeEnd', 'profile', 'profileEnd', 'count'];
-  try {
-    for (const m of consoleMethods) {
-      if (window.console && typeof window.console[m] === 'function') {
-        window.console[m] = noop;
-      }
-    }
-    Object.freeze(window.console);
-  } catch (err) {}
+  // 2. GIỮ CONSOLE HOẠT ĐỘNG BÌNH THƯỜNG ĐỂ KHÔNG GÂY LỖI TRÌNH DUYỆT
+  // (Đã loại bỏ vô hiệu hóa console để hỗ trợ debug và tránh xung đột trình duyệt)
 
-  // 3. DEBUGGER TRAP KHI MỞ DEVTOOLS
-  // Khi người chơi mở F12 hoặc DevTools, trình duyệt sẽ bị vướng vào vòng lặp debugger liên tục
-  let devToolsDetected = false;
-  function triggerTrap() {
-    if (devToolsDetected) return;
-    devToolsDetected = true;
-    document.body.innerHTML = `
-      <div style="position:fixed;inset:0;background:#060402;color:#ef4444;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif;z-index:999999;text-align:center;padding:20px;">
-        <h2 style="font-size:24px;margin-bottom:12px;color:#ef4444;">⚠️ PHÁT HIỆN CÔNG CỤ NHÀ PHÁT TRIỂN (F12)</h2>
-        <p style="color:#ffd700;font-size:14px;max-width:500px;line-height:1.6;margin-bottom:20px;">
-          Hệ thống phát hiện bạn đang mở DevTools hoặc công cụ can thiệp Console. Để đảm bảo tính công bằng của thế giới Võ Lâm, phiên chơi đã bị tạm dừng.
-        </p>
-        <button onclick="location.reload()" style="background:#eab308;color:#000;font-weight:bold;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:14px;">
-          Tải lại trò chơi
-        </button>
-      </div>
-    `;
-  }
-
-  // Đo thời gian thực thi: Nếu DevTools mở, hàm Function("debugger") sẽ tốn hơn 100ms
-  setInterval(function () {
-    const startTime = performance.now();
-    try {
-      (function () {}['constructor']('debugger')());
-    } catch (e) {}
-    const endTime = performance.now();
-    if (endTime - startTime > 120) {
-      triggerTrap();
-    }
-  }, 3000);
+  // 3. DEVTOOLS PROTECTION
+  // Giữ chế độ bảo vệ nhẹ nhàng, không gây gián đoạn phiên người chơi bình thường
 
   // Kích thước cửa sổ kiểm tra (Window size check cho trường hợp DevTools dock vào màn hình)
   const threshold = 160;

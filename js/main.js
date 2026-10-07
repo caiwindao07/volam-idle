@@ -1,6 +1,6 @@
 /* ======================= KHOI DONG + VONG LAP ======================= */
 'use strict';
-let lastT = performance.now(), saveT = 0, uiT = 0, drawTog = false;
+let lastT = performance.now(), saveT = 0, uiT = 0, drawTog = false, _openFloat = null;
 /* Tuy chon hien thi luu rieng cho thiet bi (khong theo nhan vat): thu gon, co chu, tiet kiem pin */
 const UI_KEY = 'jxidle_ui', UI_FS = [0.9, 1, 1.15, 1.3], UI_FS_NAME = ['Nhỏ', 'Vừa', 'Lớn', 'Rất lớn'];
 let UIP = null;
