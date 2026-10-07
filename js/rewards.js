@@ -517,6 +517,7 @@ function giftBody(r) {
         <div>Tăng EXP vĩnh viễn: <b style="color:#4ade80;">+${Math.round(bo.xp * 100)}%</b></div>
         <div>Tăng Sát thương: <b style="color:#ef4444;">+${Math.round(bo.dmg * 100)}%</b></div>
         <div>Cấp hiện tại: <b style="color:${S.lvl >= REBORN_LV ? '#4ade80' : '#f87171'};">${S.lvl} / ${REBORN_LV}</b></div>
+        ${!full ? `<div style="grid-column:1/-1;">Chi phí lần ${nextN}: <b style="color:#ffd700;">${(nextN * 5000000).toLocaleString()} Vàng</b>${(S.gold||0) >= nextN*5000000 ? ' <span style="color:#4ade80;">✔ Đủ</span>' : ' <span style="color:#f87171;">✘ Chưa đủ</span>'}</div>` : ''}
       </div>
       ${!full ? `
         <div style="font-size:11px;color:#a39276;margin-bottom:8px;">
@@ -525,8 +526,8 @@ function giftBody(r) {
       ` : ''}
     </div>
     <div class="btnrow" style="text-align:center;">
-      <button class="btn red" id="gReborn" ${S.lvl >= REBORN_LV && !full ? '' : 'disabled'} style="font-size:13px;padding:8px 24px;">
-        ${full ? 'Đã Chuyển Sinh Tối Đa' : S.lvl >= REBORN_LV ? `⚡ Chuyển Sinh Lần ${nextN} Ngay` : `Chưa Đạt Cấp ${REBORN_LV} (${S.lvl}/${REBORN_LV})`}
+      <button class="btn red" id="gReborn" ${S.lvl >= REBORN_LV && !full && (S.gold||0) >= nextN*5000000 ? '' : 'disabled'} style="font-size:13px;padding:8px 24px;">
+        ${full ? 'Đã Chuyển Sinh Tối Đa' : S.lvl >= REBORN_LV ? `⚡ Chuyển Sinh Lần ${nextN} (${(nextN * 5000000).toLocaleString()} Vàng)` : `Chưa Đạt Cấp ${REBORN_LV} (${S.lvl}/${REBORN_LV})`}
       </button>
     </div>
   `;
