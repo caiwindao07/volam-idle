@@ -895,6 +895,7 @@ function renderInv() {
             <button class="jx-action-btn jx-btn-sell-bag" id="bSellAllGear" style="padding:4px 2px;font-size:10px;" title="Bán tất cả đồ trong rương">Bán Hết Đồ</button>
             <button class="jx-action-btn" style="color:#fb923c;padding:4px 2px;font-size:10px;" id="bSellAll" title="Bán các món không khớp bộ lọc">Bán Lọc Rác</button>
           </div>
+          <button class="jx-action-btn" style="width:100%;color:#fde047;border-color:#ca8a04;padding:4px 2px;font-size:10.5px;font-weight:bold;margin-top:3px;background:linear-gradient(180deg,#3d260f,#1f1307);" id="bDonKho" title="Dọn kho thông minh (Luyện Huyền Tinh, dọn đồ rác rương + kho chung)">🧹 Dọn Kho Thông Minh</button>
         </div>
 
         <!-- Nhóm 2: Quản Lý Túi & Ghép Mảnh -->
@@ -1010,6 +1011,7 @@ function renderInv() {
   };
   const bBest = q('#bBest'); if (bBest) bBest.onclick = () => { const n = autoEquipAll(); toast(n ? `Đã tự động mặc ${n} món tốt hơn!` : 'Đang mặc toàn bộ trang bị tốt nhất'); refresh(); };
   const bSellAll = q('#bSellAll'); if (bSellAll) bSellAll.onclick = () => { const r = sellUnmatched(); toast(`Bán ${r.n} món${r.kept ? ` (giữ ${r.kept} món bộ / Tím / Bạch Kim)` : ''}`); refresh(); };
+  const bDk = q('#bDonKho'); if (bDk) bDk.onclick = () => { if (typeof donKhoModal === 'function') donKhoModal(); };
   const bTogF = q('#bToggleFilter'); if (bTogF) bTogF.onclick = () => { invFilterOpen = !invFilterOpen; renderInv(); };
   const bSort = q('#bSort'); if (bSort) bSort.onclick = () => sortInventory();
   const bPick = q('#bPickAll'); if (bPick) bPick.onclick = () => pickupAllGround();

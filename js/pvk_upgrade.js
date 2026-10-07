@@ -675,6 +675,10 @@ function mountModal() {
       </div>
       <p class="desc" style="font-size:11px;margin-top:6px;">Bậc tiếp theo: <b style="color:${next.col}">${next.n}</b> (+${next.spd}% tốc, +${next.hpPct}% máu, +${next.allRes}% kháng, +${next.dmgPct}% st)</p>
     ` : `<p class="desc" style="color:#4fd04f;text-align:center;font-weight:bold;">Đã đạt Thần Thú Cực Phẩm Xích Long Câu!</p>`}
+    <div class="btnrow" style="margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;">
+      <button class="btn gold" onclick="if(typeof openStableModal==='function')openStableModal();">🐎 Mở Mã Trường & Bộ Sưu Tập Danh Mã</button>
+      <button class="btn" onclick="if(typeof horsePickModal==='function')horsePickModal();">📋 Chọn Ngựa Cưỡi</button>
+    </div>
   `);
 }
 

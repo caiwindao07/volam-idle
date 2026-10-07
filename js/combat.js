@@ -401,10 +401,14 @@ function heroAttack() {
       return 0.2;
     }
     R.moveTo = manual() ? null : t;
-    if (!manual() && d > 320 && S.auto && S.auto.autoMount !== false && !S.mounted && typeof toggleMountRide === 'function') {
-      if (S.mount && S.mount.tier) toggleMountRide();
+    if (!manual() && d > 320 && typeof autoRide === 'function' && autoRide() && typeof setMount === 'function') {
+      setMount(true, true);
     }
     return 0.05;
+  }
+  if (typeof rideForAttack === 'function') {
+    const rf = rideForAttack(a);
+    if (rf === true) return 0.25;
   }
   R.moveTo = null;
   R.mana -= a.cost;
@@ -427,6 +431,10 @@ function heroAttack() {
 function enemyAI(e, dt) {
   if (e.stun > 0) { e.stun -= dt; return; }
   if (e.poison > 0) { e.poison -= dt; e.hp -= e.poisonDmg * dt; }
+  if (e.home) {
+    if (typeof fieldLeash === 'function') fieldLeash(e);
+    if (typeof fieldIdle === 'function' && fieldIdle(e, dt)) return;
+  }
   const d = Math.hypot(H.x - e.x, H.y - e.y), reach = e.ranged ? 200 : e.r + 24;
   e.face = H.x >= e.x ? 1 : -1; e.dir = dirOf(H.x - e.x, H.y - e.y);
   // Nếu ở quá xa (ngoài 360px) và chưa bị đánh, không cần tính toán đuổi theo (tránh quái cả map ùa vào)
@@ -542,6 +550,8 @@ function tick(dt) {
   if (R.tpCd > 0) R.tpCd -= dt;
   if (R.potCd) { R.potCd.life = Math.max(0, R.potCd.life - dt); R.potCd.mana = Math.max(0, R.potCd.mana - dt); }
   goldBossTick(dt); petTick(dt);                                         // phan thuong: trum Hoang Kim, dong hanh (rewards.js)
+  if (typeof rideTick === 'function') rideTick(dt);
+  if (typeof skillSysTick === 'function') skillSysTick(dt);
   if (typeof COMPANION_SYSTEM !== 'undefined' && COMPANION_SYSTEM.update) COMPANION_SYSTEM.update(dt);
   if (typeof MAP_EXPANSION !== 'undefined' && MAP_EXPANSION.maintainCampMobs) MAP_EXPANSION.maintainCampMobs(dt);
   if (typeof campTick === 'function') campTick(dt);
@@ -551,6 +561,17 @@ function tick(dt) {
   if (typeof autoPartyInviteTick === 'function') autoPartyInviteTick(dt);
   if (typeof teambarFollowTick === 'function') teambarFollowTick(dt);
   if (R.town) { townTick(dt); return; }                                // trong thanh (Tho Dia Phu)
+  if (typeof boatOn === 'function' && boatOn()) {
+    if (R.dg) R.dg.t += dt;
+    if (!R.enemies.length) {
+      if (R.spawnT > 0) { R.spawnT -= dt; return; }
+      boatSpawn();
+      return;
+    }
+  }
+  if (typeof fieldMode === 'function' && fieldMode()) {
+    fieldTick(dt);
+  }
   R.activeT = (R.activeT || 0) + dt;                                    // thoi gian danh quai thuc (khong tinh tab an, trong thanh, Luyen Cong) -> S.kps
   const looting = updateGround(dt);                       // di nhat do (cham tay, hoac het quai + khop bo loc)
   if (!R.enemies.length) {
@@ -657,6 +678,9 @@ function onKill(e) {
     else if (e.goldBoss) vipAddExp(50, 'Hạ Trùm Hoàng Kim');
     else if (e.cls === 'boss' || e.stageBoss) vipAddExp(20, 'Hạ Boss');
   }
+  if (typeof horseOnKill === 'function') horseOnKill(e);
+  if (typeof sk9OnKill === 'function') sk9OnKill(e);
+  if (typeof fieldOnKill === 'function') fieldOnKill();
 
   // TIẾN TRÌNH VƯỢT ẢI (PUSH STAGE PROGRESSION)
   if (S.push) {
@@ -782,6 +806,7 @@ function gainXp(x) {
 }
 
 function waveCleared() {
+  if (typeof boatOn === 'function' && boatOn()) { boatCleared(); return; }
   if (R.dungeon) { dungeonClearedWave(); return; }
   if (R.tower) { towerCleared(); return; }
   heal(R.P.life * 0.15, true); R.mana = Math.min(R.P.mana, R.mana + R.P.mana * 0.2);
@@ -809,6 +834,7 @@ function heroDeath() {
   if (R.enemies.some(e => e.goldBoss && !e.dead)) RW().gbT = GB_RETRY;
   R.deadT = 3; R.life = 0; R.enemies = [];
   log('<span class="bad">Bạn đã trọng thương.</span>');
+  if (typeof boatOn === 'function' && boatOn()) { boatExit(); return; }
   if (R.dungeon) { dungeonFinish(false); return; }
   if (R.tower) { towerExit(true); return; }
 
@@ -829,6 +855,13 @@ function recalc() {
   R.P = calc();
   R.life = Math.min(R.P.life, R.P.life * fl); R.mana = Math.min(R.P.mana, R.P.mana * fm);
   R.power = power(R.P); R.dirty = false;
+  if (typeof sk9SyncBranch === 'function') sk9SyncBranch();
+  if (typeof heroLook === 'function') R.look = heroLook();
+  if (typeof jxSetup === 'function') {
+    const oldK = R.jx && R.jx.key;
+    R.jx = (typeof jxOn === 'function' && jxOn()) ? jxSetup() : null;
+    if (R.jx && R.jx.key !== oldK && typeof jxPreload === 'function') jxPreload();
+  }
 }
 
 /* ---------- mo phong nhanh (kiem thu, tien trinh offline) ---------- */

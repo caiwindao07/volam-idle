@@ -1174,9 +1174,19 @@ function draw(dt) {
         }
       }
 
+      if (typeof drawMount === 'function') drawMount(c, dt);
+      if (typeof drawAura === 'function') drawAura(c);
+
       let drawn = false;
       let dollH = 0;
-      if (typeof drawDoll === 'function') {
+      if (typeof drawHeroAnim === 'function') {
+        const jh = drawHeroAnim(H.animKey, H.act || 'st', H.dir || 0, H.actT || 0, H.x, H.y, HERO_SCALE, R.deadT > 0 ? 0.45 : 1);
+        if (jh > 0) {
+          drawn = jh;
+          dollH = jh;
+        }
+      }
+      if (!drawn && typeof drawDoll === 'function') {
         const dollScale = (typeof HERO_DOLL_SCALE !== 'undefined') ? HERO_DOLL_SCALE : (1 / 0.6);
         // Khi cưỡi ngựa: đẩy paperdoll lên để ngồi trên yên (y-20),
         // thân trước ngựa (drawHorseForeground) vẽ sau sẽ tự che chân
@@ -1204,10 +1214,11 @@ function draw(dt) {
         drawHeroEquipment(c, H.x, mountedDrawY, H.dir || 0, H.face || 1, H.act || 'st', H.actT || 0, S.eq, (typeof heroSeries === 'function' ? heroSeries() : 0));
       }
 
-      // Vẽ các chi tiết phía trước của Chiến Mã (cổ, đầu, bờm, yên, dây cương) phủ lên phía trước hiệp khách
-      if (S && S.mounted && typeof drawHorseForeground === 'function') {
+      // Vẽ các chi tiết phía trước của Chiến Mã (chỉ khi không dùng JX native sheet)
+      if (!R.jx && S && S.mounted && typeof drawHorseForeground === 'function') {
         drawHorseForeground(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, S.mount);
       }
+      if (typeof drawLookFx === 'function') drawLookFx(c, dt);
 
       if (R.hurtT > 0) { c.fillStyle = '#f004'; c.beginPath(); c.arc(H.x, heroY - 24, 20, 0, 7); c.fill(); }
 

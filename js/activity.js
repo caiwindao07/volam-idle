@@ -81,6 +81,12 @@
 
     // Bắt đầu chuyến đi thuyền Phong Lăng Độ (PLD)
     startPLD() {
+      if (typeof boatStart === 'function') {
+        const win = document.getElementById('fw-activity');
+        if (win) win.classList.add('hidden');
+        boatStart();
+        return;
+      }
       if ((S.gold || 0) < 400000) {
         if (typeof toast === 'function') toast('❌ Cần 400,000 Vàng tiền đò qua bến Phong Lăng Độ!');
         return;
