@@ -149,7 +149,7 @@ window.SIGNIN = (function () {
           ['allRes', 20]
         ]
       };
-      if (S.inv.length < 60) S.inv.push(gear);
+      if (S.inv.length < (typeof INV_MAX !== 'undefined' ? INV_MAX : 200)) S.inv.push(gear);
       if (typeof toast === 'function') toast('🎁 Đã nhận được Rương Mốc 7 Ngày!');
     } else if (milestoneId === 14) {
       if (S.skPts !== undefined) S.skPts += 5;

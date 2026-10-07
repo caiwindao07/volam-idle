@@ -610,8 +610,11 @@ function renderSkill() {
 }
 
 /* ---------- the: tui do ---------- */
-/* ---------- the: tui do ---------- */
 let invFilterOpen = false;
+let invPage = 0; // Trang rương hiện tại: 0 -> 4 (5 trang)
+const INV_PAGE_SIZE = 40; // Mỗi trang hiển thị 40 ô (grid 8x5 hoặc 10x4)
+const INV_PAGE_COUNT = 5; // 5 trang: 1 -> 5 (tổng 200 ô)
+
 function renderInv() {
   invDirty = false;
   const f = lootFilter();
@@ -620,7 +623,14 @@ function renderInv() {
   const grp = LOOT_ATTR_GROUPS.map(([n], i) => `<label class="chip2"><input type="checkbox" data-g="${i}" ${f.groups.includes(i) ? 'checked' : ''}>${n}</label>`).join('');
   const ser = SERIES.map((n, i) => `<label class="chip2" style="color:${SERIES_COL[i]}"><input type="checkbox" data-s="${i}" ${f.series.includes(i) ? 'checked' : ''}>${n}</label>`).join('');
   const onGround = R.ground.length, match = R.ground.filter(d => lootMatch(d.it)).length;
-  const emptyCellsCount = Math.max(0, INV_MAX - S.inv.length);
+
+  if (invPage < 0) invPage = 0;
+  if (invPage >= INV_PAGE_COUNT) invPage = INV_PAGE_COUNT - 1;
+
+  const startIdx = invPage * INV_PAGE_SIZE;
+  const endIdx = startIdx + INV_PAGE_SIZE;
+  const pageItems = S.inv.slice(startIdx, endIdx);
+  const emptyCellsCount = Math.max(0, INV_PAGE_SIZE - pageItems.length);
   const emptyCells = Array.from({ length: emptyCellsCount }, () => `<div class="it empty" style="border:1px dashed #3d2f1d;background:transparent;"></div>`).join('');
 
   const invEl = tabEl('inv'); if (!invEl) return;
@@ -628,16 +638,29 @@ function renderInv() {
   const luong = S.gold % 10000;
   const goldStr = van > 0 ? `${van} vạn ${fmt(luong)} lượng` : `${fmt(S.gold)} lượng`;
 
+  // HTML các nút chuyển trang 1 -> 5
+  const pageTabsHtml = Array.from({ length: INV_PAGE_COUNT }, (_, idx) => {
+    const isAct = idx === invPage;
+    const pageItemCount = S.inv.slice(idx * INV_PAGE_SIZE, (idx + 1) * INV_PAGE_SIZE).length;
+    return `<button class="inv-page-btn ${isAct ? 'active' : ''}" data-page="${idx}" style="flex:1;padding:4px 2px;font-size:11px;font-weight:bold;cursor:pointer;border-radius:4px;border:1px solid ${isAct ? '#ffd700' : '#5a4425'};background:${isAct ? 'linear-gradient(180deg,#854d0e,#582900)' : '#1e140a'};color:${isAct ? '#ffd700' : '#a39276'};" title="Rương trang ${idx + 1} (${pageItemCount}/${INV_PAGE_SIZE})">
+      Rương ${idx + 1} <small style="font-size:9.5px;opacity:${pageItemCount ? 1 : 0.6};color:${pageItemCount >= INV_PAGE_SIZE ? '#ef4444' : isAct ? '#fff' : '#888'};">(${pageItemCount}/${INV_PAGE_SIZE})</small>
+    </button>`;
+  }).join('');
+
   invEl.innerHTML = `
     <div class="jx-inv-layout-split">
-      <!-- CỘT TRÁI: RƯƠNG HÀNH TRANG 10x10 CHUẨN 100 Ô -->
+      <!-- CỘT TRÁI: RƯƠNG HÀNH TRANG 200 Ô VỚI 5 TRANG -->
       <div class="jx-inv-grid-col">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;padding:0 2px;">
-          <span style="font-size:11px;font-weight:700;color:#ffd700;">🎒 RƯƠNG ĐỒ (10x10)</span>
-          <span style="font-size:10.5px;color:#a39276;">Chứa: <b style="color:${S.inv.length >= INV_MAX ? '#ef4444' : '#4ade80'};">${S.inv.length}/${INV_MAX}</b></span>
+          <span style="font-size:11px;font-weight:700;color:#ffd700;">🎒 RƯƠNG HÀNH TRANG (TRANG ${invPage + 1}/5)</span>
+          <span style="font-size:10.5px;color:#a39276;">Tổng: <b style="color:${S.inv.length >= INV_MAX ? '#ef4444' : '#4ade80'};">${S.inv.length}/${INV_MAX}</b></span>
         </div>
-        <div class="jx-inv-grid-10">
-          ${S.inv.map(itemCell).join('')}
+        <!-- Thanh chọn trang Rương 1 -> 5 -->
+        <div class="inv-page-bar" style="display:flex;gap:4px;margin-bottom:6px;">
+          ${pageTabsHtml}
+        </div>
+        <div class="jx-inv-grid-10" style="grid-template-rows:repeat(4,34px);min-height:150px;">
+          ${pageItems.map(itemCell).join('')}
           ${emptyCells}
         </div>
       </div>
@@ -790,6 +813,14 @@ function renderInv() {
   const bMq = q('#bMarketQuick'); if (bMq) bMq.onclick = () => { if (typeof openMarketModal === 'function') openMarketModal(); };
   const bKq = q('#bKtcQuick'); if (bKq) bKq.onclick = () => { if (typeof openKtcModal === 'function') openKtcModal(); };
   const bClose = q('#bCloseInv'); if (bClose) bClose.onclick = () => toggleWin('inv');
+
+  qa('.inv-page-btn').forEach(btn => {
+    btn.onclick = () => {
+      invPage = +btn.dataset.page;
+      renderInv();
+    };
+  });
+
   qa('.it').forEach(b => {
     b.ondblclick = ev => {
       ev.preventDefault();

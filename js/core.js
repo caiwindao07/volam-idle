@@ -72,7 +72,7 @@ const DETAIL_SLOT = ['weapon', 'weapon', 'armor', 'ring', 'amulet', 'boot', 'bel
 const MELEE_KIND = ['sword', 'blade', 'wand', 'spear', 'hammer', 'dualblades'], RANGE_KIND = ['darts', 'knife', 'crossbow'];
 const AFFIX_KEY = { armor: 'armor', ring: 'ring', amulet: 'necklace', boot: 'boot', belt: 'belt', helm: 'helm', cuff: 'cuff', pendant: 'pendant' };
 const RAR_VI = ['Thường', 'Xanh', 'Vàng', 'Tím', 'Hoàng Kim', 'Bạch Kim'], RAR_COL = ['#e8e0d0', '#6aa8ff', '#ffd24a', '#c77bff', '#ffb52e', '#eaf6ff'];
-const INV_MAX = 100;
+const INV_MAX = 200;
 /* Cuong hoa trang bi (forge.js): moi cap +8% thuoc tinh goc (sat thuong vu khi, phong thu, khang goc...) */
 const ENH_MAX = 10, ENH_STEP = 0.08;
 const PLAT_STEP = 0.05;   // Bach Kim: moi cap thang +5% thuoc tinh goc (Uoc luong)

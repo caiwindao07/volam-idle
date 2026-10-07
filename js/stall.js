@@ -316,7 +316,8 @@ window.STALL = (function () {
       return;
     }
 
-    if (Array.isArray(S.inv) && S.inv.length >= 60) {
+    const maxCap = typeof INV_MAX !== 'undefined' ? INV_MAX : 200;
+    if (Array.isArray(S.inv) && S.inv.length >= maxCap) {
       if (typeof toast === 'function') toast('Hành trang đã đầy!');
       return;
     }
