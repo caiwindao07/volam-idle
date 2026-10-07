@@ -110,25 +110,34 @@ let mongoClient = null;
 let mongoDb = null;
 let mongoUsersCol = null;
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://volam:Mitom1304@cluster0.tpppret.mongodb.net/volam-idle?retryWrites=true&w=majority';
+const DEFAULT_MONGODB_URI = 'mongodb+srv://volam:Mitom1304@cluster0.tpppret.mongodb.net/volam-idle?retryWrites=true&w=majority';
 
 async function initMongo() {
-  if (!MONGODB_URI) return false;
-  try {
-    const { MongoClient } = require('mongodb');
-    mongoClient = new MongoClient(MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
-    });
-    await mongoClient.connect();
-    mongoDb = mongoClient.db('volam-idle');
-    mongoUsersCol = mongoDb.collection('users');
-    console.log('[DB] Đã kết nối thành công tới MongoDB Atlas trực tuyến!');
-    return true;
-  } catch (err) {
-    console.warn('[DB] Không thể kết nối MongoDB Atlas, sử dụng chế độ lưu cục bộ:', err.message);
-    mongoUsersCol = null;
-    return false;
+  const envUri = (process.env.MONGODB_URI || '').trim();
+  const urisToTry = [];
+  if (envUri) urisToTry.push({ uri: envUri, src: 'process.env.MONGODB_URI' });
+  if (!envUri || envUri !== DEFAULT_MONGODB_URI) {
+    urisToTry.push({ uri: DEFAULT_MONGODB_URI, src: 'mặc định (cấu hình sẵn)' });
   }
+
+  for (const item of urisToTry) {
+    try {
+      const { MongoClient } = require('mongodb');
+      const client = new MongoClient(item.uri, {
+        serverSelectionTimeoutMS: 5000,
+      });
+      await client.connect();
+      mongoClient = client;
+      mongoDb = mongoClient.db('volam-idle');
+      mongoUsersCol = mongoDb.collection('users');
+      console.log(`[DB] Đã kết nối thành công tới MongoDB Atlas trực tuyến (${item.src})!`);
+      return true;
+    } catch (err) {
+      console.warn(`[DB] Không thể kết nối MongoDB Atlas (${item.src}):`, err.message);
+    }
+  }
+  mongoUsersCol = null;
+  return false;
 }
 
 async function loadDb() {
