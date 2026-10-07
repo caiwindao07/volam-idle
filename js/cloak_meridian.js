@@ -48,10 +48,10 @@
     },
 
     getCloakInfo() {
-      if (!window.S) return CLOAK_TIERS[1];
-      if (!S.cloak || typeof S.cloak !== 'object') S.cloak = { tier: 1 };
-      const tier = Math.max(1, S.cloak.tier || 1);
-      return CLOAK_TIERS[tier] || CLOAK_TIERS[1];
+      if (!window.S) return null;
+      const tier = (S.cloak && typeof S.cloak.tier === 'number') ? S.cloak.tier : 0;
+      if (tier <= 0) return null;
+      return CLOAK_TIERS[tier] || null;
     },
 
     toggleWindow() {
@@ -126,14 +126,16 @@
     // Cộng chỉ số vào nhân vật (gọi từ stats.js)
     applyStats(P) {
       if (!window.S) return;
-      if (!S.cloak || typeof S.cloak !== 'object') S.cloak = { tier: 1 };
-      // 1. Chỉ số Phi Phong
-      const tier = Math.max(1, (S.cloak && S.cloak.tier !== undefined) ? S.cloak.tier : 1);
-      const c = CLOAK_TIERS[tier] || CLOAK_TIERS[1];
-      P.life += c.hp;
-      if (!P.res) P.res = { phys: 0, cold: 0, fire: 0, light: 0, poison: 0 };
-      for (const e of ELEM) P.res[e] = (P.res[e] || 0) + c.res;
-      P.crit = (P.crit || 0) + c.crit;
+      if (!S.cloak || typeof S.cloak !== 'object') S.cloak = { tier: 0 };
+      // 1. Chỉ số Phi Phong (Chỉ áp dụng khi đã thăng bậc tier >= 1)
+      const tier = (S.cloak && typeof S.cloak.tier === 'number') ? S.cloak.tier : 0;
+      if (tier > 0 && CLOAK_TIERS[tier]) {
+        const c = CLOAK_TIERS[tier];
+        P.life += c.hp;
+        if (!P.res) P.res = { phys: 0, cold: 0, fire: 0, light: 0, poison: 0 };
+        for (const e of ELEM) P.res[e] = (P.res[e] || 0) + c.res;
+        P.crit = (P.crit || 0) + c.crit;
+      }
 
       // 2. Chỉ số Kinh Mạch
       if (S && S.meridian && S.meridian.levels) {
@@ -414,8 +416,8 @@
       const win = document.getElementById('fw-cloak-meridian');
       if (!win) return;
 
-      const curTier = Math.max(1, (S && S.cloak && S.cloak.tier) ? S.cloak.tier : 1);
-      const curCloak = CLOAK_TIERS[curTier] || CLOAK_TIERS[1];
+      const curTier = (S && S.cloak && typeof S.cloak.tier === 'number') ? S.cloak.tier : 0;
+      const curCloak = curTier > 0 ? (CLOAK_TIERS[curTier] || CLOAK_TIERS[1]) : null;
       const nextCloak = CLOAK_TIERS[curTier + 1];
 
       const qi = (S.meridian && S.meridian.qi) ? S.meridian.qi : 0;
@@ -433,18 +435,18 @@
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
               <div>
                 <span style="font-size:11px;color:#aaa;">Phi Phong Hiện Tại:</span>
-                <b style="color:${curCloak.color};font-size:14px;display:block;">${curCloak.name} (Bậc ${curTier}/6)</b>
+                <b style="color:${curCloak ? curCloak.color : '#94a3b8'};font-size:14px;display:block;">${curCloak ? `${curCloak.name} (Bậc ${curTier}/6)` : 'Chưa Kích Hoạt Phi Phong'}</b>
               </div>
               ${nextCloak ? `
                 <button onclick="CLOAK_MERIDIAN.upgradeCloak()" style="background:#7d5e2a;border:1px solid #ffd700;color:#fff;padding:6px 14px;border-radius:4px;font-size:12px;font-weight:bold;cursor:pointer;">
-                  Thăng Bậc (${((curTier + 1) * 150000).toLocaleString()} Vàng)
+                  ${curTier === 0 ? `Kích Hoạt [${nextCloak.name}]` : 'Thăng Bậc'} (${((curTier + 1) * 150000).toLocaleString()} Vàng)
                 </button>
               ` : '<span style="color:#ffd700;font-weight:bold;">Đỉnh Phong</span>'}
             </div>
             <div style="font-size:11px;color:#ccc;display:flex;gap:12px;">
-              <span>• Sinh Lực: <b style="color:#66ccff;">+${curCloak.hp}</b></span>
-              <span>• Kháng Tất Cả: <b style="color:#ffd700;">+${curCloak.res}</b></span>
-              <span>• Bạo Kích: <b style="color:#ff9900;">+${curCloak.crit}%</b></span>
+              <span>• Sinh Lực: <b style="color:#66ccff;">+${curCloak ? curCloak.hp : 0}</b></span>
+              <span>• Kháng Tất Cả: <b style="color:#ffd700;">+${curCloak ? curCloak.res : 0}</b></span>
+              <span>• Bạo Kích: <b style="color:#ff9900;">+${curCloak ? curCloak.crit : 0}%</b></span>
             </div>
           </div>
 

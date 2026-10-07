@@ -129,21 +129,21 @@ function migrate(o) {
   s.autoEquip = o.autoEquipExplicit ? !!o.autoEquip : false;
   s.autoEquipExplicit = !!o.autoEquipExplicit;
   s.auto.autoEquip = s.autoEquip;
-  s.cloak = o.cloak && typeof o.cloak === 'object' && o.cloak.tier ? o.cloak : { tier: 1 };
+  s.cloak = o.cloak && typeof o.cloak === 'object' && o.cloak.tier !== undefined ? o.cloak : { tier: 0 };
   s.pkMode = ['peace', 'pk', 'slaughter'].includes(o.pkMode) ? o.pkMode : 'peace';
   s.meridian = o.meridian && typeof o.meridian === 'object' ? o.meridian : {
-    qi: 1500,
-    levels: { nham: 2, doc: 2, xung: 1, doi: 1, amduy: 1, duongduy: 1, amkieu: 1, duongkieu: 1 }
+    qi: 0,
+    levels: { nham: 0, doc: 0, xung: 0, doi: 0, amduy: 0, duongduy: 0, amkieu: 0, duongkieu: 0 }
   };
   s.companion = o.companion && typeof o.companion === 'object' && o.companion.list ? o.companion : {
-    activeId: 1,
+    activeId: null,
     selectedTabId: 1,
     list: {
-      1: { id: 1, lvl: 15, exp: 240, intimacy: 100, maxIntimacy: 100, star: 1, equips: { weapon: 1, helm: 1, armor: 1, gloves: 1, boots: 1 } },
-      2: { id: 2, lvl: 1, exp: 0, intimacy: 80, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
-      3: { id: 3, lvl: 1, exp: 0, intimacy: 80, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
-      4: { id: 4, lvl: 1, exp: 0, intimacy: 80, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
-      5: { id: 5, lvl: 1, exp: 0, intimacy: 80, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } }
+      1: { id: 1, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+      2: { id: 2, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+      3: { id: 3, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+      4: { id: 4, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } },
+      5: { id: 5, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } }
     }
   };
   s.v = SAVE_V;

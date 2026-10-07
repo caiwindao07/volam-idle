@@ -626,7 +626,7 @@ function sendProfile() {
     mounted: !!(S && S.mounted),
     mountTier: (S && S.mount ? S.mount.tier : 1),
     mount: (S && S.mount ? S.mount : null),
-    cloakTier: (S && S.cloak && S.cloak.tier ? S.cloak.tier : 1),
+    cloakTier: (S && S.cloak && S.cloak.tier ? S.cloak.tier : 0),
     pkMode: (S && S.pkMode) || 'peace'
   }));
 }
@@ -640,7 +640,7 @@ function sendMove(dt) {
 
   const curMounted = !!(S && S.mounted);
   const curMountTier = (S && S.mount ? S.mount.tier : 1);
-  const curCloakTier = (S && S.cloak && S.cloak.tier) ? S.cloak.tier : 1;
+  const curCloakTier = (S && S.cloak && S.cloak.tier) ? S.cloak.tier : 0;
   const curPkMode = (S && S.pkMode) || 'peace';
 
   const changed = Math.abs(H.x - MP.lastX) > 0.5 || Math.abs(H.y - MP.lastY) > 0.5 || H.act !== MP.lastAct || H.dir !== MP.lastDir || curMounted !== MP.lastMounted || curCloakTier !== MP.lastCloakTier || curPkMode !== MP.lastPkMode;

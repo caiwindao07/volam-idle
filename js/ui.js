@@ -337,10 +337,10 @@ function renderCharAttrib(targetEl) {
   const P = R.P, f = FAC[S.fac];
   if (!f) return;
   const vipLv = typeof vipLevel === 'function' ? vipLevel() : 1;
-  const curTier = Math.max(1, (S && S.cloak && S.cloak.tier) ? S.cloak.tier : 1);
-  const curCloak = (window.CLOAK_MERIDIAN && CLOAK_MERIDIAN.getCloakInfo)
-    ? CLOAK_MERIDIAN.getCloakInfo()
-    : { tier: curTier, name: `Phi Phong Bậc ${curTier}/6`, color: '#4ade80', res: 15, hp: 800, crit: 2 };
+  const curTier = (S && S.cloak && typeof S.cloak.tier === 'number') ? S.cloak.tier : 0;
+  const curCloak = curTier > 0 && window.CLOAK_MERIDIAN && CLOAK_MERIDIAN.getCloakInfo
+    ? (CLOAK_MERIDIAN.getCloakInfo() || { tier: curTier, name: `Phi Phong Bậc ${curTier}/6`, color: '#4ade80', res: 15, hp: 800, crit: 2 })
+    : (curTier > 0 ? { tier: curTier, name: `Phi Phong Bậc ${curTier}/6`, color: '#4ade80', res: 15, hp: 800, crit: 2 } : { tier: 0, name: 'Chưa có', color: '#94a3b8', res: 0, hp: 0, crit: 0 });
 
   const eqCell = (k, vi, slotCls) => {
     const it = S.eq[k];
@@ -1250,8 +1250,7 @@ function noticeModal() {
 }
 function startFaction(key) {
   const f = FAC[key]; S.fac = key; S.sex = ['emei', 'cuiyan'].includes(key) ? 1 : 0; S.name = f.n;
-  if (f.starter) { S.sk[f.starter] = 1; S.skPts = Math.max(0, S.skPts - 1); S.main = f.starter; }
-  starterGear();
+  S.sk = S.sk || {}; S.main = 0; S.slots = [0, 0, 0, 0];
   R.dirty = true; recalc(); R.life = R.P.life; R.mana = R.P.mana;
   loginCheck(); dotGift();                                  // ngay dau: co qua diem danh
   closeModal(true); save(); showTab('log');

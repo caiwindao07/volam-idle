@@ -171,8 +171,8 @@ function renderAutoCombatTab(cfg) {
   const atks = getFactionAttackSkills();
   let skillOptions = `<option value="0" ${!cfg.mainSkillId ? 'selected' : ''}>⚡ Tự động (Chiêu mạnh nhất đã học)</option>`;
   for (const sk of atks) {
-    const isLearned = (S.sk && S.sk[sk.id] > 0) || (sk.req <= 1);
-    if (!isLearned) continue; // Chỉ hiển thị chiêu thức đã học hoặc chiêu khởi đầu
+    const isLearned = !!(S.sk && S.sk[sk.id] > 0);
+    if (!isLearned) continue; // Chỉ hiển thị chiêu thức đã thực sự học điểm
     const sel = cfg.mainSkillId === sk.id ? 'selected' : '';
     skillOptions += `<option value="${sk.id}" ${sel}>⚔ ${sk.n} (${sk.cost || 0} MP)</option>`;
   }
@@ -238,8 +238,8 @@ function renderAutoBuffTab(cfg) {
   let buff2Opts = `<option value="0" ${!cfg.buffSkill2 ? 'selected' : ''}>-- Không dùng --</option>`;
 
   for (const sk of buffs) {
-    const isLearned = (S.sk && S.sk[sk.id] > 0) || (sk.req <= 1);
-    if (!isLearned) continue; // Chỉ hiển thị chiêu thức đã học hoặc chiêu khởi đầu
+    const isLearned = !!(S.sk && S.sk[sk.id] > 0);
+    if (!isLearned) continue; // Chỉ hiển thị chiêu thức đã thực sự học điểm
     buff1Opts += `<option value="${sk.id}" ${cfg.buffSkill1 === sk.id ? 'selected' : ''}>✨ ${sk.n}</option>`;
     buff2Opts += `<option value="${sk.id}" ${cfg.buffSkill2 === sk.id ? 'selected' : ''}>✨ ${sk.n}</option>`;
   }
@@ -632,7 +632,7 @@ function castAutoBuffs() {
   for (const skId of buffIds) {
     const sk = (typeof SK !== 'undefined') ? SK[skId] : null;
     if (!sk) continue;
-    const isLearned = (S.sk && S.sk[skId] > 0) || (sk.req <= 1);
+    const isLearned = !!(S.sk && S.sk[skId] > 0);
     if (!isLearned) continue;
 
     const action = makeBuffAction(sk);
