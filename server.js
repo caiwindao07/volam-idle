@@ -977,6 +977,9 @@ function getSafeMobSpawnPos(zoneId, nearX, nearY) {
   return safeList[Math.floor(Math.random() * safeList.length)];
 }
 
+const zoneMobs = new Map(); // zoneId -> Map(mobId -> mob)
+let nextMobId = 5000;
+
 function spawnOneMob(zoneId, nearX, nearY) {
   if (!JW || !JW.zones) return null;
   if (JW.town && (zoneId === JW.town.id || zoneId === 37)) return null;
