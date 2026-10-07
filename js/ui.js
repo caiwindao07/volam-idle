@@ -487,7 +487,24 @@ function renderCharAttrib(targetEl) {
   `;
 
   // Binds
-  el.querySelectorAll('.plus').forEach(b => b.onclick = () => { if (!S.attrPts) return; S.attrPts--; S.attr[b.dataset.a]++; if (typeof sendAllocAttr === 'function') sendAllocAttr(b.dataset.a, 1); R.dirty = true; recalc(); renderCharAttrib(targetEl); if (typeof save === 'function') save(); });
+  el.querySelectorAll('.plus').forEach(b => b.onclick = e => {
+    if (!S.attrPts) return;
+    const attrKey = b.dataset.a;
+    if (e.ctrlKey || e.metaKey) {
+      // Ctrl+Click: hien o nhap so diem
+      const inp = prompt(`Cộng nhanh ${ATTR_VI[attrKey] || attrKey}\nĐang có: ${S.attrPts} điểm tiềm năng\nNhập số điểm muốn cộng:`, String(S.attrPts));
+      if (inp === null) return;
+      const n = Math.min(Math.max(parseInt(inp, 10) || 0, 1), S.attrPts);
+      if (!n) return;
+      S.attrPts -= n; S.attr[attrKey] += n;
+      if (typeof sendAllocAttr === 'function') sendAllocAttr(attrKey, n);
+      toast(`Đã cộng ${n} điểm vào ${ATTR_VI[attrKey] || attrKey}`);
+    } else {
+      S.attrPts--; S.attr[attrKey]++;
+      if (typeof sendAllocAttr === 'function') sendAllocAttr(attrKey, 1);
+    }
+    R.dirty = true; recalc(); renderCharAttrib(targetEl); if (typeof save === 'function') save();
+  });
   el.querySelectorAll('.minus').forEach(b => b.onclick = () => { unspendAttr(b.dataset.a); renderCharAttrib(targetEl); });
   const bp = el.querySelector('#bPower'); if (bp) bp.onclick = powerModal;
   const bs = el.querySelector('#bSugAt'); if (bs) bs.onclick = suggestModal;
