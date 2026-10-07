@@ -102,13 +102,38 @@ try {
 }
 
 // ==========================================
-// 1. DATABASE & QUẢN LÝ TÀI KHOẢN
+// 1. DATABASE & QUẢN LÝ TÀI KHOẢN (JSON + MONGODB ATLAS)
 // ==========================================
 let db = { users: {} };
 const sessions = new Map(); // token -> username
+let mongoClient = null;
+let mongoDb = null;
+let mongoUsersCol = null;
 
-function loadDb() {
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://volam:Mitom1304@cluster0.tpppret.mongodb.net/volam-idle?retryWrites=true&w=majority';
+
+async function initMongo() {
+  if (!MONGODB_URI) return false;
   try {
+    const { MongoClient } = require('mongodb');
+    mongoClient = new MongoClient(MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+    });
+    await mongoClient.connect();
+    mongoDb = mongoClient.db('volam-idle');
+    mongoUsersCol = mongoDb.collection('users');
+    console.log('[DB] Đã kết nối thành công tới MongoDB Atlas trực tuyến!');
+    return true;
+  } catch (err) {
+    console.warn('[DB] Không thể kết nối MongoDB Atlas, sử dụng chế độ lưu cục bộ:', err.message);
+    mongoUsersCol = null;
+    return false;
+  }
+}
+
+async function loadDb() {
+  try {
+    // 1. Thử nạp từ file cục bộ trước nếu có
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
@@ -116,17 +141,80 @@ function loadDb() {
       const raw = fs.readFileSync(DB_FILE, 'utf8');
       db = JSON.parse(raw);
       if (!db.users) db.users = {};
-      for (const uKey in db.users) {
-        if (db.users[uKey].token) {
-          sessions.set(db.users[uKey].token, uKey);
+    }
+
+    // 2. Nếu kết nối được MongoDB, nạp và hợp nhất dữ liệu từ Mongo Atlas
+    const connected = await initMongo();
+    if (connected && mongoUsersCol) {
+      const userDocs = await mongoUsersCol.find({}).toArray();
+      if (userDocs && userDocs.length > 0) {
+        for (const doc of userDocs) {
+          const uKey = doc.username;
+          if (uKey) {
+            db.users[uKey] = {
+              username: doc.username,
+              passwordHash: doc.passwordHash,
+              createdAt: doc.createdAt,
+              lastLogin: doc.lastLogin,
+              state: doc.state,
+              token: doc.token
+            };
+          }
         }
+        console.log(`[DB] Đã đồng bộ ${userDocs.length} tài khoản từ MongoDB Atlas.`);
+      } else if (Object.keys(db.users).length > 0) {
+        // Nếu Mongo đang trống nhưng local có data, push lên Mongo
+        const docs = Object.values(db.users);
+        for (const doc of docs) {
+          await mongoUsersCol.updateOne({ username: doc.username }, { $set: doc }, { upsert: true });
+        }
+        console.log(`[DB] Đã tải lên ban đầu ${docs.length} tài khoản lên MongoDB Atlas.`);
       }
-    } else {
-      saveDb();
+    }
+
+    for (const uKey in db.users) {
+      if (db.users[uKey].token) {
+        sessions.set(db.users[uKey].token, uKey);
+      }
     }
     console.log(`[DB] Đã nạp thành công database. Hiện có ${Object.keys(db.users).length} tài khoản.`);
   } catch (e) {
     console.error('[DB] Lỗi load database:', e);
+  }
+}
+
+let _isSavingMongo = false;
+let _pendingMongoSave = false;
+
+async function syncToMongo() {
+  if (!mongoUsersCol || _isSavingMongo) {
+    if (!mongoUsersCol) return;
+    _pendingMongoSave = true;
+    return;
+  }
+  _isSavingMongo = true;
+  try {
+    const ops = [];
+    for (const [username, userData] of Object.entries(db.users)) {
+      ops.push({
+        updateOne: {
+          filter: { username },
+          update: { $set: userData },
+          upsert: true
+        }
+      });
+    }
+    if (ops.length > 0) {
+      await mongoUsersCol.bulkWrite(ops);
+    }
+  } catch (err) {
+    console.error('[DB] Lỗi khi lưu vào MongoDB Atlas:', err.message);
+  } finally {
+    _isSavingMongo = false;
+    if (_pendingMongoSave) {
+      _pendingMongoSave = false;
+      syncToMongo();
+    }
   }
 }
 
@@ -137,7 +225,12 @@ function saveDb() {
     }
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
   } catch (e) {
-    console.error('[DB] Lỗi ghi database:', e);
+    console.error('[DB] Lỗi ghi database cục bộ:', e);
+  }
+
+  // Tự động ghi đồng bộ lên MongoDB online
+  if (mongoUsersCol) {
+    syncToMongo();
   }
 }
 
