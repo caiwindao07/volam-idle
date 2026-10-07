@@ -687,61 +687,75 @@ function renderInv() {
             <span style="font-size:10px;color:#cbd5e1;">Đã chọn: <b id="lblSelCount" style="color:#4ade80;">${window.INV_SELECTED ? window.INV_SELECTED.size : 0}</b></span>
           </div>
           <div id="selActionRow" style="display:${window.INV_SELECT_MODE ? 'flex' : 'none'};flex-direction:column;gap:3px;margin-top:4px;">
-            <div style="display:flex;gap:3px;">
-              <button class="jx-action-btn" id="btnSelAllWhite" style="flex:1;font-size:9px;padding:2px 1px;" title="Chọn toàn bộ đồ Trắng">Đồ Trắng</button>
-              <button class="jx-action-btn" id="btnSelAllBlue" style="flex:1;font-size:9px;padding:2px 1px;color:#60a5fa;" title="Chọn toàn bộ Đồ Xanh">Đồ Xanh</button>
-              <button class="jx-action-btn" id="btnSelAll" style="flex:1;font-size:9px;padding:2px 1px;" title="Chọn toàn bộ đồ trong rương">Tất Cả</button>
-              <button class="jx-action-btn" id="btnUnselAll" style="flex:1;font-size:9px;padding:2px 1px;" title="Bỏ chọn">Bỏ Chọn</button>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;">
+              <button class="jx-action-btn" id="btnSelAllWhite" style="padding:2px 1px;font-size:9px;" title="Chọn toàn bộ đồ Trắng">Trắng</button>
+              <button class="jx-action-btn" id="btnSelAllBlue" style="padding:2px 1px;font-size:9px;color:#60a5fa;" title="Chọn toàn bộ Đồ Xanh">Xanh</button>
+              <button class="jx-action-btn" id="btnSelAll" style="padding:2px 1px;font-size:9px;" title="Chọn toàn bộ đồ trong rương">Tất Cả</button>
+              <button class="jx-action-btn" id="btnUnselAll" style="padding:2px 1px;font-size:9px;" title="Bỏ chọn">Bỏ Chọn</button>
             </div>
-            <button class="jx-action-btn" id="btnExecuteMultiSell" style="width:100%;padding:4px 0;font-size:11px;font-weight:bold;background:${window.INV_SELECTED && window.INV_SELECTED.size > 0 ? '#b91c1c' : '#450a0a'};border:1px solid #ef4444;color:#fff;" ${window.INV_SELECTED && window.INV_SELECTED.size > 0 ? '' : 'disabled'}>
-              🗑️ Bán ${window.INV_SELECTED ? window.INV_SELECTED.size : 0} món
+            <button class="jx-action-btn" id="btnExecuteMultiSell" style="width:100%;padding:4px 0;font-size:10.5px;font-weight:bold;background:${window.INV_SELECTED && window.INV_SELECTED.size > 0 ? '#b91c1c' : '#450a0a'};border:1px solid #ef4444;color:#fff;" ${window.INV_SELECTED && window.INV_SELECTED.size > 0 ? '' : 'disabled'}>
+              🗑️ Bán (${window.INV_SELECTED ? window.INV_SELECTED.size : 0})
             </button>
-            <button class="jx-action-btn" id="btnExecuteMultiDismantle" style="width:100%;padding:3px 0;font-size:10.5px;font-weight:bold;background:#1e3a8a;border:1px solid #3b82f6;color:#93c5fd;display:none;">
-              🔨 Rã Đồ Xanh đã chọn
+            <button class="jx-action-btn" id="btnExecuteMultiDismantle" style="width:100%;padding:3px 0;font-size:10px;font-weight:bold;background:#1e3a8a;border:1px solid #3b82f6;color:#93c5fd;display:none;">
+              🔨 Rã Đồ Xanh
             </button>
-            <button class="jx-action-btn" id="btnDismantleGold" style="width:100%;padding:3px 0;font-size:10.5px;font-weight:bold;background:#78350f;border:1px solid #fbbf24;color:#fde68a;">
-              💛 Phân rã → Mảnh Hoàng Kim (2~4/món)
-            </button>
-            <button class="jx-action-btn" id="btnCraftGold" style="width:100%;padding:3px 0;font-size:10.5px;font-weight:bold;background:#1a2e1a;border:1px solid #4ade80;color:#86efac;">
-              ✨ Ghép Mảnh HK → Đồ HK (10 mảnh/món)
-            </button>
-            <button class="jx-action-btn" id="btnStashSelected" style="width:100%;padding:3px 0;font-size:10.5px;font-weight:bold;background:#1e2a3a;border:1px solid #60a5fa;color:#93c5fd;">
-              📦 Gởi Kho Chung (max 200 ô)
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+              <button class="jx-action-btn" id="btnDismantleGold" style="padding:3px 2px;font-size:9.5px;font-weight:bold;background:#78350f;border:1px solid #fbbf24;color:#fde68a;" title="Phân rã đồ Hoàng Kim đã chọn thành 2~4 mảnh/món">
+                💛 Rã Mảnh HK
+              </button>
+              <button class="jx-action-btn" id="btnCraftGold" style="padding:3px 2px;font-size:9.5px;font-weight:bold;background:#1a2e1a;border:1px solid #4ade80;color:#86efac;" title="Dùng 10 Mảnh HK ghép trang bị HK">
+                ✨ Ghép Đồ HK
+              </button>
+            </div>
+            <button class="jx-action-btn" id="btnStashSelected" style="width:100%;padding:3px 0;font-size:10px;font-weight:bold;background:#1e2a3a;border:1px solid #60a5fa;color:#93c5fd;" title="Gởi các món đã chọn vào Kho chung">
+              📦 Gởi Vào Kho Chung
             </button>
           </div>
         </div>
 
-        <!-- Nhóm 1: Bán Nhanh & Rã Đồ Xanh -->
+        <!-- Nhóm 1: Bán Nhanh & Rã Đồ -->
         <div class="jx-ctrl-group">
           <div class="jx-ctrl-group-title">Bán & Rã Đồ</div>
-          <button class="jx-action-btn jx-btn-sell-white" id="bSellWhite" title="Bán toàn bộ trang bị phẩm chất Trắng (thường)">Bán Hết Đồ Trắng</button>
-          <button class="jx-action-btn" style="color:#60a5fa;border-color:#2563eb;" id="bDisAllBlue" title="Rã toàn bộ đồ xanh trong rương thành Mảnh Trang Bị (ngẫu nhiên 1-3 mảnh/món)">🔨 Rã Hết Đồ Xanh (+Mảnh)</button>
-          <button class="jx-action-btn jx-btn-sell-bag" id="bSellAllGear" title="Bán tất cả trang bị trong rương (giữ nguyên trang bị đang mặc trên người)">Bán Hết Đồ Trong Rương</button>
-          <button class="jx-action-btn" style="color:#fb923c;" id="bSellAll" title="Bán các món trang bị không khớp bộ lọc">Bán Đồ Lọc Rác</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+            <button class="jx-action-btn jx-btn-sell-white" id="bSellWhite" style="padding:4px 2px;font-size:10px;" title="Bán toàn bộ đồ Trắng">Bán Đồ Trắng</button>
+            <button class="jx-action-btn" style="color:#60a5fa;border-color:#2563eb;padding:4px 2px;font-size:10px;" id="bDisAllBlue" title="Rã toàn bộ đồ xanh trong rương thành Mảnh Trang Bị">🔨 Rã Đồ Xanh</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+            <button class="jx-action-btn jx-btn-sell-bag" id="bSellAllGear" style="padding:4px 2px;font-size:10px;" title="Bán tất cả đồ trong rương">Bán Hết Đồ</button>
+            <button class="jx-action-btn" style="color:#fb923c;padding:4px 2px;font-size:10px;" id="bSellAll" title="Bán các món không khớp bộ lọc">Bán Lọc Rác</button>
+          </div>
         </div>
 
-        <!-- Nhóm 2: Thao tác túi & Lò Ghép Mảnh -->
+        <!-- Nhóm 2: Quản Lý Túi & Ghép Mảnh -->
         <div class="jx-ctrl-group">
           <div class="jx-ctrl-group-title" style="display:flex;justify-content:space-between;align-items:center;">
             <span>Quản Lý Túi</span>
-            <label style="display:flex;align-items:center;gap:3px;cursor:pointer;font-size:9.5px;color:#cbd5e1;text-transform:none;font-weight:normal;" title="Bật hoặc Tắt tự động mặc trang bị tốt hơn">
-              <input type="checkbox" id="chkInvAutoEquip" ${S.autoEquip ? 'checked' : ''} class="accent-amber-500"> Tự mặc đồ tốt
+            <label style="display:flex;align-items:center;gap:3px;cursor:pointer;font-size:9.5px;color:#cbd5e1;text-transform:none;font-weight:normal;" title="Bật/Tắt tự động mặc trang bị tốt hơn">
+              <input type="checkbox" id="chkInvAutoEquip" ${S.autoEquip ? 'checked' : ''} class="accent-amber-500"> Tự mặc
             </label>
           </div>
-          <button class="jx-action-btn gold" id="bOpenShardHub" title="Mở Lò Rã & Ghép Mảnh Trang Bị">💠 Ghép Mảnh Đồ</button>
-          <button class="jx-action-btn gold" id="bBest" title="Tự động mặc trang bị tốt nhất trong rương">Mặc Đồ Tốt</button>
-          <button class="jx-action-btn" id="bSort" title="Sắp xếp đồ theo phẩm chất từ cao đến thấp">Sắp Xếp</button>
-          <button class="jx-action-btn" id="bPickAll" title="Nhặt toàn bộ đồ khớp bộ lọc đang rơi trên đất">Nhặt Đất (${onGround})</button>
-          <button class="jx-action-btn" id="bStash" title="Mở rương thủ kho chung">Kho Chung</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+            <button class="jx-action-btn gold" id="bOpenShardHub" style="padding:4px 2px;font-size:10px;" title="Mở Lò Rã & Ghép Mảnh">💠 Ghép Mảnh</button>
+            <button class="jx-action-btn gold" id="bBest" style="padding:4px 2px;font-size:10px;" title="Tự động mặc đồ tốt nhất">Mặc Đồ Tốt</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+            <button class="jx-action-btn" id="bSort" style="padding:4px 2px;font-size:10px;" title="Sắp xếp đồ theo phẩm chất">Sắp Xếp</button>
+            <button class="jx-action-btn" id="bPickAll" style="padding:4px 2px;font-size:10px;" title="Nhặt toàn bộ đồ trên đất">Nhặt Đất (${onGround})</button>
+          </div>
+          <button class="jx-action-btn" id="bStash" style="padding:4px 2px;font-size:10.5px;" title="Mở rương thủ kho chung">📦 Kho Chung</button>
         </div>
 
-        <!-- Nhóm 3: Tiện ích giang hồ -->
+        <!-- Nhóm 3: Tiện Ích -->
         <div class="jx-ctrl-group">
           <div class="jx-ctrl-group-title">Tiện Ích</div>
-          <button class="jx-action-btn ${invFilterOpen ? 'gold' : ''}" id="bToggleFilter">Lọc Đồ ${invFilterOpen ? '▲' : '▼'}</button>
-          <button class="jx-action-btn" id="bMarketQuick" style="color:#fde047;">Chợ Đen</button>
-          <button class="jx-action-btn" id="bKtcQuick" style="color:#67e8f9;">Kỳ Trân Các</button>
-          <button class="jx-action-btn" id="bCloseInv" style="color:#ef4444;">Đóng</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+            <button class="jx-action-btn ${invFilterOpen ? 'gold' : ''}" id="bToggleFilter" style="padding:4px 2px;font-size:10px;">Lọc Đồ ${invFilterOpen ? '▲' : '▼'}</button>
+            <button class="jx-action-btn" id="bMarketQuick" style="color:#fde047;padding:4px 2px;font-size:10px;">Chợ Đen</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+            <button class="jx-action-btn" id="bKtcQuick" style="color:#67e8f9;padding:4px 2px;font-size:10px;">Kỳ Trân</button>
+            <button class="jx-action-btn" id="bCloseInv" style="color:#ef4444;padding:4px 2px;font-size:10px;">Đóng</button>
+          </div>
         </div>
       </div>
     </div>
