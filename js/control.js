@@ -383,10 +383,10 @@ function bindControls() {
   const tapBtn = (el, fn) => el && el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); fn(); });
   tapBtn($('#bHp'), () => drinkNow('life')); tapBtn($('#bMp'), () => drinkNow('mana'));
   tapBtn($('#bTp'), () => R.town ? backFromTown() : goTown());
-  $('#ctrlBtn').onclick = () => setCtrl(manual() ? 'auto' : 'manual');
+  const bCtrl = $('#ctrlBtn'); if (bCtrl) bCtrl.onclick = () => setCtrl(manual() ? 'auto' : 'manual');
   const pkBtn = $('#btnPkMode'); if (pkBtn) pkBtn.onclick = () => cyclePkMode();
   const pkChip = $('#pkChipBtn'); if (pkChip) pkChip.onclick = () => cyclePkMode();
-  $('#inBtn').onclick = () => { S.inputMode = mouseMode() ? 'joy' : 'mouse'; INPUT.target = null; refreshInputBtn(); save(); toast(mouseMode() ? 'Điều khiển bằng chuột: bấm hoặc giữ chuột để đi' : 'Điều khiển bằng joystick: kéo ở góc trái dưới'); };
+  const bIn = $('#inBtn'); if (bIn) bIn.onclick = () => { S.inputMode = mouseMode() ? 'joy' : 'mouse'; INPUT.target = null; refreshInputBtn(); save(); toast(mouseMode() ? 'Điều khiển bằng chuột: bấm hoặc giữ chuột để đi' : 'Điều khiển bằng joystick: kéo ở góc trái dưới'); };
   refreshInputBtn(); window.addEventListener('resize', refreshInputBtn);
   $('#rotBtn').onclick = () => toggleRot();
   refreshRotBtn();

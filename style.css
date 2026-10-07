@@ -171,6 +171,186 @@ select,textarea{background:#0b100e;color:var(--text);border:1px solid var(--line
 .tag{font-size:10px;padding:1px 6px;border-radius:3px;background:#2b2014;color:#c89b3c;border:1px solid #5a4425}
 .tag.attack{background:#451a14;color:#ff9a70;border-color:#7d3024}
 
+/* Skill Grid Box (Chuẩn mẫu phác thảo VLTK PC) */
+.sk-grid-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  background: #110d08;
+  color: #cbd5e1;
+}
+
+.sk-subbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  background: rgba(26, 20, 13, 0.95);
+  border: 1px solid #3d2f1d;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.sk-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 56px);
+  gap: 5px;
+  justify-content: center;
+  padding: 8px 6px;
+  background: radial-gradient(circle at center, #1c150e 0%, #0c0906 100%);
+  border: 1.5px solid #5a4425;
+  border-radius: 6px;
+  max-height: 58vh;
+  overflow-y: auto;
+}
+
+.sk-cell {
+  position: relative;
+  width: 56px;
+  height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 4px;
+  background: #17110a;
+  border: 1.5px solid #4a361e;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.sk-cell:hover {
+  border-color: #ffd700;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.45);
+  transform: translateY(-1px);
+  z-index: 2;
+}
+
+.sk-cell.empty {
+  cursor: default;
+  background: rgba(16, 12, 8, 0.4);
+  border: 1px dashed #302315;
+  box-shadow: none;
+  transform: none;
+}
+
+.sk-cell.lock {
+  filter: grayscale(0.7) brightness(0.65);
+}
+
+.sk-cell.main {
+  border-color: #ffd700;
+  box-shadow: inset 0 0 6px rgba(255, 215, 0, 0.4), 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+.sk-cell .sic {
+  width: 38px;
+  height: 38px;
+  border-radius: 4px;
+  border: 1px solid #7d5e2d;
+  background: #000;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.sk-cell .sk-lvl {
+  font-size: 10px;
+  font-weight: bold;
+  color: #ffd700;
+  margin-top: 3px;
+  line-height: 1;
+  text-shadow: 0 1px 2px #000;
+  pointer-events: none;
+}
+
+.sk-cell.lock .sk-lvl {
+  color: #94a3b8;
+}
+
+.sk-cell .sk-lvl.max {
+  color: #4ade80;
+}
+
+.sk-cell .sk-badge {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: bold;
+  padding: 0 3px;
+  border-radius: 2px;
+  line-height: 11px;
+  box-shadow: 0 1px 2px #000;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sk-cell .sk-badge.main {
+  background: #ffd700;
+  color: #000;
+}
+
+.sk-cell .sk-badge.slot {
+  background: #2563eb;
+  color: #fff;
+}
+
+.sk-cell .sk-btn-plus {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 17px;
+  height: 17px;
+  background: #16a34a;
+  border: 1.5px solid #86efac;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 14px;
+  text-align: center;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 1px 4px #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 3;
+}
+
+.sk-cell .sk-btn-plus:hover {
+  background: #22c55e;
+  transform: scale(1.15);
+}
+
+.sk-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: #150f0a;
+  border: 1px solid #3d2f1d;
+  border-radius: 4px;
+}
+
+.sk-footer .sk-pts-lbl {
+  font-size: 12px;
+  font-weight: bold;
+  color: #ffd700;
+}
+
+.sk-footer .sk-pts-val {
+  font-size: 14px;
+  font-weight: bold;
+  color: #ef4444;
+}
+
 #tabs{display:grid;grid-template-columns:repeat(5,1fr);background:#0b100e;border-top:1px solid var(--gold2);padding-bottom:var(--safe-b)}
 #tabs button{position:relative;padding:10px 2px;font-size:12px;color:var(--dim)} #tabs button.on{color:var(--gold);box-shadow:inset 0 2px 0 var(--gold)}
 .dot{position:absolute;top:6px;right:12%;width:7px;height:7px;border-radius:50%;background:#f55;display:none} .dot.on{display:block}

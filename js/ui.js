@@ -574,53 +574,132 @@ function skillModal(id) {
     <p class="desc">${esc(s.d || 'Không có mô tả.')}</p>
     <div class="idet"><span class="tag${act ? ' attack' : ''}">${act ? 'Tấn công' : 'Nội tại'}</span><small class="dim">Yêu cầu cấp ${s.req}${S.lvl < s.req ? ` (bạn cấp ${S.lvl})` : ''}</small></div>
     ${atk}
+    ${act && L ? `<div style="display:flex;align-items:center;gap:5px;margin:8px 0 6px 0;"><span style="color:#ffd700;font-size:11px;font-weight:bold;">Gán vào ô đánh:</span> ${[0, 1, 2, 3].map(i => `<button data-slot="${i}" data-sid="${id}" class="btn sm slot-btn ${(S.slots || [])[i] === +id ? 'on' : ''}" style="padding:2px 8px;font-size:11px;${(S.slots || [])[i] === +id ? 'background:#ffd700;color:#000;font-weight:bold;' : ''}">Ô ${i + 1}</button>`).join('')}</div>` : ''}
     <div class="sl"><b>${L ? 'Cấp hiện tại ' + L : 'Nếu học (cấp 1)'}</b>${lines(show)}</div>
     ${next && L ? `<div class="sl"><b>Cấp kế tiếp ${next}</b>${lines(next)}</div>` : ''}
     <div class="btnrow">${act && L ? '<button class="btn" id="skMain">Chọn làm chiêu chính</button>' : ''}<button class="btn" id="skPlus" ${canLearn(s) ? '' : 'disabled'}>+ Cộng điểm</button><button class="btn red" id="skMinus" ${L ? '' : 'disabled'}>− Rút điểm</button></div>`, () => {
     const m = $('#skMain'); if (m) m.onclick = () => { S.main = s.id; S.mainLock = true; R.dirty = true; recalc(); renderSkill(); toast('Chiêu chính: ' + s.n); skillModal(id); };
     $('#skPlus').onclick = () => { if (!canLearn(s)) return; S.skPts--; S.sk[id] = (S.sk[id] || 0) + 1; if (typeof sendAllocSkill === 'function') sendAllocSkill(id); uiSfx('learn'); R.dirty = true; recalc(); renderSkill(); save(); skillModal(id); };
     $('#skMinus').onclick = () => { if (unlearnSkill(id)) skillModal(id); };
+    modalEl.querySelectorAll('.slot-btn').forEach(b => {
+      b.onclick = () => {
+        assignSlot(+b.dataset.slot, +b.dataset.sid);
+        skillModal(id);
+        renderSkill();
+      };
+    });
   });
 }
 function renderSkill() {
   const f = FAC[S.fac];
-  const rows = f.skills.map(id => {
-    const s = SK[id], L = S.sk[id] || 0, act = isAttack(s);
-    const a = act && L ? activeInfo(R.P, s, L) : null;
-    return `<div class="skl${S.lvl < s.req ? ' lock' : ''}${R.P.main.id === +id ? ' main' : ''}" data-id="${id}">
-      <img class="sic" src="${esc(s.ic || '')}" alt=""><div class="info"><b>${esc(s.n)}</b> <span class="tag${act ? ' attack' : ''}">${act ? 'Tấn công' : 'Nội tại'}</span>
-      <small>Cấp yêu cầu ${s.req}${a ? ` · ${fmt(a.tot)} sát thương · ${a.targets > 1 ? 'nhiều mục tiêu' : 'đơn mục tiêu'}` : ''}</small></div>
-      <span class="lvl">${L}/${s.max}</span><span class="pm"><button class="plus" data-id="${id}" title="Cộng 1 điểm" ${canLearn(s) ? '' : 'disabled'}>+</button><button class="minus" data-id="${id}" title="Rút lại 1 điểm" ${L > 0 ? '' : 'disabled'}>−</button><button class="skinfo" data-id="${id}" title="Thông tin kỹ năng">i</button></span>
-      ${act && L ? `<div class="slots" style="display:flex;align-items:center;gap:4px;"><span style="color:#c89b3c;font-size:10.5px;font-weight:bold;">Gán vào:</span> ${[0, 1, 2, 3].map(i => `<button data-slot="${i}" data-sid="${id}" class="${(S.slots || [])[i] === +id ? 'on' : ''}" style="padding:2px 7px;font-size:11px;font-weight:bold;cursor:pointer;border-radius:3px;${(S.slots || [])[i] === +id ? 'background:#ffd700;color:#000;border:1px solid #ffd700;' : 'background:#1a140d;color:#cbd5e1;border:1px solid #5a4425;'}" title="Gán vào Ô [Phím ${i + 1}]">Ô ${i + 1}</button>`).join('')}</div>` : ''}</div>`;
-  }).join('');
-  const skillEl = tabEl('skill'); if (!skillEl) return;
+  if (!f) return;
+  const skills = f.skills || [];
+  
+  // Tổng số ô hiển thị: 35 ô (5 cột x 7 hàng chuẩn theo hình phác thảo)
+  const totalSlots = Math.max(35, Math.ceil(skills.length / 5) * 5);
+
+  let gridHtml = '';
+  for (let idx = 0; idx < totalSlots; idx++) {
+    const id = skills[idx];
+    if (id && SK[id]) {
+      const s = SK[id];
+      const L = S.sk[id] || 0;
+      const act = isAttack(s);
+      const isMain = R.P && R.P.main && R.P.main.id === +id;
+      const isLocked = S.lvl < s.req;
+      const learnable = canLearn(s);
+      
+      // Kiểm tra xem skill có đang gán trong slot 1-4 không
+      const assignedSlots = (S.slots || []).map((sid, i) => sid === +id ? (i + 1) : null).filter(Boolean);
+      
+      gridHtml += `
+        <div class="sk-cell skl${isLocked ? ' lock' : ''}${isMain ? ' main' : ''}" data-id="${id}">
+          ${isMain ? `<span class="sk-badge main" title="Chiêu đánh chính">Chính</span>` : (assignedSlots.length ? `<span class="sk-badge slot" title="Gán ô ${assignedSlots.join(',')}">${assignedSlots[0]}</span>` : '')}
+          ${learnable && S.skPts > 0 ? `<button class="sk-btn-plus" data-id="${id}" title="Cộng 1 điểm kỹ năng">+</button>` : ''}
+          <img class="sic" src="${esc(s.ic || '')}" alt="${esc(s.n)}">
+          <span class="sk-lvl${L >= s.max ? ' max' : ''}">${isLocked ? `Lv.${s.req}` : `${L}/${s.max}`}</span>
+        </div>
+      `;
+    } else {
+      // Ô kẻ viền trống theo lưới
+      gridHtml += `<div class="sk-cell empty"></div>`;
+    }
+  }
+
+  const skillEl = tabEl('skill');
+  if (!skillEl) return;
+
   skillEl.innerHTML = `
-    <div class="jx-money-bar" style="margin-bottom:6px;">
-      <span>⚡ Võ Công Phái <b style="color:#ffd700;">${esc(f.n)}</b></span>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span style="font-size:11px;color:#cbd5e1;">Điểm: <b style="color:#ef4444;font-size:13px;">${S.skPts}</b></span>
-        <button class="jx-action-btn" id="bSugSk" style="padding:2px 6px;font-size:10px;">Gợi ý</button>
+    <div class="sk-grid-wrap">
+      <div class="sk-subbar">
+        <span style="color:#ffd700;font-weight:bold;">⚡ Môn Phái: ${esc(f.n)}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10.5px;color:#cbd5e1;">
+            <input type="checkbox" id="cRot" ${S.rot === false ? '' : 'checked'} class="accent-amber-500"> Xoay chiêu 1-4
+          </label>
+          <button class="jx-action-btn" id="bSugSk" style="padding:1px 6px;font-size:10px;">Gợi ý</button>
+        </div>
+      </div>
+
+      <div class="sk-grid">
+        ${gridHtml}
+      </div>
+
+      <div class="sk-footer">
+        <span style="font-size:10px;color:#a39276;">💡 Rê chuột xem thuộc tính · Chuột phải rút điểm</span>
+        <div class="sk-pts-wrap" style="display:flex;align-items:center;gap:4px;">
+          <span class="sk-pts-lbl">Điểm kỹ năng:</span>
+          <span class="sk-pts-val">${S.skPts || 0}</span>
+        </div>
       </div>
     </div>
-    <div class="jx-box" style="margin-bottom:6px;padding:4px 8px;font-size:11px;color:#a39276;">
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cRot" ${S.rot === false ? '' : 'checked'} class="accent-amber-500"> Tự động xoay chiêu: Luân phiên các chiêu ô 1–4</label>
-    </div>
-    <div style="font-size:10.5px;color:#ffd700;margin:0 0 6px 2px;line-height:1.4;">
-      ✦ Bấm <b>[Ô 1] – [Ô 4]</b> để gán chiêu vào ô đánh. Chạm tên chiêu để chọn làm chiêu chính ${S.mainLock ? '(<a id="bAutoMain" style="color:#60a5fa;cursor:pointer;text-decoration:underline;">bỏ khóa</a>)' : '(tự chọn chiêu mạnh nhất)'}.<br>
-      ✦ Trên thanh đánh: <b>Chuột phải</b> (hoặc <b>Nhấn giữ</b>) vào ô chiêu để mở bảng đổi chiêu nhanh!
-    </div>
-    <div style="display:flex;flex-direction:column;gap:4px;">
-      ${rows}
-    </div>
   `;
-  skillEl.querySelectorAll('.plus').forEach(b => b.onclick = e => { e.stopPropagation(); const s = SK[b.dataset.id]; if (!canLearn(s)) return; S.skPts--; S.sk[s.id] = (S.sk[s.id] || 0) + 1; if (typeof sendAllocSkill === 'function') sendAllocSkill(s.id); uiSfx('learn'); R.dirty = true; recalc(); renderSkill(); save(); });
-  skillEl.querySelectorAll('.minus').forEach(b => b.onclick = e => { e.stopPropagation(); unlearnSkill(+b.dataset.id); });
-  skillEl.querySelectorAll('.skinfo').forEach(b => b.onclick = e => { e.stopPropagation(); skillModal(+b.dataset.id); });
-  skillEl.querySelectorAll('.slots button').forEach(b => b.onclick = e => { e.stopPropagation(); assignSlot(+b.dataset.slot, +b.dataset.sid); renderSkill(); });
-  const bSugSk = skillEl.querySelector('#bSugSk'); if (bSugSk) bSugSk.onclick = suggestModal;
-  const cRot = skillEl.querySelector('#cRot'); if (cRot) cRot.onchange = () => toggleRot();
-  const am = skillEl.querySelector('#bAutoMain'); if (am) am.onclick = () => { S.mainLock = false; R.dirty = true; recalc(); renderSkill(); };
-  skillEl.querySelectorAll('.skl').forEach(r => r.onclick = () => { const s = SK[r.dataset.id]; if (isAttack(s) && S.sk[s.id]) { S.main = s.id; S.mainLock = true; R.dirty = true; recalc(); renderSkill(); toast('Chiêu chính: ' + s.n); } else skillModal(s.id); });
+
+  // Gắn sự kiện nút cộng điểm nhanh trên góc ô
+  skillEl.querySelectorAll('.sk-btn-plus').forEach(b => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const s = SK[b.dataset.id];
+      if (!canLearn(s)) return;
+      S.skPts--;
+      S.sk[s.id] = (S.sk[s.id] || 0) + 1;
+      if (typeof sendAllocSkill === 'function') sendAllocSkill(s.id);
+      if (typeof uiSfx === 'function') uiSfx('learn');
+      R.dirty = true;
+      recalc();
+      renderSkill();
+      save();
+    };
+  });
+
+  // Gắn sự kiện click / chuột phải vào ô kỹ năng
+  skillEl.querySelectorAll('.sk-cell:not(.empty)').forEach(cell => {
+    const sid = +cell.dataset.id;
+    const s = SK[sid];
+    if (!s) return;
+
+    cell.onclick = (e) => {
+      if (e.target.closest('.sk-btn-plus')) return;
+      skillModal(sid);
+    };
+
+    cell.oncontextmenu = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if ((S.sk[sid] || 0) > 0) {
+        unlearnSkill(sid);
+      }
+    };
+  });
+
+  const bSugSk = skillEl.querySelector('#bSugSk');
+  if (bSugSk) bSugSk.onclick = suggestModal;
+  const cRot = skillEl.querySelector('#cRot');
+  if (cRot) cRot.onchange = () => toggleRot();
+
+  if (window.SKILL_TOOLTIP && typeof window.SKILL_TOOLTIP.bind === 'function') {
+    window.SKILL_TOOLTIP.bind();
+  }
 }
 
 /* ---------- the: tui do ---------- */

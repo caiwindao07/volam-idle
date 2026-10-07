@@ -161,7 +161,7 @@ function init() {
   $('#tabs').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (b) showTab(b.dataset.t); });
   $('#mClose').onclick = () => closeModal();
   $('#giftBtn').onclick = () => { if (S && S.fac) { uiSfx('click'); giftModal(); } };
-  $('#svBtn').onclick = () => { uiSfx('click'); svIntro(); };
+  const svBtn = $('#svBtn'); if (svBtn) svBtn.onclick = () => { uiSfx('click'); svIntro(); };
   const campBtn = $('#campBtn'); if (campBtn) campBtn.onclick = () => { uiSfx('click'); campModal(); };
   const mountBtn = $('#mountBtn'); if (mountBtn) mountBtn.onclick = () => { uiSfx('click'); mountModal(); };
   const bossBtn = $('#bossBtn'); if (bossBtn) bossBtn.onclick = () => { uiSfx('click'); bossModal(); };

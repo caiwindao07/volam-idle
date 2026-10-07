@@ -15,15 +15,15 @@
 const VIP_EXP_TABLE = [
   0,       // VIP 0 (khong dung)
   0,       // VIP 1: Mac dinh tang ngay khi tham gia giang ho
-  500,     // VIP 2
-  1500,    // VIP 3
-  3500,    // VIP 4
-  7000,    // VIP 5
-  12000,   // VIP 6
-  20000,   // VIP 7
-  35000,   // VIP 8
-  60000,   // VIP 9
-  100000   // VIP 10: Vo Lam Chi Ton
+  300,     // VIP 2: 300 diem (= 8tr x VIP 1)
+  900,     // VIP 3: +600 diem (= 16tr x VIP 2) -> tong 900
+  1800,    // VIP 4: +900 diem (= 24tr x VIP 3) -> tong 1800
+  3000,    // VIP 5: +1200 diem (= 32tr x VIP 4) -> tong 3000
+  4500,    // VIP 6: +1500 diem (= 40tr x VIP 5) -> tong 4500
+  6300,    // VIP 7: +1800 diem (= 48tr x VIP 6) -> tong 6300
+  8400,    // VIP 8: +2100 diem (= 56tr x VIP 7) -> tong 8400
+  10800,   // VIP 9: +2400 diem (= 64tr x VIP 8) -> tong 10800
+  13500    // VIP 10: +2700 diem (= 72tr x VIP 9) -> tong 13500: Vo Lam Chi Ton
 ];
 
 const VIP_PERKS = [
@@ -250,19 +250,20 @@ function claimDailyVip() {
 }
 
 function trainVipWithGold() {
-  const cost = 8000;
-  if (S.gold < cost) {
-    toast(`Không đủ ngân lượng! Cần ${fmt(cost)} lượng để tu luyện.`);
-    return;
-  }
   const v = getVipState();
   if (v.lvl >= 10) {
     toast('Bạn đã đạt cấp VIP 10 Chí Tôn tối đa!');
     return;
   }
+  const curLvl = Math.max(1, v.lvl);
+  const cost = 8000000 * curLvl;
+  if (S.gold < cost) {
+    toast(`Không đủ ngân lượng! Cần ${fmt(cost)} lượng (8.000.000 x VIP ${curLvl}) để nhận +300 điểm VIP.`);
+    return;
+  }
   S.gold -= cost;
-  vipAddExp(300, 'Tu luyện võ công bằng ngân lượng');
-  toast(`Tu luyện thành công! +300 điểm VIP.`);
+  vipAddExp(300, `Tu luyện ngân lượng (VIP ${curLvl})`);
+  toast(`Tu luyện thành công! +300 điểm VIP (-${fmt(cost)} lượng).`);
   save();
   refresh();
   vipModal();
@@ -276,6 +277,7 @@ function vipModal() {
   const pct = curLvl >= 10 ? 100 : Math.min(100, Math.floor((v.exp - prevExp) / (nextExp - prevExp) * 100));
   const t = typeof today === 'function' ? today() : new Date().toDateString();
   const claimed = v.lastClaim === t;
+  const curTrainCost = 8000000 * Math.max(1, curLvl);
 
   let perkListHtml = '';
   for (let i = 1; i <= 10; i++) {
@@ -329,9 +331,9 @@ function vipModal() {
           <span style="font-size:9px;">${pct}%</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:10px;color:#cbd5e1;">Tu luyện nâng VIP hoàn toàn miễn phí bằng ngân lượng in-game!</span>
+          <span style="font-size:10px;color:#cbd5e1;">Quy đổi: 300 điểm VIP = 8.000.000 x Cấp VIP (${fmt(curTrainCost)} lượng)</span>
           <button class="jx-action-btn" id="bTrainVip" style="padding:2px 8px;font-size:10px;">
-            ⚡ Tu luyện (+300 điểm / 8,000 lượng)
+            ⚡ Tu luyện (+300 điểm / ${fmt(curTrainCost)} lượng)
           </button>
         </div>
       </div>
