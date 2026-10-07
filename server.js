@@ -1038,6 +1038,7 @@ function handleBotChatResponse(bot, player, playerWs, text) {
 }
 const serverParties = new Map(); // partyId -> { id, leaderId, leaderName, members: [ { id, name, fac, series, lvl, x, y } ] }
 let nextPartyId = 100;
+let serverMarket = [];
 
 function getPlayerParty(playerId) {
   for (const party of serverParties.values()) {
@@ -1141,6 +1142,8 @@ function spawnOneMob(zoneId, nearX, nearY) {
 function ensureZoneMobs(zoneId, nearX, nearY) {
   if (!JW || !JW.zones) return [];
   if (JW.town && (zoneId === JW.town.id || zoneId === 37)) return [];
+  const z = JW.zones.find(x => x.id === zoneId);
+  if (!z) return []; // Thoát ngay nếu bản đồ không hợp lệ
   let map = zoneMobs.get(zoneId);
   if (!map) {
     map = new Map();
@@ -1148,14 +1151,17 @@ function ensureZoneMobs(zoneId, nearX, nearY) {
   }
   const zonePlayers = getActivePlayersInZone(zoneId);
   const maxMobs = Math.min(80, Math.max(45, zonePlayers.length * 15)); // Mở rộng bãi quái theo số lượng người online (45-80 quái)
-  while (map.size < maxMobs) {
+  let attempts = 0;
+  while (map.size < maxMobs && attempts < maxMobs * 2) {
+    attempts++;
     let px = nearX, py = nearY;
     if (zonePlayers.length > 0) {
       const pl = zonePlayers[Math.floor(Math.random() * zonePlayers.length)];
       px = pl.x;
       py = pl.y;
     }
-    spawnOneMob(zoneId, px, py);
+    const spawned = spawnOneMob(zoneId, px, py);
+    if (!spawned) break; // Thoát ngay nếu không thể sinh quái, chống lặp vô hạn tràn RAM
   }
   return Array.from(map.values());
 }
