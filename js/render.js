@@ -1031,6 +1031,85 @@ function drawHorseMount(c, x, y, dir, act, actT, mountData) {
   return bob;
 }
 
+/* Vẽ các chi tiết phía trước của ngựa (cổ, đầu, bờm, dây cương, yên) phủ lên trước người cưỡi */
+function drawHorseForeground(c, x, y, dir, act, actT, mountData) {
+  const tier = (mountData && mountData.tier) || (typeof S !== 'undefined' && S && S.mount ? S.mount.tier : 1);
+  const cfg = (typeof PVK_MOUNTS !== 'undefined' && PVK_MOUNTS[tier - 1]) ? PVK_MOUNTS[tier - 1] : {
+    col: '#ffd700', horseCol: '#ca8a04', maneCol: '#fef08a'
+  };
+
+  const isMoving = act === 'run';
+  const gallopT = (actT || 0) * (isMoving ? 14 : 3);
+  const bob = isMoving ? Math.sin(gallopT) * 3 : Math.sin(gallopT) * 1;
+  const flip = (dir >= 1 && dir <= 3);
+
+  c.save();
+  c.translate(x, y);
+  if (flip) c.scale(-1, 1);
+
+  // 1. Cổ & Đầu ngựa đè lên trước
+  c.fillStyle = cfg.horseCol;
+  c.beginPath();
+  c.moveTo(9, -7 + bob);
+  c.lineTo(17, -19 + bob);
+  c.lineTo(23, -17 + bob);
+  c.lineTo(15, -3 + bob);
+  c.closePath();
+  c.fill();
+
+  // Đầu ngựa
+  c.beginPath();
+  c.ellipse(20, -18 + bob, 5.5, 3.8, 0.4, 0, Math.PI * 2);
+  c.fill();
+
+  // Mắt ngựa
+  c.fillStyle = '#0f172a';
+  c.beginPath();
+  c.arc(21, -19 + bob, 1.2, 0, Math.PI * 2);
+  c.fill();
+  c.fillStyle = '#ffd700';
+  c.beginPath();
+  c.arc(21.3, -19.3 + bob, 0.4, 0, Math.PI * 2);
+  c.fill();
+
+  // Bờm ngựa
+  c.strokeStyle = cfg.maneCol;
+  c.lineWidth = 3.2;
+  c.beginPath();
+  c.moveTo(11, -9 + bob);
+  c.lineTo(16, -21 + bob);
+  c.stroke();
+
+  // Tai ngựa
+  c.fillStyle = cfg.maneCol;
+  c.beginPath();
+  c.moveTo(16, -22 + bob);
+  c.lineTo(18, -26 + bob);
+  c.lineTo(20, -21 + bob);
+  c.fill();
+
+  // 2. Dây cương vàng (vắt từ đầu ngựa về phía yên người cưỡi)
+  c.strokeStyle = '#fef08a';
+  c.lineWidth = 1.2;
+  c.beginPath();
+  c.moveTo(18, -17 + bob);
+  c.quadraticCurveTo(8, -10 + bob, -1, -9 + bob);
+  c.stroke();
+
+  // 3. Đai yên cương và bàn đạp chân
+  c.strokeStyle = '#78350f';
+  c.lineWidth = 2.2;
+  c.beginPath();
+  c.moveTo(-3, -8 + bob);
+  c.lineTo(-1, 0 + bob);
+  c.stroke();
+  // Bàn đạp kim loại
+  c.fillStyle = '#ffd700';
+  c.fillRect(-2.5, -1 + bob, 4, 2);
+
+  c.restore();
+}
+
 function draw(dt) {
   const c = CX; c.setTransform(DPR, 0, 0, DPR, 0, 0); c.clearRect(0, 0, AR.w, AR.h);
   updateCamera(dt);
@@ -1182,6 +1261,11 @@ function draw(dt) {
       // Vẽ Res Ngoại Trang phụ trợ (nếu Paperdoll chưa vẽ)
       if (!dollH && typeof drawHeroEquipment === 'function' && typeof S !== 'undefined' && S && S.eq) {
         drawHeroEquipment(c, H.x, heroY, H.dir || 0, H.face || 1, H.act || 'st', H.actT || 0, S.eq, (typeof heroSeries === 'function' ? heroSeries() : 0));
+      }
+
+      // Vẽ các chi tiết phía trước của Chiến Mã (cổ, đầu, bờm, yên, dây cương) phủ lên phía trước hiệp khách
+      if (S && S.mounted && typeof drawHorseForeground === 'function') {
+        drawHorseForeground(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, S.mount);
       }
 
       if (R.hurtT > 0) { c.fillStyle = '#f004'; c.beginPath(); c.arc(H.x, heroY - 24, 20, 0, 7); c.fill(); }

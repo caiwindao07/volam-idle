@@ -515,6 +515,12 @@ function renderCharAttrib(targetEl) {
   const bClose = el.querySelector('#bCloseChar'); if (bClose) bClose.onclick = () => toggleWin('char-attrib');
   el.querySelectorAll('.jx-equip-slot .it').forEach(b => {
     const slot = b.parentNode.dataset.slot;
+    b.oncontextmenu = ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      closeModal();
+      unequip(slot);
+    };
     b.ondblclick = ev => {
       ev.preventDefault();
       ev.stopPropagation();
@@ -866,6 +872,17 @@ function renderInv() {
   });
 
   qa('.it').forEach(b => {
+    b.oncontextmenu = ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const uid = +b.dataset.uid;
+      if (!uid) return;
+      const it = findItem(uid);
+      if (it && S.inv && S.inv.includes(it)) {
+        closeModal();
+        equip(it);
+      }
+    };
     b.ondblclick = ev => {
       ev.preventDefault();
       ev.stopPropagation();
@@ -1312,6 +1329,10 @@ function updateTop() {
     rankEl.textContent = `Hạng #${myRank} Giang Hồ`;
     rankEl.title = `Nhấp xem Bảng Xếp Hạng Giang Hồ (Hiện tại: Hạng #${myRank})`;
   }
+
+  if (typeof updateMountHudBtn === 'function') {
+    updateMountHudBtn();
+  }
 }
 /* Nap tu file .jxsave (hoac ma van ban): chon slot dich, canh bao ghi de, roi tai lai trang */
 function pickSaveFile(after) {
@@ -1535,17 +1556,32 @@ function travelToZone(idx) {
 }
 
 /* =================== CƯỠI NGỰA (MOUNT RIDING) =================== */
+function updateMountHudBtn() {
+  const qMount = $('#qbMount');
+  if (!qMount) return;
+  const isMounted = !!(typeof S !== 'undefined' && S && S.mounted);
+  const m = (typeof mountCurrent === 'function') ? mountCurrent() : null;
+  qMount.classList.toggle('active', isMounted);
+  qMount.style.boxShadow = isMounted ? '0 0 10px #fbbf24, inset 0 0 6px #ffd700' : '';
+  qMount.style.borderColor = isMounted ? '#ffd700' : '';
+  qMount.title = isMounted 
+    ? `[Phím 4] Đang Cưỡi [${m ? m.n : 'Chiến Mã'}] (Bấm để xuống ngựa)` 
+    : `[Phím 4] Cưỡi Ngựa [${m ? m.n : 'Chiến Mã'}] (Bấm để lên ngựa)`;
+}
+
 function toggleMountRide() {
   if (typeof pvkEnsureMount === 'function') pvkEnsureMount();
   S.mounted = !S.mounted;
+  const m = typeof mountCurrent === 'function' ? mountCurrent() : null;
   if (S.mounted) {
-    const m = typeof mountCurrent === 'function' ? mountCurrent() : null;
     toast(`🏇 Đã lên ngựa [${m ? m.n : 'Chiến Mã'}]! Tốc độ di chuyển gia tăng!`);
     uiSfx('use');
   } else {
-    toast('Đã xuống ngựa!');
+    toast(`Đã xuống ngựa [${m ? m.n : 'Chiến Mã'}]!`);
   }
+  updateMountHudBtn();
   recalc();
+  if (typeof refresh === 'function') refresh();
   if (typeof sendMove === 'function') sendMove(0);
 }
 
@@ -1647,9 +1683,12 @@ function initActionBar() {
   if (qHp) qHp.onclick = () => { if (typeof drinkNow === 'function') drinkNow('life'); };
   if (qMp) qMp.onclick = () => { if (typeof drinkNow === 'function') drinkNow('mana'); };
   if (qTp) qTp.onclick = () => { if (typeof openMapTravelModal === 'function') openMapTravelModal(); };
-  if (qMount) qMount.onclick = () => {
-    toggleMountRide();
-  };
+  if (qMount) {
+    qMount.onclick = () => {
+      toggleMountRide();
+    };
+    updateMountHudBtn();
+  }
 
   const mapCell = $('#jxHudMapCell');
   if (mapCell) {

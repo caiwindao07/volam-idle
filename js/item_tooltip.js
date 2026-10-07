@@ -651,8 +651,10 @@
       }
     });
 
-    // 5. Đơn giản hóa: Double-click để mặc đồ (từ rương) hoặc tháo đồ (từ người) không cần mở bảng so sánh
-    document.addEventListener('dblclick', e => {
+    // 5. Thao tác Mặc / Tháo Đồ Nhanh:
+    // - Chuột phải (contextmenu): Tự động chặn menu ngữ cảnh của trình duyệt và thực hiện mặc/tháo đồ ngay lập tức
+    // - Double click (dblclick): Mặc đồ từ rương hoặc tháo đồ từ người
+    function handleFastEquipAction(e) {
       const itEl = e.target.closest('.it[data-uid]');
       if (!itEl) return;
       const uid = +itEl.dataset.uid;
@@ -660,13 +662,13 @@
       const item = findItem(uid);
       if (!item) return;
 
+      e.preventDefault();
+      e.stopPropagation();
       hideItemTooltip();
 
-      // Nếu đang ở ô trang bị trên người (.jx-equip-slot) -> Tháo đồ
+      // Nếu đang ở ô trang bị trên người (.jx-equip-slot) -> Tháo đồ về rương
       const equipSlotEl = itEl.closest('.jx-equip-slot');
       if (equipSlotEl && equipSlotEl.dataset.slot && typeof unequip === 'function') {
-        e.preventDefault();
-        e.stopPropagation();
         if (typeof closeModal === 'function') closeModal();
         unequip(equipSlotEl.dataset.slot);
         return;
@@ -674,11 +676,25 @@
 
       // Nếu đang ở trong rương hành trang (S.inv) -> Mặc đồ ngay lập tức
       if (typeof S !== 'undefined' && S && S.inv && S.inv.includes(item) && typeof equip === 'function') {
-        e.preventDefault();
-        e.stopPropagation();
         if (typeof closeModal === 'function') closeModal();
         equip(item);
         return;
+      }
+    }
+
+    // Chặn menu chuột phải trên toàn bộ ô item và thực hiện mặc/tháo đồ
+    document.addEventListener('contextmenu', e => {
+      const itEl = e.target.closest('.it[data-uid]');
+      if (itEl) {
+        handleFastEquipAction(e);
+      }
+    });
+
+    // Double click mặc/tháo đồ
+    document.addEventListener('dblclick', e => {
+      const itEl = e.target.closest('.it[data-uid]');
+      if (itEl) {
+        handleFastEquipAction(e);
       }
     });
   }
