@@ -117,25 +117,11 @@
       _lastAuth.gold = S.gold;
     }
 
-    // Nếu phát hiện cấp độ tự ý bị nâng trong console
-    // Chỉ kiểm tra khi _lastAuth.lvl đã được đồng bộ từ server (khác null)
-    if (_lastAuth.lvl !== null && S.lvl > _lastAuth.lvl) {
-      if (typeof toast === 'function') toast('⚠️ Phát hiện can thiệp cấp độ không hợp lệ!');
-      S.lvl = _lastAuth.lvl;
-      if (typeof refresh === 'function') refresh();
-    } else if (_lastAuth.lvl === null && S.lvl) {
-      // Lần đầu load từ server: ghi nhận level thực tế, không phạt
-      _lastAuth.lvl = Number(S.lvl) || 1;
-    }
-
-    // Nếu phát hiện hack điểm tiềm năng vượt trần
-    // Chỉ kiểm tra khi _lastAuth.attrPts đã được đồng bộ từ server
-    if (_lastAuth.attrPts !== null) {
-      const maxBudget = (S.lvl - 1) * 5 + 50;
-      if (S.attrPts > maxBudget) {
-        S.attrPts = _lastAuth.attrPts;
-        if (typeof refresh === 'function') refresh();
-      }
+    // Đồng bộ cấp độ và điểm tiềm năng tự nhiên theo tiến trình chơi game
+    if (S.lvl > _lastAuth.lvl) {
+      _lastAuth.lvl = S.lvl;
+      _lastAuth.attrPts = S.attrPts;
+      _lastAuth.skPts = S.skPts;
     }
   }, 1000);
 
