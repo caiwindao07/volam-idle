@@ -1178,13 +1178,13 @@ function draw(dt) {
       let dollH = 0;
       if (typeof drawDoll === 'function') {
         const dollScale = (typeof HERO_DOLL_SCALE !== 'undefined') ? HERO_DOLL_SCALE : (1 / 0.6);
-        // Khi cưỡi ngựa: đẩy paperdoll lên cao để ngồi trên yên (y-52),
+        // Khi cưỡi ngựa: đẩy paperdoll lên để ngồi trên yên (y-20),
         // thân trước ngựa (drawHorseForeground) vẽ sau sẽ tự che chân
-        const drawY = (S && S.mounted) ? (H.y - 52 + mountBob) : heroY;
+        const drawY = (S && S.mounted) ? (H.y - 20 + mountBob) : heroY;
         dollH = drawDoll(c, H.x, drawY, H.act || 'st', H.dir || 0, H.actT || 0, dollScale, R.deadT > 0 ? 0.45 : 1, S);
         if (dollH > 0) drawn = dollH;
       }
-      const mountedDrawY = (S && S.mounted) ? (H.y - 52 + mountBob) : heroY;
+      const mountedDrawY = (S && S.mounted) ? (H.y - 20 + mountBob) : heroY;
       if (!drawn && hw && hw.anim && typeof drawAnim === 'function') {
         drawn = drawAnim(hw.anim, H.act || 'st', H.dir || 0, H.actT || 0, H.x, mountedDrawY, HERO_SCALE);
       }
