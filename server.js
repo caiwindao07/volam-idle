@@ -133,43 +133,37 @@ async function initMongo() {
 
 async function loadDb() {
   try {
-    // 1. Thử nạp từ file cục bộ trước nếu có
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    if (fs.existsSync(DB_FILE)) {
-      const raw = fs.readFileSync(DB_FILE, 'utf8');
-      db = JSON.parse(raw);
-      if (!db.users) db.users = {};
-    }
-
-    // 2. Nếu kết nối được MongoDB, nạp và hợp nhất dữ liệu từ Mongo Atlas
+    // 1. Kết nối MongoDB Atlas
     const connected = await initMongo();
     if (connected && mongoUsersCol) {
+      // Khi chạy online bằng MongoDB: dữ liệu tách biệt hoàn toàn, CHỈ lấy từ MongoDB Atlas
+      db = { users: {} };
       const userDocs = await mongoUsersCol.find({}).toArray();
-      if (userDocs && userDocs.length > 0) {
-        for (const doc of userDocs) {
-          const uKey = doc.username;
-          if (uKey) {
-            db.users[uKey] = {
-              username: doc.username,
-              passwordHash: doc.passwordHash,
-              createdAt: doc.createdAt,
-              lastLogin: doc.lastLogin,
-              state: doc.state,
-              token: doc.token
-            };
-          }
+      for (const doc of userDocs) {
+        const uKey = doc.username;
+        if (uKey) {
+          db.users[uKey] = {
+            username: doc.username,
+            passwordHash: doc.passwordHash,
+            createdAt: doc.createdAt,
+            lastLogin: doc.lastLogin,
+            state: doc.state,
+            token: doc.token
+          };
         }
-        console.log(`[DB] Đã đồng bộ ${userDocs.length} tài khoản từ MongoDB Atlas.`);
-      } else if (Object.keys(db.users).length > 0) {
-        // Nếu Mongo đang trống nhưng local có data, push lên Mongo
-        const docs = Object.values(db.users);
-        for (const doc of docs) {
-          await mongoUsersCol.updateOne({ username: doc.username }, { $set: doc }, { upsert: true });
-        }
-        console.log(`[DB] Đã tải lên ban đầu ${docs.length} tài khoản lên MongoDB Atlas.`);
       }
+      console.log(`[DB] Đang hoạt động chế độ Online (MongoDB Atlas). Số tài khoản: ${userDocs.length}.`);
+    } else {
+      // Chế độ Offline/Local khi không có Mongo: nạp từ db.json
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      if (fs.existsSync(DB_FILE)) {
+        const raw = fs.readFileSync(DB_FILE, 'utf8');
+        db = JSON.parse(raw);
+        if (!db.users) db.users = {};
+      }
+      console.log(`[DB] Đang hoạt động chế độ Cục bộ (db.json). Số tài khoản: ${Object.keys(db.users).length}.`);
     }
 
     for (const uKey in db.users) {
@@ -177,7 +171,6 @@ async function loadDb() {
         sessions.set(db.users[uKey].token, uKey);
       }
     }
-    console.log(`[DB] Đã nạp thành công database. Hiện có ${Object.keys(db.users).length} tài khoản.`);
   } catch (e) {
     console.error('[DB] Lỗi load database:', e);
   }
