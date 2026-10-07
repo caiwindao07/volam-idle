@@ -134,10 +134,37 @@ const LOOT_ATTR_GROUPS = [ // thuoc tinh hay loc (ten trong KMagicDesc.cpp)
   ['Tốc độ', ['attackspeed_v', 'castspeed_v', 'fastwalkrun_p']], ['Hút máu / nội', ['steallifeenhance_p', 'stealmanaenhance_p']],
   ['Chính xác / né', ['attackratingenhance_v', 'adddefense_v']], ['Ngũ hành', ['metalskill_v', 'woodskill_v', 'waterskill_v', 'fireskill_v', 'earthskill_v']],
 ];
+const LOOT_SPECIFIC_ATTRS = [
+  { id: '', n: '-- Bất kỳ thuộc tính nào --' },
+  { id: 'allres_p', n: 'Kháng tất cả (%)' },
+  { id: 'steallifeenhance_p', n: 'Hút sinh lực (%)' },
+  { id: 'stealmanaenhance_p', n: 'Hút nội lực (%)' },
+  { id: 'attackspeed_v', n: 'Tốc độ đánh (ngoại công)' },
+  { id: 'castspeed_v', n: 'Tốc độ xuất chiêu (nội công)' },
+  { id: 'fastwalkrun_p', n: 'Tốc độ di chuyển (%)' },
+  { id: 'allskill_v', n: 'Kỹ năng vốn có (+cấp)' },
+  { id: 'lifemax_v', n: 'Sinh lực tối đa (điểm)' },
+  { id: 'lifemax_p', n: 'Sinh lực tối đa (%)' },
+  { id: 'manamax_v', n: 'Nội lực tối đa (điểm)' },
+  { id: 'physicsres_p', n: 'Kháng vật lý (%)' },
+  { id: 'coldres_p', n: 'Kháng băng (%)' },
+  { id: 'fireres_p', n: 'Kháng hỏa (%)' },
+  { id: 'lightingres_p', n: 'Kháng lôi (%)' },
+  { id: 'poisonres_p', n: 'Kháng độc (%)' },
+  { id: 'strength_v', n: 'Sức mạnh' },
+  { id: 'dexterity_v', n: 'Thân pháp' },
+  { id: 'vitality_v', n: 'Sinh khí' },
+  { id: 'energy_v', n: 'Nội công' },
+  { id: 'addphysicsdamage_v', n: 'Sát thương vật lý (điểm)' },
+  { id: 'addphysicsdamage_p', n: 'Sát thương vật lý (%)' }
+];
+
 function lootFilter() {
-  const f = S.lootF || (S.lootF = { minRar: 0, minLvl: 1, groups: [], series: [], auto: true });
+  const f = S.lootF || (S.lootF = { minRar: 0, minLvl: 1, groups: [], series: [], targetAttr: '', minAttrVal: 0, auto: true });
   if (f.minRar === undefined || f.minRar === null) f.minRar = 0;
   if (f.auto === undefined) f.auto = true;
+  if (f.targetAttr === undefined) f.targetAttr = '';
+  if (f.minAttrVal === undefined) f.minAttrVal = 0;
   return f;
 }
 function lootMatch(it) {
@@ -149,6 +176,19 @@ function lootMatch(it) {
   if (f.groups && f.groups.length) {
     const want = new Set(f.groups.flatMap(g => (LOOT_ATTR_GROUPS[g] || [0, []])[1]));
     if (!it.mag.some(m => want.has(attrName(m.a)))) return false;
+  }
+  // Lọc theo thuộc tính chỉ định và giá trị tối thiểu (Min Value)
+  if (f.targetAttr) {
+    const minVal = Number(f.minAttrVal) || 0;
+    const hasAttr = it.mag.some(m => {
+      if (attrName(m.a) !== f.targetAttr) return false;
+      if (minVal <= 0) return true;
+      // Giá trị của thuộc tính nằm trong m.p[0] hoặc max(m.p)
+      const p = m.p || [];
+      const val = Math.max(p[0] || 0, p[2] || 0);
+      return val >= minVal;
+    });
+    if (!hasAttr) return false;
   }
   return true;
 }

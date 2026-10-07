@@ -50,14 +50,52 @@
     const next = L < s.max ? L + 1 : 0;
 
     // Hiệu ứng kỹ năng
-    const SK_HIDE = /^(skill_attackradius|missle_|skill_cost_v|skill_eventskilllevel|addskilldamage|skill_)/;
+    const SK_HIDE = /^(skill_attackradius|missle_|skill_cost_v|skill_eventskilllevel|skill_)/;
     function effectLines(lv) {
       const out = [];
       if (typeof skVal === 'function' && typeof attrText === 'function' && typeof J !== 'undefined') {
         for (const name in s.attr) {
+          if (name.startsWith('addskilldamage')) continue; // Xử lý riêng ở phần tương hỗ
           if (SK_HIDE.test(name) || !J.attrDesc[name]) continue;
           const p = skVal(s, name, lv); if (!p) continue;
           const t = attrText(name, p); if (t && !/^\s*$/.test(t)) out.push(t);
+        }
+      }
+      return out;
+    }
+
+    // Tương hỗ kỹ năng (Kỹ năng này hỗ trợ cho chiêu nào & được chiêu nào hỗ trợ)
+    function synergyLines(lv) {
+      const out = [];
+      // 1. Kỹ năng này hỗ trợ tăng sát thương cho kỹ năng khác (Chiêu này có addskilldamage1..6)
+      for (const name in s.attr) {
+        if (name.startsWith('addskilldamage')) {
+          const p = (typeof skVal === 'function') ? skVal(s, name, lv) : null;
+          if (p && p[0] && SK[p[0]]) {
+            const targetSk = SK[p[0]];
+            const bonus = p[2] || p[1] || 0;
+            out.push(`<div style="color:#60a5fa;">✦ Hỗ trợ <b>${esc(targetSk.n)}</b>: +<b style="color:#ffd700;">${bonus}%</b> sát thương</div>`);
+          }
+        }
+      }
+
+      // 2. Kỹ năng này nhận hỗ trợ từ kỹ năng khác trong môn phái
+      const f = (typeof FAC !== 'undefined' && typeof S !== 'undefined' && FAC[S.fac]) ? FAC[S.fac] : null;
+      if (f && f.skills) {
+        for (const otherId of f.skills) {
+          if (+otherId === +s.id) continue;
+          const otherSk = SK[otherId];
+          if (!otherSk || !otherSk.attr) continue;
+          const otherLv = (S.sk && S.sk[otherId]) || 0;
+          for (const name in otherSk.attr) {
+            if (name.startsWith('addskilldamage')) {
+              const p = (typeof skVal === 'function') ? skVal(otherSk, name, Math.max(1, otherLv)) : null;
+              if (p && +p[0] === +s.id) {
+                const bonus = otherLv ? (p[2] || p[1] || 0) : 0;
+                out.push(`<div style="color:#a78bfa;">✦ Nhận từ <b>${esc(otherSk.n)}</b> (Lv.${otherLv}): +<b style="color:${otherLv ? '#4ade80' : '#888'};">${bonus}%</b> ST</div>`);
+              }
+            }
+          }
         }
       }
       return out;
@@ -84,6 +122,12 @@
     const curHtml = curLines.length
       ? curLines.map(t => `<div style="color:#d4c89a">· ${esc(t)}</div>`).join('')
       : '<div style="color:#666">—</div>';
+
+    // Tương hỗ kỹ năng
+    const synList = synergyLines(show);
+    const synHtml = synList.length
+      ? `<div style="margin-top:5px;padding-top:4px;border-top:1px dashed #5a4425;font-size:10.5px;">${synList.join('')}</div>`
+      : '';
 
     // Hiệu ứng kế tiếp
     let nextHtml = '';
@@ -124,6 +168,7 @@
       ${atkHtml}
       <div style="font-size:11px;color:#a0916c;font-weight:bold;margin-bottom:2px">${L ? `Cấp ${show} hiện tại:` : 'Nếu học (cấp 1):'}</div>
       ${curHtml}
+      ${synHtml}
       ${nextHtml}
     `;
   }

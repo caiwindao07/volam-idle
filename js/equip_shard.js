@@ -287,11 +287,86 @@
 
   function renderShardModalContent() {
     const haveShards = getEquipShards();
+    const goldShardGeneric = (typeof matHave === 'function') ? matHave('shard', 'gold_shard') : (S.mats && S.mats.shard && S.mats.shard.gold_shard || 0);
     const blueList = getInvBlueGearList();
 
     let tabBodyHtml = '';
 
-    if (curModalTab === 'craft') {
+    if (curModalTab === 'gold') {
+      // TAB MẢNH HOÀNG KIM (ĐỒNG BỘ CẢ MẢNH HOÀNG KIM THEO TÊN SET & MẢNH CHUNG)
+      const shardsDb = (typeof window.RCP !== 'undefined' && window.RCP.shards) ? window.RCP.shards : {};
+      const shardsMap = (typeof mats === 'function') ? mats().shard : (S.mats && S.mats.shard ? S.mats.shard : {});
+      
+      // Lấy danh sách mảnh trang bị Hoàng Kim người chơi đang có hoặc có thể ghép
+      const goldItemsList = [];
+      for (const name in shardsDb) {
+        const need = shardsDb[name];
+        const have = shardsMap[name] || 0;
+        goldItemsList.push({ name, need, have, canCraft: have >= need });
+      }
+
+      // Sắp xếp: Ưu tiên các mảnh đang có, sau đó đến các mảnh đủ điều kiện ghép
+      goldItemsList.sort((a, b) => {
+        if (a.canCraft !== b.canCraft) return b.canCraft ? 1 : -1;
+        if (a.have !== b.have) return b.have - a.have;
+        return a.name.localeCompare(b.name);
+      });
+
+      const goldItemsHtml = goldItemsList.map(item => {
+        const pct = Math.min(100, Math.round((item.have / item.need) * 100));
+        const color = item.canCraft ? '#4ade80' : (item.have > 0 ? '#ffd700' : '#888');
+        return `
+          <div style="background:rgba(20,15,10,0.85);border:1px solid ${item.canCraft ? '#4ade80' : '#4a381e'};border-radius:5px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="flex:1;min-width:0;margin-right:8px;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <b style="color:${item.have > 0 ? '#ffd700' : '#94a3b8'};font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Mảnh ${esc(item.name)}</b>
+                ${item.canCraft ? '<span style="background:#166534;color:#bbf7d0;font-size:9px;padding:1px 4px;border-radius:3px;font-weight:bold;">ĐỦ GHÉP</span>' : ''}
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
+                <div style="flex:1;max-width:120px;background:#000;height:6px;border-radius:3px;overflow:hidden;border:1px solid #3d2f1d;">
+                  <div style="width:${pct}%;height:100%;background:${item.canCraft ? '#22c55e' : '#eab308'};"></div>
+                </div>
+                <span style="font-size:10px;color:${color};font-weight:bold;">${item.have}/${item.need} mảnh</span>
+              </div>
+            </div>
+            <div>
+              <button class="jx-action-btn ${item.canCraft ? 'gold' : ''}" onclick="window.EQUIP_SHARD.doCombineGold('${esc(item.name)}')" style="padding:4px 10px;font-size:10.5px;" ${item.canCraft ? '' : 'disabled'}>
+                ✨ Ghép Đồ
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      tabBodyHtml = `
+        <div>
+          <!-- Header Thống Kê Mảnh Hoàng Kim -->
+          <div style="background:rgba(25,18,10,0.95);border:1.5px solid #d4af37;border-radius:6px;padding:8px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:12px;color:#cbd5e1;">
+                Mảnh Hoàng Kim Vạn Năng: <b style="color:#ffd700;font-size:13px;">${goldShardGeneric}</b> mảnh
+              </div>
+              <div style="font-size:10px;color:#a39276;margin-top:2px;">
+                Mảnh rơi từ Boss, Tống Kim hoặc phân rã đồ Hoàng Kim thừa (10 mảnh vạn năng = 1 đồ HK ngẫu nhiên).
+              </div>
+            </div>
+            <div>
+              <button class="jx-action-btn gold" onclick="if(window.ITEM_TOOLTIP)window.ITEM_TOOLTIP.craftGold();" style="padding:5px 12px;font-size:11px;font-weight:bold;" ${goldShardGeneric >= 10 ? '' : 'disabled'}>
+                🎁 Đổi Đồ HK (10 Mảnh)
+              </button>
+            </div>
+          </div>
+
+          <!-- Danh Sách Toàn Bộ Mảnh Hoàng Kim Theo Bộ -->
+          <div style="font-size:11px;font-weight:bold;color:#ffd700;margin-bottom:5px;">
+            DANH SÁCH MẢNH HOÀNG KIM (THEO MÔN PHÁI & ĐỒ BỘ)
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:280px;overflow-y:auto;padding-right:2px;">
+            ${goldItemsHtml || '<div style="grid-column:1/-1;text-align:center;padding:25px;color:#a39276;">Chưa có mảnh Hoàng Kim nào.</div>'}
+          </div>
+        </div>
+      `;
+    } else if (curModalTab === 'craft') {
       // TAB GHÉP MẢNH TRANG BỊ
       const curCost = calcCraftCost(curCraftSlot, curCraftTier, curCraftSupreme);
       const isAffordable = haveShards >= curCost;
@@ -471,11 +546,17 @@
       <div class="jx-client-window" style="margin:-14px;border:none;box-shadow:none;min-width:620px;">
         <div class="jx-window-header">
           <div class="jx-window-title">
-            <span>💠 LÒ RÃ & GHÉP MẢNH TRANG BỊ XANH</span>
+            <span>💠 LÒ RÃ & GHÉP MẢNH TRANG BỊ</span>
           </div>
-          <div style="display:flex;align-items:center;gap:6px;background:rgba(30,58,138,0.4);border:1px solid #3b82f6;padding:2px 8px;border-radius:12px;">
-            <span style="font-size:11px;color:#93c5fd;">Mảnh Trang Bị:</span>
-            <b style="color:#60a5fa;font-size:12.5px;">${haveShards}</b>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="display:flex;align-items:center;gap:5px;background:rgba(30,58,138,0.4);border:1px solid #3b82f6;padding:2px 8px;border-radius:12px;">
+              <span style="font-size:10.5px;color:#93c5fd;">Mảnh Trang Bị:</span>
+              <b style="color:#60a5fa;font-size:12px;">${haveShards}</b>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;background:rgba(120,53,15,0.4);border:1px solid #fbbf24;padding:2px 8px;border-radius:12px;">
+              <span style="font-size:10.5px;color:#fde68a;">Mảnh HK:</span>
+              <b style="color:#ffd700;font-size:12px;">${goldShardGeneric}</b>
+            </div>
           </div>
         </div>
 
@@ -483,6 +564,9 @@
         <div style="display:flex;background:#0d0a07;border-bottom:1.5px solid #5a4425;padding:4px 8px;gap:6px;">
           <button class="jx-action-btn ${curModalTab === 'craft' ? 'gold' : ''}" onclick="window.EQUIP_SHARD.switchTab('craft')" style="padding:5px 14px;font-size:11.5px;font-weight:bold;">
             🔮 Ghép Trang Bị
+          </button>
+          <button class="jx-action-btn ${curModalTab === 'gold' ? 'gold' : ''}" onclick="window.EQUIP_SHARD.switchTab('gold')" style="padding:5px 14px;font-size:11.5px;font-weight:bold;color:#fde047;">
+            💛 Mảnh Hoàng Kim
           </button>
           <button class="jx-action-btn ${curModalTab === 'dismantle' ? 'gold' : ''}" onclick="window.EQUIP_SHARD.switchTab('dismantle')" style="padding:5px 14px;font-size:11.5px;font-weight:bold;">
             🔨 Rã Đồ Xanh (${blueList.length})
@@ -494,7 +578,7 @@
         </div>
 
         <div style="padding:6px 12px;border-top:1px solid #3d2f1d;background:#0d0a07;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:10px;color:#a39276;">Tích lũy mảnh trang bị để đúc nên thần binh hộ thể!</span>
+          <span style="font-size:10px;color:#a39276;">Tích lũy mảnh trang bị và mảnh Hoàng Kim để đúc nên thần binh hộ thể!</span>
           <button class="jx-action-btn" onclick="closeModal();">Đóng</button>
         </div>
       </div>
@@ -554,6 +638,19 @@
     doDismantleAll: function () {
       dismantleAllBlue();
       renderShardModalContent();
+    },
+    doCombineGold: function (name) {
+      if (typeof combineShards === 'function') {
+        const res = combineShards(name);
+        if (res.ok) {
+          if (typeof uiSfx === 'function') uiSfx('levelup');
+          if (typeof toast === 'function') toast(`✨ ${res.msg || 'Ghép thành công!'}`);
+          renderShardModalContent();
+          if (typeof refresh === 'function') refresh();
+        } else {
+          if (typeof toast === 'function') toast(res.msg || 'Không thể ghép!');
+        }
+      }
     }
   };
 })();

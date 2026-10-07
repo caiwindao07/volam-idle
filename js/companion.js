@@ -192,6 +192,7 @@
       const p = S.companion.list[petId];
       if (!p) return;
 
+      p.equips = p.equips || { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 };
       const curLv = p.equips[slot] || 0;
       const costGold = (curLv + 1) * 60000;
       if ((S.gold || 0) < costGold) {
@@ -204,6 +205,146 @@
       if (typeof toast === 'function') toast(`🔨 Nâng cấp trang bị Đồng Hành lên Cấp ${curLv + 1}!`);
       if (typeof save === 'function') save();
       if (typeof recalcStats === 'function') recalcStats();
+      this.renderWindow();
+    },
+
+    // Mở popup chọn trang bị từ túi của chủ nhân để mặc cho Bạn Đồng Hành
+    openEquipSelectModal(petId, slot) {
+      this.init();
+      if (!window.S || !S.companion || !S.companion.list) return;
+      const p = S.companion.list[petId];
+      if (!p) return;
+      p.items = p.items || { weapon: null, helm: null, armor: null, gloves: null, boots: null };
+
+      const slotNames = { weapon: 'Vũ Khí', helm: 'Mũ (Nón)', armor: 'Áo Giáp', gloves: 'Hộ Uyển', boots: 'Giày' };
+      // Map slot đồng hành sang mã detail d trong JX:
+      // weapon: d === 0 || d === 1
+      // helm: d === 7
+      // armor: d === 2
+      // gloves: d === 8
+      // boots: d === 5
+      const validDetails = {
+        weapon: [0, 1],
+        helm: [7],
+        armor: [2],
+        gloves: [8],
+        boots: [5]
+      }[slot] || [];
+
+      const curItem = p.items[slot];
+      const invCandidates = (S.inv || []).filter(it => it && validDetails.includes(it.d));
+
+      const candHtml = invCandidates.map(it => {
+        const rarCol = (typeof RAR_COL !== 'undefined' && RAR_COL[it.r]) || '#ffd700';
+        return `
+          <div style="background:#1a140d;border:1px solid #5a4425;border-radius:4px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:34px;height:34px;border:1px solid ${rarCol};border-radius:4px;background:#000;display:grid;place-items:center;flex-shrink:0;">
+                ${it.ic ? `<img src="${esc(it.ic)}" style="max-width:28px;max-height:28px;">` : ''}
+              </div>
+              <div>
+                <b style="color:${rarCol};font-size:12px;">${esc(it.n)}${it.enh ? ` +${it.enh}` : ''}</b>
+                <div style="font-size:10px;color:#a39276;">Cấp ${it.lvl} · ${(it.mag || []).length} dòng ma pháp</div>
+              </div>
+            </div>
+            <div>
+              <button class="jx-action-btn gold" onclick="COMPANION_SYSTEM.equipPlayerItem(${petId}, '${slot}', ${it.uid})" style="padding:4px 8px;font-size:11px;">
+                Mặc Cho Pet
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const modalHtml = `
+        <div class="jx-client-window" style="margin:-14px;border:none;box-shadow:none;min-width:440px;">
+          <div class="jx-window-header">
+            <span class="jx-window-title">🐾 TRANG BỊ CHO ĐỒNG HÀNH: ${slotNames[slot]}</span>
+          </div>
+          <div style="padding:10px;background:#15100c;">
+            ${curItem ? `
+              <div style="background:#22150b;border:1.5px solid #d4af37;border-radius:5px;padding:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:36px;height:36px;border:1px solid #ffd700;background:#000;display:grid;place-items:center;">
+                    ${curItem.ic ? `<img src="${esc(curItem.ic)}" style="max-width:30px;max-height:30px;">` : ''}
+                  </div>
+                  <div>
+                    <span style="font-size:10px;color:#cbd5e1;">Đang trang bị:</span>
+                    <div style="color:#ffd700;font-weight:bold;font-size:12px;">${esc(curItem.n)}${curItem.enh ? ` +${curItem.enh}` : ''}</div>
+                  </div>
+                </div>
+                <button class="jx-action-btn" onclick="COMPANION_SYSTEM.unequipPlayerItem(${petId}, '${slot}')" style="padding:4px 10px;font-size:11px;color:#ef4444;border-color:#ef4444;">
+                  Tháo Về Túi
+                </button>
+              </div>
+            ` : '<div style="color:#888;font-size:11px;margin-bottom:8px;text-align:center;">Vị trí này đang trống. Hãy chọn trang bị từ túi của bạn bên dưới:</div>'}
+
+            <div style="font-size:11px;font-weight:bold;color:#ffd700;margin-bottom:6px;">TRANG BỊ HỢP LỆ TRONG HÀNH TRANG:</div>
+            <div style="display:flex;flex-direction:column;gap:5px;max-height:240px;overflow-y:auto;">
+              ${candHtml || '<div style="text-align:center;padding:20px;color:#888;">Không có trang bị loại này trong hành trang.</div>'}
+            </div>
+          </div>
+          <div style="padding:6px 12px;border-top:1px solid #3d2f1d;background:#0d0a07;text-align:right;">
+            <button class="jx-action-btn" onclick="closeModal();">Đóng</button>
+          </div>
+        </div>
+      `;
+
+      if (typeof modal === 'function') {
+        modal(modalHtml, () => {});
+      }
+    },
+
+    // Mặc trang bị từ túi vào cho Bạn Đồng Hành
+    equipPlayerItem(petId, slot, uid) {
+      if (!window.S || !S.inv) return;
+      const p = S.companion.list[petId];
+      if (!p) return;
+      p.items = p.items || { weapon: null, helm: null, armor: null, gloves: null, boots: null };
+
+      const itemIdx = S.inv.findIndex(x => x && x.uid === uid);
+      if (itemIdx === -1) {
+        if (typeof toast === 'function') toast('Trang bị không còn trong túi!');
+        return;
+      }
+      const itemToEquip = S.inv.splice(itemIdx, 1)[0];
+
+      // Nếu pet đang mặc món cũ -> tháo về túi
+      if (p.items[slot]) {
+        S.inv.push(p.items[slot]);
+      }
+
+      p.items[slot] = itemToEquip;
+      if (typeof closeModal === 'function') closeModal();
+      if (typeof uiSfx === 'function') uiSfx('dropWeapon');
+      if (typeof toast === 'function') toast(`🐾 Đã mặc [${itemToEquip.n}] cho Bạn Đồng Hành!`);
+      if (typeof save === 'function') save();
+      if (typeof recalcStats === 'function') recalcStats();
+      if (typeof refresh === 'function') refresh();
+      this.renderWindow();
+    },
+
+    // Tháo trang bị của đồng hành về túi
+    unequipPlayerItem(petId, slot) {
+      if (!window.S || !S.inv) return;
+      const p = S.companion.list[petId];
+      if (!p || !p.items || !p.items[slot]) return;
+
+      if (S.inv.length >= (typeof INV_MAX !== 'undefined' ? INV_MAX : 1000)) {
+        if (typeof toast === 'function') toast('❌ Hành trang đã đầy!');
+        return;
+      }
+
+      const item = p.items[slot];
+      p.items[slot] = null;
+      S.inv.push(item);
+
+      if (typeof closeModal === 'function') closeModal();
+      if (typeof uiSfx === 'function') uiSfx('dropOther');
+      if (typeof toast === 'function') toast(`🐾 Đã tháo [${item.n}] về hành trang!`);
+      if (typeof save === 'function') save();
+      if (typeof recalcStats === 'function') recalcStats();
+      if (typeof refresh === 'function') refresh();
       this.renderWindow();
     },
 
@@ -227,12 +368,49 @@
         lifeSteal: Math.round((active.baseBuff.lifeSteal || 0) * lvlMult * intimMult)
       };
 
-      // Cộng thêm từ 5 món trang bị pet
-      for (const slot in active.equips) {
-        const eqLv = active.equips[slot] || 0;
-        buff.str += eqLv * 5;
-        buff.dex += eqLv * 5;
-        buff.hpMax += eqLv * 150;
+      // 1. Cộng thêm từ cấp cường hóa 5 món trang bị pet cơ bản
+      if (active.equips) {
+        for (const slot in active.equips) {
+          const eqLv = active.equips[slot] || 0;
+          buff.str += eqLv * 5;
+          buff.dex += eqLv * 5;
+          buff.hpMax += eqLv * 150;
+        }
+      }
+
+      // 2. CỘNG THÊM TỪ TRANG BỊ CHỦ NHÂN MẶC CHO ĐỒNG HÀNH (S.items)
+      if (active.items) {
+        for (const slot in active.items) {
+          const it = active.items[slot];
+          if (!it) continue;
+          // Thuộc tính cơ bản của trang bị (base)
+          if (it.base) {
+            for (const [id, mn, mx] of it.base) {
+              const val = Math.round((mn + mx) / 2);
+              if (id === 34 || id === 105) buff.hpMax += val; // Sinh lực
+              else if (id === 32) buff.str += val;           // Sức mạnh
+              else if (id === 33) buff.dex += val;           // Thân pháp
+              else if (id === 35) buff.eng += val;           // Nội công
+              else if (id === 98 || id === 101) buff.resAll += val; // Kháng
+            }
+          }
+          // Dòng ma pháp của trang bị (mag)
+          if (it.mag) {
+            for (const m of it.mag) {
+              const p = m.p || [];
+              const val = p[0] || 0;
+              const aName = (typeof attrName === 'function') ? attrName(m.a) : '';
+              if (aName === 'allres_p') buff.resAll += val;
+              else if (aName === 'lifemax_v') buff.hpMax += val;
+              else if (aName === 'strength_v') buff.str += val;
+              else if (aName === 'dexterity_v') buff.dex += val;
+              else if (aName === 'vitality_v') buff.vit += val;
+              else if (aName === 'energy_v') buff.eng += val;
+              else if (aName === 'steallifeenhance_p') buff.lifeSteal += val;
+              else if (aName === 'deadlystrike_p') buff.critPct += val;
+            }
+          }
+        }
       }
 
       return buff;
@@ -436,18 +614,24 @@
                 </div>
               </div>
 
-              <!-- 5 Ô Trang Bị Đồng Hành -->
+              <!-- 5 Ô Trang Bị Đồng Hành (Cho phép mặc đồ từ rương người chơi) -->
               <div style="border-top:1px solid #3c2a1a;padding-top:8px;margin-bottom:10px;">
-                <b style="font-size:12px;color:#ffd700;display:block;margin-bottom:6px;">Trang Bị Đồng Hành (5 ô):</b>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <b style="font-size:12px;color:#ffd700;">Trang Bị Đồng Hành (5 ô):</b>
+                  <span style="font-size:9.5px;color:#cbd5e1;">Bấm vào ô để mặc đồ từ túi</span>
+                </div>
                 <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:4px;">
                   ${['weapon', 'helm', 'armor', 'gloves', 'boots'].map(slot => {
-                    const slotNames = { weapon: 'Vũ Khí', helm: 'Nón', armor: 'Áo', gloves: 'Hộ Uyển', boots: 'Giày' };
-                    const lv = data.equips[slot] || 0;
+                    const slotNames = { weapon: 'Vũ Khí', helm: 'Mũ', armor: 'Áo', gloves: 'Hộ Uyển', boots: 'Giày' };
+                    const curEqItem = data.items && data.items[slot];
+                    const lv = (data.equips && data.equips[slot]) || 0;
+                    const rarCol = curEqItem ? ((typeof RAR_COL !== 'undefined' && RAR_COL[curEqItem.r]) || '#ffd700') : '#5a4425';
                     return `
-                      <button onclick="COMPANION_SYSTEM.upgradeEquip(${meta.id}, '${slot}')" 
-                        style="background:#110c08;border:1px solid #5a4425;color:#d8cbb8;padding:4px 2px;border-radius:3px;font-size:10px;text-align:center;cursor:pointer;" title="Nhấp để cường hóa trang bị">
-                        <div>${slotNames[slot]}</div>
-                        <b style="color:#ffd700;">+${lv}</b>
+                      <button onclick="COMPANION_SYSTEM.openEquipSelectModal(${meta.id}, '${slot}')" 
+                        style="background:#110c08;border:1.5px solid ${curEqItem ? rarCol : '#5a4425'};color:#d8cbb8;padding:4px 2px;border-radius:4px;font-size:10px;text-align:center;cursor:pointer;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;" title="${curEqItem ? `[${curEqItem.n}] - Bấm để thay hoặc tháo đồ` : `[${slotNames[slot]}] Chưa mặc - Bấm để chọn từ túi`}">
+                        ${curEqItem && curEqItem.ic ? `<img src="${esc(curEqItem.ic)}" style="max-width:24px;max-height:24px;margin-bottom:2px;">` : `<div style="font-size:16px;line-height:1;margin-bottom:2px;">⚔️</div>`}
+                        <div style="font-size:9.5px;color:${curEqItem ? rarCol : '#a39276'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:54px;">${curEqItem ? esc(curEqItem.n) : slotNames[slot]}</div>
+                        <span style="font-size:8.5px;color:#fbbf24;">+${lv}</span>
                       </button>
                     `;
                   }).join('')}
