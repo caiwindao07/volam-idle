@@ -612,8 +612,8 @@ function renderSkill() {
 /* ---------- the: tui do ---------- */
 let invFilterOpen = false;
 let invPage = 0; // Trang rương hiện tại: 0 -> 4 (5 trang)
-const INV_PAGE_SIZE = 40; // Mỗi trang hiển thị 40 ô (grid 8x5 hoặc 10x4)
-const INV_PAGE_COUNT = 5; // 5 trang: 1 -> 5 (tổng 200 ô)
+const INV_PAGE_SIZE = 200; // Mỗi trang chứa 200 ô (chuẩn 10 cột x 20 dòng)
+const INV_PAGE_COUNT = 5; // 5 rương: 1 -> 5 (tổng 1000 ô)
 
 function renderInv() {
   invDirty = false;
@@ -638,28 +638,28 @@ function renderInv() {
   const luong = S.gold % 10000;
   const goldStr = van > 0 ? `${van} vạn ${fmt(luong)} lượng` : `${fmt(S.gold)} lượng`;
 
-  // HTML các nút chuyển trang 1 -> 5
+  // HTML các nút chuyển trang Rương 1 -> 5 (mỗi rương 200 ô)
   const pageTabsHtml = Array.from({ length: INV_PAGE_COUNT }, (_, idx) => {
     const isAct = idx === invPage;
     const pageItemCount = S.inv.slice(idx * INV_PAGE_SIZE, (idx + 1) * INV_PAGE_SIZE).length;
-    return `<button class="inv-page-btn ${isAct ? 'active' : ''}" data-page="${idx}" style="flex:1;padding:4px 2px;font-size:11px;font-weight:bold;cursor:pointer;border-radius:4px;border:1px solid ${isAct ? '#ffd700' : '#5a4425'};background:${isAct ? 'linear-gradient(180deg,#854d0e,#582900)' : '#1e140a'};color:${isAct ? '#ffd700' : '#a39276'};" title="Rương trang ${idx + 1} (${pageItemCount}/${INV_PAGE_SIZE})">
+    return `<button class="inv-page-btn ${isAct ? 'active' : ''}" data-page="${idx}" style="flex:1;padding:5px 2px;font-size:11px;font-weight:bold;cursor:pointer;border-radius:4px;border:1.5px solid ${isAct ? '#ffd700' : '#5a4425'};background:${isAct ? 'linear-gradient(180deg,#854d0e,#582900)' : '#1e140a'};color:${isAct ? '#ffd700' : '#a39276'};box-shadow:${isAct ? '0 0 8px rgba(255,215,0,0.35)' : 'none'};" title="Rương ${idx + 1} (${pageItemCount}/${INV_PAGE_SIZE})">
       Rương ${idx + 1} <small style="font-size:9.5px;opacity:${pageItemCount ? 1 : 0.6};color:${pageItemCount >= INV_PAGE_SIZE ? '#ef4444' : isAct ? '#fff' : '#888'};">(${pageItemCount}/${INV_PAGE_SIZE})</small>
     </button>`;
   }).join('');
 
   invEl.innerHTML = `
     <div class="jx-inv-layout-split">
-      <!-- CỘT TRÁI: RƯƠNG HÀNH TRANG 200 Ô VỚI 5 TRANG -->
+      <!-- CỘT TRÁI: RƯƠNG HÀNH TRANG (5 RƯƠNG x 200 Ô = 1000 Ô) -->
       <div class="jx-inv-grid-col">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;padding:0 2px;">
-          <span style="font-size:11px;font-weight:700;color:#ffd700;">🎒 RƯƠNG HÀNH TRANG (TRANG ${invPage + 1}/5)</span>
-          <span style="font-size:10.5px;color:#a39276;">Tổng: <b style="color:${S.inv.length >= INV_MAX ? '#ef4444' : '#4ade80'};">${S.inv.length}/${INV_MAX}</b></span>
+          <span style="font-size:11px;font-weight:700;color:#ffd700;">🎒 RƯƠNG HÀNH TRANG ${invPage + 1} (200 Ô)</span>
+          <span style="font-size:10.5px;color:#a39276;">Tổng cả 5 rương: <b style="color:${S.inv.length >= INV_MAX ? '#ef4444' : '#4ade80'};">${S.inv.length}/${INV_MAX}</b></span>
         </div>
-        <!-- Thanh chọn trang Rương 1 -> 5 -->
+        <!-- Thanh chọn Rương 1 -> 5 -->
         <div class="inv-page-bar" style="display:flex;gap:4px;margin-bottom:6px;">
           ${pageTabsHtml}
         </div>
-        <div class="jx-inv-grid-10" style="grid-template-rows:repeat(4,34px);min-height:150px;">
+        <div class="jx-inv-grid-10" style="max-height:360px;overflow-y:auto;padding-right:2px;">
           ${pageItems.map(itemCell).join('')}
           ${emptyCells}
         </div>
