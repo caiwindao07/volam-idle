@@ -1036,6 +1036,7 @@ function renderMore() {
         <div class="row" style="font-size:11px;"><span>Âm lượng SFX</span> <input type="range" id="sVol" min="0" max="1" step="0.05" value="${sndCfg().vol}"></div>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="mOn" ${sndCfg().music ? 'checked' : ''} class="accent-amber-500"> Nhạc nền theo bản đồ (BGM)</label>
         <div class="row" style="font-size:11px;"><span>Âm lượng Nhạc</span> <input type="range" id="mVol" min="0" max="1" step="0.05" value="${sndCfg().mvol}"></div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cNoShake" ${S.noShake ? 'checked' : ''} class="accent-amber-500"> Tắt hiệu ứng rung màn hình (Camera Shake)</label>
       </div>
     </div>
 
@@ -1117,6 +1118,7 @@ function renderMore() {
   m('#cPts').onchange = e => { S.autoPts = e.target.checked; if (S.autoPts) { autoSpendAttrs(); autoSpendSkills(); recalc(); } save(); };
   m('#cJoy').onchange = e => { S.joy = e.target.checked ? 'fixed' : 'float'; save(); };
   m('#cLowFx').onchange = e => { S.lowFx = e.target.checked; save(); };
+  m('#cNoShake').onchange = e => { S.noShake = e.target.checked; save(); toast(S.noShake ? 'Đã TẮT rung màn hình' : 'Đã BẬT rung màn hình'); };
   m('#sDiff').onchange = e => { S.diff = +e.target.value; R.enemies = []; R.spawnT = 0.3; save(); toast('Độ khó: ' + diffOf().n); renderMore(); };
   m('#cBuy').onchange = e => { S.autoBuy = e.target.checked; save(); };
   m('#cForge').onchange = e => { S.autoForge = e.target.checked; if (S.autoForge) autoForge(); save(); };

@@ -777,7 +777,7 @@ function updateCamera(dt) {
   }
 }
 function shakeCamera(mag = 4, dur = 0.15) {
-  if (typeof S !== 'undefined' && S && S.lowFx) return;
+  if (typeof S !== 'undefined' && S && (S.lowFx || S.noShake)) return;
   CAM.shakeMag = Math.max(CAM.shakeMag || 0, mag);
   CAM.shakeDur = dur;
   CAM.shakeT = dur;
