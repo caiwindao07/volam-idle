@@ -137,7 +137,13 @@ function fillSlots() {
 function assignSlot(i, id) { fillSlots(); const j = S.slots.indexOf(id); if (j >= 0) S.slots[j] = S.slots[i]; S.slots[i] = id; renderPad(); save(); }
 function pressSlot(i) {
   fillSlots(); const id = S.slots[i]; if (!id) { toast('Ô trống: gán chiêu ở thẻ Võ công'); return; }
-  S.main = id; S.mainLock = true; R.dirty = true; recalc(); renderPad(); toast('Chiêu chính: ' + SK[id].n);
+  S.main = id; S.mainLock = true;
+  if (typeof R !== 'undefined' && R) {
+    R.manualAttack = true;
+    R.atkT = 0;
+  }
+  R.dirty = true; recalc(); renderPad(); toast('Chiêu chính: ' + SK[id].n);
+  if (typeof heroAttack === 'function') heroAttack();
 }
 
 /* ---------- thuoc & Tho Dia Phu ---------- */
@@ -298,6 +304,14 @@ function bindControls() {
         return;
       }
     }
+    const clickedEnemy = (typeof alive === 'function') ? alive().find(e => Math.hypot(e.x - wx, e.y - wy) <= e.r + 20) : null;
+    if (clickedEnemy) {
+      R.manualTarget = clickedEnemy;
+      R.manualAttack = true;
+      R.atkT = 0;
+      if (typeof heroAttack === 'function') heroAttack();
+      return;
+    }
     const d = groundAt(x + CAM.x, y + CAM.y);                   // cham vao do: di nhat (doi sang toa do the gioi)
     if (d) { R.pickTarget = R.pickTarget === d ? null : d; if (R.pickTarget) toast(`Đi nhặt: ${d.it.n}`); return; }
     if (manual()) { INPUT.target = { x: wx, y: wy }; }   // cham dat: di toi do
@@ -309,6 +323,14 @@ function bindControls() {
     const k = ev.key.length === 1 ? ev.key.toLowerCase() : ev.key; INPUT.keys[k] = true;
     if (SV.on) { if (!ev.repeat && (k === 'p' || k === 'Escape')) svPause(); return; }   // Luyen Cong: chi di chuyen + tam dung
     if (['w', 'a', 's', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(k) && !manual()) setCtrl('manual');
+    if (k === ' ' || k === 'space') {
+      ev.preventDefault();
+      if (typeof R !== 'undefined' && R) {
+        R.manualAttack = true;
+        R.atkT = 0;
+      }
+      if (typeof heroAttack === 'function') heroAttack();
+    }
     if ('123'.includes(k)) pressSlot(+k - 1);
     if (k === '4') { if (typeof toggleMountRide === 'function') toggleMountRide(); else pressSlot(3); }
     if (k === 'q') drinkNow('life'); if (k === 'e') drinkNow('mana'); if (k === 't') { if (typeof openMapTravelModal === 'function') openMapTravelModal(); else (R.town ? backFromTown() : goTown()); }

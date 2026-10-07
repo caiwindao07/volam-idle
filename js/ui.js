@@ -505,7 +505,16 @@ function renderCharAttrib(targetEl) {
   const bFm = el.querySelector('#bFactionModal'); if (bFm) bFm.onclick = () => pvkChangeFactionModal();
   const bInv = el.querySelector('#bOpenInvSide'); if (bInv) bInv.onclick = () => toggleWin('inv');
   const bClose = el.querySelector('#bCloseChar'); if (bClose) bClose.onclick = () => toggleWin('char-attrib');
-  el.querySelectorAll('.jx-equip-slot .it').forEach(b => b.onclick = () => itemModal(findItem(b.dataset.uid), b.parentNode.dataset.slot));
+  el.querySelectorAll('.jx-equip-slot .it').forEach(b => {
+    const slot = b.parentNode.dataset.slot;
+    b.ondblclick = ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      closeModal();
+      unequip(slot);
+    };
+    b.onclick = () => itemModal(findItem(b.dataset.uid), slot);
+  });
 }
 
 function renderChar() { renderCharAttrib(); }
@@ -767,6 +776,17 @@ function renderInv() {
   const bKq = q('#bKtcQuick'); if (bKq) bKq.onclick = () => { if (typeof openKtcModal === 'function') openKtcModal(); };
   const bClose = q('#bCloseInv'); if (bClose) bClose.onclick = () => toggleWin('inv');
   qa('.it').forEach(b => {
+    b.ondblclick = ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const uid = +b.dataset.uid;
+      if (!uid) return;
+      const it = findItem(uid);
+      if (it && S.inv && S.inv.includes(it)) {
+        closeModal();
+        equip(it);
+      }
+    };
     b.onclick = ev => {
       const uid = +b.dataset.uid;
       if (!uid) return;

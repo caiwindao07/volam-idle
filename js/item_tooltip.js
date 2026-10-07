@@ -549,6 +549,37 @@
         hideItemTooltip();
       }
     });
+
+    // 5. Đơn giản hóa: Double-click để mặc đồ (từ rương) hoặc tháo đồ (từ người) không cần mở bảng so sánh
+    document.addEventListener('dblclick', e => {
+      const itEl = e.target.closest('.it[data-uid]');
+      if (!itEl) return;
+      const uid = +itEl.dataset.uid;
+      if (!uid || typeof findItem !== 'function') return;
+      const item = findItem(uid);
+      if (!item) return;
+
+      hideItemTooltip();
+
+      // Nếu đang ở ô trang bị trên người (.jx-equip-slot) -> Tháo đồ
+      const equipSlotEl = itEl.closest('.jx-equip-slot');
+      if (equipSlotEl && equipSlotEl.dataset.slot && typeof unequip === 'function') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof closeModal === 'function') closeModal();
+        unequip(equipSlotEl.dataset.slot);
+        return;
+      }
+
+      // Nếu đang ở trong rương hành trang (S.inv) -> Mặc đồ ngay lập tức
+      if (typeof S !== 'undefined' && S && S.inv && S.inv.includes(item) && typeof equip === 'function') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof closeModal === 'function') closeModal();
+        equip(item);
+        return;
+      }
+    });
   }
 
   // Khởi động khi DOM sẵn sàng

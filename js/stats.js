@@ -53,7 +53,11 @@ function calc(eq) {
   const A = {}, lv = S.lvl, ser = heroSeries(), add = J.levelAdd[ser], st = heroStart();
   const skAdd = {};                                        // allskill_v co tham so 3 = id ky nang: +cap cho rieng ky nang do
   const addItemAttr = (m) => {
-    const name = attrName(m.a), p = m.p.map(v => v === -1 ? 0 : v);
+    if (!m) return;
+    const a = m.a !== undefined ? m.a : (Array.isArray(m) ? m[0] : null);
+    const rawP = m.p !== undefined ? m.p : (Array.isArray(m) ? m[1] : null);
+    if (a == null || !rawP || !Array.isArray(rawP)) return;
+    const name = attrName(a), p = rawP.map(v => v === -1 ? 0 : v);
     if (name === 'allskill_v' && p[2] > 0) { skAdd[p[2]] = (skAdd[p[2]] || 0) + p[0]; return; }
     addAttr(A, name, p);
   };

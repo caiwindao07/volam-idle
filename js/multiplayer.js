@@ -319,8 +319,17 @@ function handleServerMessage(msg) {
         if (msg.gold !== undefined) S.gold = msg.gold;
         if (msg.lvl !== undefined) S.lvl = msg.lvl;
         if (msg.xp !== undefined) S.xp = msg.xp;
-        if (msg.attrPts !== undefined) S.attrPts = msg.attrPts;
-        if (msg.skPts !== undefined) S.skPts = msg.skPts;
+        if (msg.attrPts !== undefined) {
+          const maxAttr = (S.lvl - 1) * 5 + ((S.rw && S.rw.stat && S.rw.stat.reborn) || 0) * 100 + 50;
+          const spentAttr = ((S.attr && S.attr.str) || 0) + ((S.attr && S.attr.dex) || 0) + ((S.attr && S.attr.vit) || 0) + ((S.attr && S.attr.eng) || 0);
+          S.attrPts = Math.max(0, Math.min(msg.attrPts, Math.max(0, maxAttr - spentAttr)));
+        }
+        if (msg.skPts !== undefined) {
+          let spentSk = 0;
+          if (S.sk) { for (const k in S.sk) spentSk += (S.sk[k] || 0); }
+          const maxSk = 1 + (S.lvl - 1) * 1 + 10;
+          S.skPts = Math.max(0, Math.min(msg.skPts, Math.max(0, maxSk - spentSk)));
+        }
       } finally {
         window._legitLevelTransition = false;
         window._legitExpGain = false;

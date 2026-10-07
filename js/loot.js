@@ -210,13 +210,20 @@ function updateGround(dt) {
   if (!R.ground.length) return false;
   for (const d of R.ground) d.age += dt;
 
-  // 1. Tu dong hut / nhat tat ca cac mon roi quanh nhan vat (VIP mo rong pham vi toan man hinh)
-  const vacR = (typeof vipVacuumRadius === 'function') ? Math.max(150, vipVacuumRadius()) : VACUUM_R;
-  for (const d of R.ground.slice()) {
-    if (d.age < 0.05) continue;
-    const dist = Math.hypot(d.x - H.x, d.y - H.y);
-    if (dist <= vacR) {
-      pickUp(d, true);
+  const f = lootFilter();
+  const allowAuto = (f.auto !== false) && (!S.auto || S.auto.autoLoot !== false);
+
+  // 1. Tu dong hut / nhat cac mon roi quanh nhan vat NEU KHOP BO LOC (VIP mo rong pham vi toan man hinh)
+  if (allowAuto) {
+    const vacR = (typeof vipVacuumRadius === 'function') ? Math.max(150, vipVacuumRadius()) : VACUUM_R;
+    for (const d of R.ground.slice()) {
+      if (d.age < 0.05) continue;
+      // Chi hut mon khop bo loc, tru khi nguoi choi chu dong click tay vao mon do
+      if (!lootMatch(d.it) && R.pickTarget !== d) continue;
+      const dist = Math.hypot(d.x - H.x, d.y - H.y);
+      if (dist <= vacR) {
+        pickUp(d, true);
+      }
     }
   }
 
@@ -225,11 +232,13 @@ function updateGround(dt) {
   // 2. Cham tay chon mon do cu the -> di toi nhat
   let target = R.pickTarget && R.ground.includes(R.pickTarget) ? R.pickTarget : null;
 
-  // 3. Tu dong chay lai nhat mon gan nhat tren san (khong bo sot bat ky mon nao)
-  if (!target && !(typeof manual === 'function' && manual())) {
+  // 3. Tu dong chay lai nhat mon gan nhat tren san NEU KHOP BO LOC
+  if (!target && allowAuto && !(typeof manual === 'function' && manual())) {
     let best = null, bd = 1500;
     for (const d of R.ground) {
       if (d.age < 0.1) continue;
+      // Chi chay lai nhat mon thoa man bo loc!
+      if (!lootMatch(d.it)) continue;
       const k = Math.hypot(d.x - H.x, d.y - H.y);
       if (k < bd) { bd = k; best = d; }
     }
@@ -248,7 +257,6 @@ function updateGround(dt) {
   if (H._stuck && H._stuck > 25) {
     H._lootStuck = (H._lootStuck || 0) + 1;
     if (H._lootStuck > 2) {
-      // Mon do o vi tri vat can khong the toi -> Tu dong hut vao nguoi hoac ban de giai phong
       pickUp(target, true);
       H._lootStuck = 0;
     }

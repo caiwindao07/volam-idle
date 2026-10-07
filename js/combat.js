@@ -380,12 +380,26 @@ function heroAttack() {
     R.moveTo = null;
     return 0.2;
   }
-  if (S.auto && S.auto.on === false && !manual()) return 0.3; // Tam dung auto
+  // Khi Auto Chiến Đấu đang TẮT: Nhân vật TUYỆT ĐỐI không tự động tấn công
+  // Chỉ xuất chiêu nếu người chơi bấm tay (R.manualAttack) hoặc chọn mục tiêu (R.manualTarget)
+  if (!S || !S.auto || S.auto.on === false) {
+    if (!R.manualAttack && !R.manualTarget) {
+      R.moveTo = null;
+      return 0.3;
+    }
+  }
+
   const a = pickAttack(P, list.some(e => e.cls === 'boss' || e.cls === 'elite' || e.goldBoss));
-  const t = nearest(list);
+  const t = (R.manualTarget && !R.manualTarget.dead && R.manualTarget.hp > 0) ? R.manualTarget : nearest(list);
   if (!t) return 0.3;
   const d = Math.hypot(t.x - H.x, t.y - H.y) - t.r;
   if (d > a.rad) {
+    // Nếu Auto đang tắt và không phải đang đuổi theo mục tiêu chỉ định tay thì dừng lại
+    if (S.auto && S.auto.on === false && !R.manualTarget) {
+      R.moveTo = null;
+      R.manualAttack = false;
+      return 0.2;
+    }
     R.moveTo = manual() ? null : t;
     if (!manual() && d > 320 && S.auto && S.auto.autoMount !== false && !S.mounted && typeof toggleMountRide === 'function') {
       if (S.mount && S.mount.tier) toggleMountRide();
@@ -401,6 +415,13 @@ function heroAttack() {
   H.face = t.x >= H.x ? 1 : -1; H.dir = dirOf(t.x - H.x, t.y - H.y); H.act = 'at'; H.actT = 0;
   if (a.id) skillSfx(a.id); else npcSfx(W.hero[S.fac] && W.hero[S.fac].anim, 'at', 0.4);
   if (typeof sendMultiplayerSkill === 'function') sendMultiplayerSkill(a, t);
+
+  // Xóa cờ tấn công thủ công sau khi tung chiêu
+  R.manualAttack = false;
+  if (R.manualTarget && (R.manualTarget.dead || R.manualTarget.hp <= 0)) {
+    R.manualTarget = null;
+  }
+
   return 1 / a.rate;
 }
 function enemyAI(e, dt) {

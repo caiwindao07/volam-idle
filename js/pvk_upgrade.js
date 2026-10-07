@@ -570,9 +570,12 @@ const PVK_MOUNTS = [
 
 function pvkEnsureMount() {
   if (!S) return;
-  if (!S.mount) {
+  if (!S.mount || typeof S.mount !== 'object') {
     S.mount = { tier: 1, lvl: 1, exp: 0, fodder: 10 };
   }
+  if (S.mount.tier == null) S.mount.tier = 1;
+  if (S.mount.exp == null) S.mount.exp = 0;
+  if (S.mount.fodder == null) S.mount.fodder = 10;
 }
 
 function mountCurrent() {
@@ -614,19 +617,27 @@ function mountFeed(useFodder) {
     const newM = mountCurrent();
     toast(`⭐ CHIẾN MÃ TIẾN HÓA LÊN [${newM.n}]!`);
     log(`<b class="up">⭐ Chiến mã đột phá lên bậc [${newM.n}]!</b>`);
-    // Dong bo slot trang bi horse
+    // Dong bo slot trang bi horse dung dinh dang item ma thuat
     if (S.eq) {
       S.eq.horse = {
         uid: S.uid++, n: newM.n, d: 10, r: newM.tier >= 8 ? 4 : newM.tier >= 5 ? 3 : 2,
         s: heroSeries(), req: [{ id: 36, v: newM.minLvl }],
         base: [[106, newM.spd, newM.spd], [82, newM.hpPct, newM.hpPct]],
-        mag: [[109, [newM.allRes, -1, 0]], [65, [newM.dmgPct, -1, 0]]]
+        mag: [
+          { a: 109, p: [newM.allRes, -1, 0], pre: 1 },
+          { a: 65, p: [newM.dmgPct, -1, 0], pre: 1 }
+        ]
       };
     }
   }
   if (R) R.dirty = true;
+  if (typeof recalc === 'function') recalc();
   save();
-  mountModal();
+  if (document.getElementById('giftTabs')) {
+    if (typeof refreshGift === 'function') refreshGift();
+  } else {
+    mountModal();
+  }
 }
 
 function mountModal() {

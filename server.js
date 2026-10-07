@@ -368,7 +368,7 @@ function sanitizeAndValidateState(serverState, incomingState, username) {
     incomingState.xp = Math.max(0, Number(incomingState.xp) || 0);
   }
 
-  // 2. Điểm Tiềm Năng & Điểm Kỹ Năng
+  // 2. Điểm Tiềm Năng & Điểm Kỹ Năng: Mỗi cấp chỉ +5 tiềm năng và +1 kỹ năng
   const clientAttr = incomingState.attr || {};
   incomingState.attr = {
     str: Math.max(0, Math.floor(Number(clientAttr.str) || 0)),
@@ -376,10 +376,26 @@ function sanitizeAndValidateState(serverState, incomingState, username) {
     vit: Math.max(0, Math.floor(Number(clientAttr.vit) || 0)),
     eng: Math.max(0, Math.floor(Number(clientAttr.eng) || 0))
   };
-  incomingState.attrPts = Math.max(0, Math.floor(Number(incomingState.attrPts) || 0));
+  const rebornCount = (incomingState.rw && incomingState.rw.stat && incomingState.rw.stat.reborn) || 0;
+  const maxAttrPossible = (incomingState.lvl - 1) * 5 + rebornCount * 100 + 50;
+  const totalAttrSpent = incomingState.attr.str + incomingState.attr.dex + incomingState.attr.vit + incomingState.attr.eng;
+  let clientAttrPts = Math.max(0, Math.floor(Number(incomingState.attrPts) || 0));
+  if (totalAttrSpent + clientAttrPts > maxAttrPossible) {
+    clientAttrPts = Math.max(0, maxAttrPossible - totalAttrSpent);
+  }
+  incomingState.attrPts = clientAttrPts;
 
   incomingState.sk = incomingState.sk || {};
-  incomingState.skPts = Math.max(0, Math.floor(Number(incomingState.skPts) || 0));
+  let totalSkSpent = 0;
+  for (const skId in incomingState.sk) {
+    totalSkSpent += Number(incomingState.sk[skId]) || 0;
+  }
+  const maxSkPossible = 1 + (incomingState.lvl - 1) * 1 + 10; // 1 ban đầu + 1 mỗi cấp + sách mật tịch
+  let clientSkPts = Math.max(0, Math.floor(Number(incomingState.skPts) || 0));
+  if (totalSkSpent + clientSkPts > maxSkPossible) {
+    clientSkPts = Math.max(0, maxSkPossible - totalSkSpent);
+  }
+  incomingState.skPts = clientSkPts;
 
   // 3. Ngân lượng: Giữ nguyên số vàng hợp lệ
   incomingState.gold = Math.max(0, Math.floor(Number(incomingState.gold) || 0));
@@ -2000,11 +2016,12 @@ wss.on('connection', (ws) => {
             if (p.uKey && db.users[p.uKey] && db.users[p.uKey].state) {
               const uState = db.users[p.uKey].state;
               uState.gold = (uState.gold || 0) + goldDrop;
-              const curLvl = Math.max(1, Math.min(200, Number(uState.lvl) || 1));
-              const expNeeded = (JX && JX.exp && JX.exp[curLvl - 1]) ? JX.exp[curLvl - 1] : (curLvl * 1000);
+              uState.lvl = Math.max(1, Math.min(200, Number(uState.lvl) || 1));
               uState.xp = (uState.xp || 0) + expGain;
               let didLevelUp = false;
-              while (uState.lvl < 200 && uState.xp >= expNeeded) {
+              while (uState.lvl < 200) {
+                const expNeeded = (JX && JX.exp && JX.exp[uState.lvl - 1]) ? JX.exp[uState.lvl - 1] : (uState.lvl * 1000);
+                if (uState.xp < expNeeded) break;
                 uState.xp -= expNeeded;
                 uState.lvl++;
                 uState.attrPts = (uState.attrPts || 0) + 5;
