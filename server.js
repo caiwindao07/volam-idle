@@ -110,33 +110,66 @@ let mongoClient = null;
 let mongoDb = null;
 let mongoUsersCol = null;
 
-const DEFAULT_MONGODB_URI = 'mongodb+srv://volam:Mitom1304@cluster0.tpppret.mongodb.net/volam-idle?retryWrites=true&w=majority';
+global._mongoStatus = {
+  mode: 'init',
+  connected: false,
+  attempts: [],
+  serverPublicIp: null,
+  accountsCount: 0
+};
+
+// Truy vấn public IP của server để hỗ trợ cấu hình whitelist MongoDB Atlas
+try {
+  const https = require('https');
+  https.get('https://api.ipify.org?format=json', (r) => {
+    let raw = '';
+    r.on('data', c => raw += c);
+    r.on('end', () => {
+      try {
+        const j = JSON.parse(raw);
+        global._mongoStatus.serverPublicIp = j.ip;
+      } catch (e) {}
+    });
+  }).on('error', () => {});
+} catch (e) {}
 
 async function initMongo() {
   const envUri = (process.env.MONGODB_URI || '').trim();
+  const defaultUriWithAuth = 'mongodb+srv://volam:Mitom1304@cluster0.tpppret.mongodb.net/volam-idle?authSource=admin&retryWrites=true&w=majority';
+  const defaultUriWithoutAuth = 'mongodb+srv://volam:Mitom1304@cluster0.tpppret.mongodb.net/volam-idle?retryWrites=true&w=majority';
+
   const urisToTry = [];
   if (envUri) urisToTry.push({ uri: envUri, src: 'process.env.MONGODB_URI' });
-  if (!envUri || envUri !== DEFAULT_MONGODB_URI) {
-    urisToTry.push({ uri: DEFAULT_MONGODB_URI, src: 'mặc định (cấu hình sẵn)' });
-  }
+  urisToTry.push({ uri: defaultUriWithAuth, src: 'mặc định (authSource=admin)' });
+  urisToTry.push({ uri: defaultUriWithoutAuth, src: 'mặc định (chuẩn Atlas)' });
+
+  global._mongoStatus.attempts = [];
 
   for (const item of urisToTry) {
     try {
       const { MongoClient } = require('mongodb');
       const client = new MongoClient(item.uri, {
         serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 5000
       });
       await client.connect();
       mongoClient = client;
       mongoDb = mongoClient.db('volam-idle');
       mongoUsersCol = mongoDb.collection('users');
       console.log(`[DB] Đã kết nối thành công tới MongoDB Atlas trực tuyến (${item.src})!`);
+      global._mongoStatus.mode = 'mongodb';
+      global._mongoStatus.connected = true;
+      global._mongoStatus.connectedSource = item.src;
+      global._mongoStatus.attempts.push({ src: item.src, ok: true });
       return true;
     } catch (err) {
       console.warn(`[DB] Không thể kết nối MongoDB Atlas (${item.src}):`, err.message);
+      global._mongoStatus.attempts.push({ src: item.src, ok: false, error: err.message });
     }
   }
   mongoUsersCol = null;
+  global._mongoStatus.mode = 'local';
+  global._mongoStatus.connected = false;
   return false;
 }
 
@@ -432,6 +465,16 @@ const server = http.createServer((req, res) => {
 
   // API ROUTING
   if (pathname.startsWith('/api/')) {
+    // 0. Kiểm tra trạng thái cơ sở dữ liệu (Database Health / Diagnostic)
+    if (pathname === '/api/db-status' && req.method === 'GET') {
+      return sendJson(res, 200, {
+        ok: true,
+        ...global._mongoStatus,
+        accountsCount: Object.keys(db.users || {}).length,
+        help: !global._mongoStatus.connected ? 'Vào MongoDB Atlas -> Network Access -> Add IP Address -> chọn Allow Access From Anywhere (0.0.0.0/0)' : 'Đã kết nối MongoDB Atlas thành công'
+      });
+    }
+
     // 1. Đăng ký tài khoản
     if (pathname === '/api/register' && req.method === 'POST') {
       parseJsonBody(req, (err, data) => {
