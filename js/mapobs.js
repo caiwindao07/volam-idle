@@ -7,7 +7,14 @@ const OBS_DEFAULT_WORLD = 3072;
 
 function obsLoad(key) {
   let kStr = String(key === 'town' ? W.town.id : key);
-  if (kStr === '386') kStr = '224'; // Tống Kim dùng chung bản đồ Sa Mạc Địa Biểu (224)
+  if (kStr === '386') {
+    // Chiến Trường Tống Kim Chu Tiên Trấn / Giới Kiều 3 cầu (386)
+    OBS.key = '386';
+    OBS.g = null;
+    WORLD.w = 3584;
+    WORLD.h = 3584;
+    return true;
+  }
   const m = !window.NO_OBS && window.JMO && (window.JMO[kStr] || (key === 'town' && window.JMO['37']));
   OBS.key = key; OBS.g = null;
   if (!m) { WORLD.w = WORLD.h = OBS_DEFAULT_WORLD; return false; }

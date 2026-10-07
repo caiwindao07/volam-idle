@@ -169,20 +169,26 @@ const TONGKIM = {
 
   // 2. Vào chiến trường
   join(camp) {
+    this.inBattle = true;
+    this.camp = (camp === 'auto' || !camp) ? (Math.random() < 0.5 ? 'song' : 'jin') : camp;
     if (MP && MP.connected && MP.ws) {
       MP.ws.send(JSON.stringify({
         type: 'tongkim_join',
-        camp: camp
+        camp: this.camp
       }));
       if (typeof uiSfx === 'function') uiSfx('quest');
-    } else {
-      // Hỗ trợ chế độ ngoại tuyến / Singleplayer: chuyển map 386 trực tiếp
-      this.inBattle = true;
-      this.camp = (camp === 'auto' || !camp) ? (Math.random() < 0.5 ? 'song' : 'jin') : camp;
-      if (typeof travelToZone === 'function') travelToZone(386);
-      if (typeof toast === 'function') toast(`⚔️ Đã gia nhập phe ${this.camp === 'song' ? 'Tống (Cờ Xanh)' : 'Kim (Cờ Đỏ)'}!`);
-      this.updateHud();
     }
+    // Lập tức dịch chuyển vào Map 386 (Chiến Trường Tống Kim Chu Tiên Trấn / Giới Kiều)
+    if (typeof travelToZone === 'function') travelToZone(386);
+    if (typeof H !== 'undefined') {
+      if (this.camp === 'song') {
+        H.x = 950; H.y = 950;
+      } else {
+        H.x = 2600; H.y = 2600;
+      }
+    }
+    if (typeof toast === 'function') toast(`⚔️ Đã tham chiến Tống Kim! Phe: ${this.camp === 'song' ? 'Tống (Cờ Xanh)' : 'Kim (Cờ Đỏ)'}`);
+    this.updateHud();
   },
 
   // 3. Rời chiến trường
@@ -209,11 +215,16 @@ const TONGKIM = {
     if (MP && MP.connected && MP.ws) {
       MP.ws.send(JSON.stringify({ type: 'tongkim_leave' }));
     }
-    if (typeof travelToZone === 'function') travelToZone(37); // Trở về Biện Kinh
+    if (typeof travelToTown === 'function') {
+      travelToTown(0); // Trở về Biện Kinh
+    } else if (typeof travelToZone === 'function') {
+      travelToZone(0);
+    }
   },
 
   // 4. Đồng bộ dữ liệu Tống Kim từ Server
   onSync(msg) {
+    const wasInBattle = this.inBattle;
     this.inBattle = !!msg.inBattle;
     if (msg.phase !== undefined) this.phase = msg.phase;
     if (msg.phaseName !== undefined) this.phaseName = msg.phaseName;
@@ -226,6 +237,21 @@ const TONGKIM = {
     if (msg.myCombo !== undefined) this.myCombo = msg.myCombo;
     if (msg.quanco !== undefined) this.quanco = msg.quanco;
     if (msg.ladder) this.ladder = msg.ladder;
+
+    // Tự động chuyển map 386 khi server báo đã vào trận
+    if (this.inBattle) {
+      const curZ = (typeof S !== 'undefined' && S) ? S.chosenZone : 0;
+      if (curZ !== 386 && typeof travelToZone === 'function') {
+        travelToZone(386);
+        if (typeof H !== 'undefined') {
+          if (this.camp === 'song') { H.x = 950; H.y = 950; }
+          else { H.x = 2600; H.y = 2600; }
+        }
+      }
+    } else if (wasInBattle && !this.inBattle) {
+      // Hết trận, trở về Biện Kinh
+      if (typeof travelToTown === 'function') travelToTown(0);
+    }
 
     this.updateHud();
 

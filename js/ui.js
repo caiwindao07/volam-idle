@@ -1602,17 +1602,31 @@ function travelToTown(idx) {
   toast(`Đã đến ${t.n}!`);
 }
 
-function travelToZone(idx) {
-  const z = ZONES[idx];
-  if (!z) return;
-  if (S.lvl < z.lo) {
+function travelToZone(target) {
+  let idx = -1;
+  let z = null;
+  if (typeof target === 'number') {
+    if (target >= 0 && target < ZONES.length) {
+      idx = target;
+      z = ZONES[idx];
+    } else {
+      idx = ZONES.findIndex(item => item.id === target);
+      if (idx !== -1) z = ZONES[idx];
+    }
+  } else if (target && typeof target === 'object' && target.id) {
+    idx = ZONES.findIndex(item => item.id === target.id);
+    z = ZONES[idx] || target;
+  }
+  if (!z || idx === -1) return;
+  if (S.lvl < z.lo && z.id !== 386) {
     toast(`Chưa đủ đẳng cấp! Cần đạt cấp ${z.lo} trở lên để đến ${z.n}.`);
     return;
   }
   closeModal();
   if (R.town) {
     R.town = false;
-    $('#townBar').classList.add('hidden');
+    const tb = $('#townBar');
+    if (tb) tb.classList.add('hidden');
   }
   const targetStage = idx * ZONE_STAGES + 1;
   S.chosenZone = z.id;
@@ -1623,13 +1637,14 @@ function travelToZone(idx) {
   S.push = false;
   R.enemies = [];
   R.spawnT = 0.3;
-  obsLoad(z.id);
+  R.bgImg = img(z.bg);
+  if (typeof obsLoad === 'function') obsLoad(z.id);
   [H.x, H.y] = inWorld(WORLD.w / 2, WORLD.h / 2);
   snapCamera();
-  onZoneChange(z);
+  if (typeof onZoneChange === 'function') onZoneChange(z);
   R.tpCd = TP_CD;
-  R.banner = { t: 2.5, text: z.n, sub: `Bản đồ luyện công (Cấp ${z.lo} - ${z.hi})` };
-  log(`Dịch chuyển đến bản đồ luyện công <b>${esc(z.n)}</b> (Cấp ${z.lo}-${z.hi}).`);
+  R.banner = { t: 2.5, text: z.n, sub: z.id === 386 ? 'Chiến Trường Tống Kim Chu Tiên Trấn' : `Bản đồ luyện công (Cấp ${z.lo} - ${z.hi})` };
+  log(`Dịch chuyển đến bản đồ <b>${esc(z.n)}</b>.`);
   toast(`Đã dịch chuyển đến ${z.n}!`);
   refresh();
 }

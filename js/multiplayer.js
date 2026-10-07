@@ -824,11 +824,15 @@ function drawSingleOtherPlayer(c, dt, p) {
   const seriesCol = (typeof SERIES_COL !== 'undefined') ? (SERIES_COL[p.series] || '#ffd700') : '#ffd700';
 
   let playerY = p.y;
+  let mountBob = 0;
   if (p.mounted) {
     if (typeof drawHorseMount === 'function') {
       const mData = p.mount || { tier: p.mountTier || 1 };
-      const bob = drawHorseMount(c, p.x, p.y, p.dir || 0, p.act || 'st', p.actT || 0, mData);
-      playerY = p.y - 14 + bob;
+      mountBob = drawHorseMount(c, p.x, p.y, p.dir || 0, p.act || 'st', p.actT || 0, mData);
+      playerY = p.y - 14 + mountBob;
+    }
+    if (typeof drawHorseRiderBody === 'function') {
+      drawHorseRiderBody(c, p.x, p.y, p.dir || 0, p.act || 'st', p.actT || 0, p.sex, mountBob);
     }
   } else {
     // 1. Bóng dưới chân

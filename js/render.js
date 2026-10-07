@@ -786,7 +786,7 @@ function shakeCamera(mag = 4, dur = 0.15) {
 const BG_TILE = 1536;
 function drawTiledBg(c, bg) {
   if (!(bg && bg.complete && bg.naturalWidth)) { c.fillStyle = '#26301f'; c.fillRect(CAM.x - 40, CAM.y - 40, AR.w + 80, AR.h + 80); return; }
-  if (OBS.g) { c.drawImage(bg, 0, 0, WORLD.w, WORLD.h); return; }          // ban do that rong, khong lat guong
+  if (OBS.g || (typeof S !== 'undefined' && S && S.chosenZone === 386)) { c.drawImage(bg, 0, 0, WORLD.w, WORLD.h); return; }          // ban do that rong, khong lat guong
   const T = BG_TILE, i0 = Math.floor((CAM.x - 40) / T), i1 = Math.floor((CAM.x + AR.w + 40) / T), j0 = Math.floor((CAM.y - 40) / T), j1 = Math.floor((CAM.y + AR.h + 40) / T);
   for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
     const fx = i & 1, fy = j & 1;
@@ -928,6 +928,8 @@ function preloadHorseSprites() {
   const acts = ['st', 'run'];
   acts.forEach(a => {
     img('img/horse/rider_legs_' + a + '.png');
+    img('img/horse/rider_body_man_' + a + '.png');
+    img('img/horse/rider_body_lady_' + a + '.png');
     ids.forEach(id => {
       img('img/horse/horse_' + id + '_back_' + a + '.png');
       img('img/horse/horse_' + id + '_front_' + a + '.png');
@@ -936,6 +938,27 @@ function preloadHorseSprites() {
 }
 if (typeof window !== 'undefined') {
   setTimeout(preloadHorseSprites, 500);
+}
+
+/* Vẽ thân kỵ mã ngồi trên yên ngựa chuẩn Kingsoft JX1 PC (ma_bd_120_rd/hr & fm_bd_120_rd/hr) */
+function drawHorseRiderBody(c, x, y, dir, act, actT, isLady, bob) {
+  const isMoving = act === 'run';
+  const actKey = isMoving ? 'run' : 'st';
+  const fps = isMoving ? 12 : 6;
+  const frameIdx = Math.floor((actT || 0) * fps) % 8;
+  const dirIdx = (((dir || 0) % 8) + 8) % 8;
+  const sexKey = isLady ? 'lady' : 'man';
+  const riderImg = img('img/horse/rider_body_' + sexKey + '_' + actKey + '.png');
+  if (riderImg && riderImg.complete && riderImg.naturalWidth) {
+    const sx = frameIdx * 128;
+    const sy = dirIdx * 128;
+    const sw = 128, sh = 128;
+    const dx = x - 64;
+    const dy = y - 74 + (isMoving ? (bob || 0) : 0);
+    c.drawImage(riderImg, sx, sy, sw, sh, dx, dy, sw, sh);
+    return true;
+  }
+  return false;
 }
 
 function drawHorseMount(c, x, y, dir, act, actT, mountData) {
@@ -1119,11 +1142,17 @@ function draw(dt) {
       if (R.deadT > 0) setAct(H, 'die'); else if (H.act !== 'at' && H.act !== 'hurt') setAct(H, H.moving ? 'run' : 'st');
 
       let heroY = H.y;
+      let mountBob = 0;
       if (S && S.mounted) {
-        const bob = drawHorseMount(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, S.mount);
-        heroY = H.y - 14 + bob;
+        mountBob = drawHorseMount(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, S.mount);
+        heroY = H.y - 14 + mountBob;
       } else {
         c.fillStyle = '#0007'; c.beginPath(); c.ellipse(H.x, H.y, 16, 6, 0, 0, 7); c.fill();
+      }
+
+      // Vẽ tư thế ngồi trên yên kỵ mã chuẩn PC JX1 (Layer 2.1: Thân kỵ mã)
+      if (S && S.mounted && typeof drawHorseRiderBody === 'function') {
+        drawHorseRiderBody(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, S && S.sex, mountBob);
       }
 
       // Vẽ Phi Phong hào quang & cánh áo choàng phát sáng
