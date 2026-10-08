@@ -987,115 +987,26 @@ body.deskland #jx-float-overlay {
     min-height: 220px !important;
   }
 
-  /* Top HUD duy trì hàng ngang duy nhất không nhảy dòng */
+  /* Top HUD bố cục 2 tầng chuẩn hoainiem2003 / Media Screenshot */
   #top {
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    scrollbar-width: none !important;
-    white-space: nowrap !important;
-    padding: calc(3px + var(--safe-t)) 6px 3px !important;
-    gap: 5px !important;
-    height: 42px !important;
-    min-height: 42px !important;
     display: flex !important;
+    flex-wrap: wrap !important;
+    padding: calc(4px + var(--safe-t, 0px)) 6px 4px !important;
+    background: #0e0a06 !important;
+    border-bottom: 1px solid #3d2f1d !important;
+    height: auto !important;
+    min-height: auto !important;
+    gap: 4px 6px !important;
     align-items: center !important;
+    overflow: visible !important;
   }
   #top::-webkit-scrollbar {
     display: none !important;
   }
   .hud-clock,
   .hud-online-badge,
-  #compactBtn,
-  #hudRankTag {
-    display: none !important;
-  }
-  .hud-left-cluster {
-    gap: 5px !important;
-    flex-shrink: 0 !important;
-    white-space: nowrap !important;
-  }
-  .lvbox {
-    width: 36px !important;
-    height: 36px !important;
-    border-width: 1.5px !important;
-  }
-  .lvbox #lv {
-    min-width: 18px !important;
-    height: 16px !important;
-    font-size: 10px !important;
-    padding: 0 2px !important;
-    right: -4px !important;
-    bottom: -4px !important;
-  }
-  .lvbox .lvplus {
-    width: 14px !important;
-    height: 14px !important;
-    font-size: 9px !important;
-  }
-  .hud-bars-col {
-    width: 130px !important;
-    gap: 2px !important;
-    flex-shrink: 0 !important;
-  }
-  .hud-bars-row .bar {
-    height: 11px !important;
-  }
-  .hud-bars-row .bar span {
-    font-size: 8px !important;
-    line-height: 11px !important;
-  }
-  .hud-bars-row:nth-child(2) {
-    display: none !important;
-  }
-  .topmid {
-    padding: 0 2px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex: 0 0 auto !important;
-    white-space: nowrap !important;
-  }
-  .topmid .row {
-    gap: 4px !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex-wrap: nowrap !important;
-    white-space: nowrap !important;
-  }
-  #heroName {
-    display: none !important;
-  }
-  #stageLbl {
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    white-space: nowrap !important;
-  }
-  .push-mode-btn,
-  .pk-mode-btn {
-    font-size: 10px !important;
-    padding: 2px 6px !important;
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
-  }
-  .hud-map-banner {
-    padding: 2px 6px !important;
-    font-size: 10px !important;
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
-  }
-  .hud-right-cluster {
-    display: flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-    flex-shrink: 0 !important;
-    white-space: nowrap !important;
-    width: auto !important;
-    padding-top: 0 !important;
-    border-top: none !important;
-  }
-  .hud-right-cluster::-webkit-scrollbar {
-    display: none !important;
-  }
+  .hud-map-banner,
+  #hudRankTag,
   .spd-top-btn,
   .auto-top-btn,
   .today-top-btn,
@@ -1103,13 +1014,506 @@ body.deskland #jx-float-overlay {
   .act-top-btn,
   .forge-top-btn,
   .casino-top-btn,
-  #giftBtn {
-    font-size: 10px !important;
-    padding: 2px 6px !important;
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
-    height: 24px !important;
+  .desktop-only {
+    display: none !important;
+  }
+
+  .hud-left-cluster {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+  .lvbox {
+    width: 38px !important;
+    height: 38px !important;
+    border: 1.5px solid #8e6c38 !important;
     border-radius: 4px !important;
+    position: relative !important;
+    background-size: cover !important;
+    overflow: visible !important;
+    flex-shrink: 0 !important;
+  }
+  .lvbox #lv {
+    position: absolute !important;
+    left: -4px !important;
+    bottom: -4px !important;
+    right: auto !important;
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 50% !important;
+    background: #000 !important;
+    border: 1.5px solid #ffd700 !important;
+    color: #ffd700 !important;
+    font-size: 9.5px !important;
+    font-weight: bold !important;
+    display: grid !important;
+    place-items: center !important;
+    z-index: 2 !important;
+    padding: 0 !important;
+  }
+  .lvbox .lvplus,
+  .lvbox .lvlbl {
+    display: none !important;
+  }
+  .hud-hero-meta {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    flex-shrink: 0 !important;
+  }
+  .hud-fac-name {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #e2e8f0 !important;
+    line-height: 1.1 !important;
+  }
+  .hud-server-badge {
+    font-size: 8.5px !important;
+    font-weight: bold !important;
+    color: #93c5fd !important;
+    background: #1e3a8a !important;
+    border: 1px solid #3b82f6 !important;
+    border-radius: 8px !important;
+    padding: 1px 5px !important;
+    line-height: 1 !important;
+    width: fit-content !important;
+  }
+
+  .topmid {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    flex: 0 0 auto !important;
+  }
+  .hud-power-box {
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    background: rgba(22, 16, 10, 0.9) !important;
+    border: 1px solid #785a2d !important;
+    border-radius: 4px !important;
+    padding: 2px 5px !important;
+    cursor: pointer !important;
+  }
+  .hud-power-box .lbl {
+    font-size: 9px !important;
+    color: #a39276 !important;
+  }
+  .hud-power-box b {
+    font-size: 11px !important;
+    color: #fbbf24 !important;
+    font-weight: bold !important;
+  }
+  .hud-stage-box {
+    display: flex !important;
+    align-items: center !important;
+    font-size: 10px !important;
+    color: #cbd5e1 !important;
+  }
+  .hud-stage-box #stageLbl {
+    font-size: 10px !important;
+    color: #fde047 !important;
+    font-weight: bold !important;
+  }
+
+  .hud-right-cluster {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+  }
+  .gold {
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    color: #ffd700 !important;
+  }
+  #giftBtn {
+    display: grid !important;
+    place-items: center !important;
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 4px !important;
+    border: 1px solid #785a2d !important;
+    background: #24160d !important;
+    font-size: 13px !important;
+    padding: 0 !important;
+    position: relative !important;
+  }
+  #compactBtn {
+    display: grid !important;
+    place-items: center !important;
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 4px !important;
+    border: 1px solid #5a4425 !important;
+    background: #1a1208 !important;
+    font-size: 12px !important;
+    color: #a39276 !important;
+    padding: 0 !important;
+  }
+
+  /* Hàng thanh máu/nội lực/kinh nghiệm trên mobile */
+  .hud-bars-col {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    margin-top: 2px !important;
+    flex-shrink: 0 !important;
+  }
+  .hud-bars-row {
+    display: flex !important;
+    gap: 4px !important;
+    width: 100% !important;
+  }
+  .hud-bars-row .bar {
+    height: 10px !important;
+    border-radius: 2px !important;
+  }
+  .hud-bars-row .bar span {
+    font-size: 7.5px !important;
+    line-height: 10px !important;
+  }
+  .hud-bars-row .bar.hp {
+    flex: 1 !important;
+  }
+  .hud-bars-row .bar.mp {
+    flex: 1 !important;
+  }
+  .hud-bars-row .bar.sp {
+    display: none !important;
+  }
+  .hud-bars-row.xp-row {
+    display: flex !important;
+  }
+  .hud-bars-row.xp-row .bar.xp {
+    width: 100% !important;
+    display: block !important;
+    height: 8px !important;
+  }
+  .hud-bars-row.xp-row .bar.xp span {
+    font-size: 7px !important;
+    line-height: 8px !important;
+  }
+
+  /* Mobile Battle Overlay Elements */
+  .mob-battle-overlay {
+    position: absolute !important;
+    top: 6px !important;
+    left: 8px !important;
+    right: 8px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    z-index: 15 !important;
+    pointer-events: none !important;
+  }
+  .mob-status-center {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 1px !important;
+    pointer-events: auto !important;
+    margin: 0 auto !important;
+  }
+  .mob-status-title {
+    font-size: 9px !important;
+    color: rgba(255,255,255,0.7) !important;
+    text-shadow: 0 1px 2px #000 !important;
+  }
+  .mob-status-online {
+    font-size: 9.5px !important;
+    font-weight: bold !important;
+    color: #4ade80 !important;
+    text-shadow: 0 1px 3px #000 !important;
+  }
+  .mob-status-event {
+    font-size: 10px !important;
+    font-weight: bold !important;
+    color: #ffd700 !important;
+    text-shadow: 0 1px 3px #000 !important;
+    background: rgba(0,0,0,0.55) !important;
+    padding: 1px 6px !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(251,191,36,0.3) !important;
+  }
+  .mob-top-controls {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    pointer-events: auto !important;
+  }
+  .mob-icon-btn {
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 4px !important;
+    border: 1px solid #785a2d !important;
+    background: rgba(18,14,10,0.85) !important;
+    color: #ffd700 !important;
+    font-size: 13px !important;
+    display: grid !important;
+    place-items: center !important;
+    cursor: pointer !important;
+  }
+  .mob-auto-pill {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    background: rgba(18,14,10,0.85) !important;
+    border: 1px solid #785a2d !important;
+    border-radius: 12px !important;
+    padding: 2px 5px !important;
+    font-size: 9.5px !important;
+    color: #cbd5e1 !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+  }
+  .mob-switch-track {
+    width: 24px !important;
+    height: 13px !important;
+    border-radius: 7px !important;
+    background: #334155 !important;
+    position: relative !important;
+    transition: background 0.2s !important;
+  }
+  .mob-switch-thumb {
+    width: 11px !important;
+    height: 11px !important;
+    border-radius: 50% !important;
+    background: #fff !important;
+    position: absolute !important;
+    top: 1px !important;
+    left: 1px !important;
+    transition: transform 0.2s !important;
+  }
+  .mob-auto-pill.on .mob-switch-track {
+    background: #eab308 !important;
+  }
+  .mob-auto-pill.on .mob-switch-thumb {
+    transform: translateX(11px) !important;
+  }
+  .mob-autocombat-notice {
+    position: absolute !important;
+    left: 50% !important;
+    top: 60% !important;
+    transform: translateX(-50%) !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    color: #fde047 !important;
+    text-shadow: 0 1px 3px #000, 0 0 6px rgba(0,0,0,0.9) !important;
+    pointer-events: none !important;
+    z-index: 12 !important;
+  }
+  #rotBtn {
+    position: absolute !important;
+    left: 8px !important;
+    top: 56% !important;
+    z-index: 16 !important;
+    background: rgba(22, 101, 52, 0.75) !important;
+    border: 1px solid #4ade80 !important;
+    color: #bbf7d0 !important;
+    font-size: 10px !important;
+    padding: 3px 8px !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  /* Hotbar trên mobile */
+  #pad {
+    position: absolute !important;
+    right: 6px !important;
+    bottom: 6px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 4px !important;
+    pointer-events: auto !important;
+    z-index: 25 !important;
+  }
+  .pad-skills-group {
+    display: flex !important;
+    gap: 4px !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+  .pad-skills-group .pbtn.sk {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 6px !important;
+    border: 1.5px solid #d4af37 !important;
+    background: rgba(14, 10, 6, 0.92) !important;
+  }
+  .pad-pots-group {
+    display: flex !important;
+    gap: 4px !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    align-items: center !important;
+  }
+  .pad-pots-group .pbtn.pot {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 6px !important;
+    position: relative !important;
+  }
+  .pot-badge {
+    position: absolute !important;
+    top: -3px !important;
+    right: -3px !important;
+    min-width: 15px !important;
+    height: 13px !important;
+    border-radius: 6px !important;
+    font-size: 8.5px !important;
+    font-weight: bold !important;
+    color: #fff !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 0 2px !important;
+    z-index: 3 !important;
+  }
+  .pbtn.hp .pot-badge { background: #dc2626 !important; }
+  .pbtn.mp .pot-badge { background: #2563eb !important; }
+  #bTp {
+    width: 44px !important;
+    height: 38px !important;
+    font-size: 9px !important;
+    border-radius: 6px !important;
+    background: rgba(146, 97, 26, 0.9) !important;
+    border: 1px solid #ffd700 !important;
+  }
+  #bMount {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 6px !important;
+  }
+
+  /* 6x4 Grid & Hub Buttons */
+  .mob-hub-grid {
+    display: grid !important;
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 4px !important;
+    margin-bottom: 6px !important;
+  }
+  .mob-hub-btn {
+    background: rgba(22, 17, 12, 0.95) !important;
+    border: 1px solid #4a381e !important;
+    border-radius: 6px !important;
+    aspect-ratio: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    cursor: pointer !important;
+    padding: 2px !important;
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.5) !important;
+    transition: transform 0.1s, border-color 0.1s !important;
+  }
+  .mob-hub-btn:active {
+    transform: scale(0.94) !important;
+    border-color: #ffd700 !important;
+    background: rgba(35, 26, 17, 0.98) !important;
+  }
+  .mob-hub-icon {
+    font-size: 18px !important;
+    line-height: 1.1 !important;
+  }
+  .mob-hub-lbl {
+    font-size: 9px !important;
+    color: #cbd5e1 !important;
+    text-align: center !important;
+    line-height: 1.1 !important;
+    margin-top: 2px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    width: 100% !important;
+  }
+  .mob-hub-badge {
+    position: absolute !important;
+    top: -3px !important;
+    right: -3px !important;
+    min-width: 14px !important;
+    height: 13px !important;
+    border-radius: 7px !important;
+    background: #dc2626 !important;
+    color: #fff !important;
+    font-size: 8px !important;
+    font-weight: bold !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 0 3px !important;
+    border: 1px solid rgba(255,255,255,0.7) !important;
+  }
+
+  /* To-do Box trên mobile */
+  .mob-todo-wrap {
+    margin-bottom: 6px !important;
+  }
+  .mob-todo-wrap .todo {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    align-items: center !important;
+    background: rgba(18, 14, 10, 0.92) !important;
+    border: 1px solid #5a4425 !important;
+    border-radius: 6px !important;
+    padding: 6px 8px !important;
+  }
+  .mob-todo-wrap .todo b {
+    color: #ffd700 !important;
+    font-size: 11px !important;
+    margin-right: 4px !important;
+  }
+  .mob-todo-wrap .todochip {
+    background: #241b12 !important;
+    border: 1px solid #785a2d !important;
+    border-radius: 4px !important;
+    color: #f1f5f9 !important;
+    font-size: 10px !important;
+    padding: 3px 6px !important;
+    cursor: pointer !important;
+  }
+
+  /* Stage Bar trên mobile */
+  .mob-stage-bar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    background: rgba(26, 20, 14, 0.95) !important;
+    border: 1px solid #6b4e23 !important;
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+    margin-bottom: 6px !important;
+  }
+  .mob-stage-info {
+    font-size: 12px !important;
+    color: #fde047 !important;
+    font-weight: bold !important;
+  }
+  .mob-stage-btn {
+    background: #15803d !important;
+    border: 1.5px solid #4ade80 !important;
+    border-radius: 6px !important;
+    color: #fff !important;
+    font-size: 12px !important;
+    font-weight: bold !important;
+    padding: 4px 18px !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.6) !important;
+  }
+  .mob-stage-btn.farm-on {
+    background: #1e3a8a !important;
+    border-color: #60a5fa !important;
   }
 
   /* Thanh tabs điều hướng dưới đáy màn hình */
@@ -1199,6 +1603,13 @@ body.deskland #jx-float-overlay {
   #pad {
     bottom: 60px !important;
     right: 14px !important;
+  }
+  .mob-battle-overlay,
+  .mob-autocombat-notice,
+  .hud-hero-meta,
+  .hud-power-box,
+  .hud-stage-box {
+    display: none !important;
   }
 }
 

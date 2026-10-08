@@ -372,6 +372,10 @@ function handleServerMessage(msg) {
       if (msg.pkValue !== undefined) S.pkValue = msg.pkValue;
       if (msg.jailUntil !== undefined) S.jailUntil = msg.jailUntil;
       if (msg.lastPkReduceT !== undefined) S.lastPkReduceT = msg.lastPkReduceT;
+      if (msg.vip && typeof msg.vip === 'object') {
+        S.vip = Object.assign(S.vip || {}, msg.vip);
+        if (typeof updateVipTopBtn === 'function') updateVipTopBtn();
+      }
       if (typeof _updateLastAuthoritativeState === 'function') {
         _updateLastAuthoritativeState(S);
       }

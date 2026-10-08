@@ -282,40 +282,142 @@ function renderLog(forceRebuild = false) {
       }).join('');
 
       const html = `
-        ${(typeof todoHTML === 'function') ? todoHTML() : ''}
-        <div class="jx-box" style="margin-bottom:6px;">
-          <div class="jx-box-header">
-            <span id="curStageTitle">⚔️ Ải Hiện Tại: <b style="color:#ffd700;">${esc(z.n || '')}</b> (Ải ${inZoneNum}/${zoneStagesNum})${isBoss ? ' <span style="color:#ef4444;font-weight:bold;">(Trùm)</span>' : ''}</span>
-            <span id="curStageLv" style="font-size:10px;color:#a39276;">Quái cấp ${stgLv}</span>
+        <!-- 6x4 Grid of 21 Features (hoainiem2003 / Media Screenshot) -->
+        <div class="mob-hub-grid">
+          <button class="mob-hub-btn" data-hub="today">
+            <div class="mob-hub-icon">📅</div>
+            <div class="mob-hub-lbl">Hôm nay</div>
+            <span class="mob-hub-badge">2</span>
+          </button>
+          <button class="mob-hub-btn" data-hub="log">
+            <div class="mob-hub-icon">📖</div>
+            <div class="mob-hub-lbl">Nhật ký</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="casino">
+            <div class="mob-hub-icon">🎮</div>
+            <div class="mob-hub-lbl">Giải trí</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="auto">
+            <div class="mob-hub-icon">🔋</div>
+            <div class="mob-hub-lbl">Treo máy</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="mount">
+            <div class="mob-hub-icon">🐎</div>
+            <div class="mob-hub-lbl">Thần Mã</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="donate">
+            <div class="mob-hub-icon">❤️</div>
+            <div class="mob-hub-lbl">Ủng hộ</div>
+          </button>
+
+          <button class="mob-hub-btn" data-hub="tower">
+            <div class="mob-hub-icon">🏯</div>
+            <div class="mob-hub-lbl">Tháp</div>
+            <span class="mob-hub-badge">${(S && S.towerFloor) || 25}</span>
+          </button>
+          <button class="mob-hub-btn" data-hub="dungeon">
+            <div class="mob-hub-icon">📜</div>
+            <div class="mob-hub-lbl">Phó bản</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="ach">
+            <div class="mob-hub-icon">🏆</div>
+            <div class="mob-hub-lbl">Thành tựu</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="event">
+            <div class="mob-hub-icon">🏮</div>
+            <div class="mob-hub-lbl">Sự kiện</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="clan">
+            <div class="mob-hub-icon">🏛️</div>
+            <div class="mob-hub-lbl">Bang hội</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="forge">
+            <div class="mob-hub-icon">⚒️</div>
+            <div class="mob-hub-lbl">Lò rèn</div>
+          </button>
+
+          <button class="mob-hub-btn" data-hub="stash">
+            <div class="mob-hub-icon">🧰</div>
+            <div class="mob-hub-lbl">Kho</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="guide">
+            <div class="mob-hub-icon">📚</div>
+            <div class="mob-hub-lbl">Bách khoa</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="phucduyen">
+            <div class="mob-hub-icon">🧧</div>
+            <div class="mob-hub-lbl">Phúc Duyên</div>
+            <span class="mob-hub-badge">2</span>
+          </button>
+          <button class="mob-hub-btn" data-hub="reborn">
+            <div class="mob-hub-icon">☯️</div>
+            <div class="mob-hub-lbl">Chuyển sinh</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="train">
+            <div class="mob-hub-icon">🥋</div>
+            <div class="mob-hub-lbl">Luyện Công</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="companion">
+            <div class="mob-hub-icon">🐾</div>
+            <div class="mob-hub-lbl">Đồng hành</div>
+          </button>
+
+          <button class="mob-hub-btn" data-hub="rank">
+            <div class="mob-hub-icon">📊</div>
+            <div class="mob-hub-lbl">Xếp hạng</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="feedback">
+            <div class="mob-hub-icon">✉️</div>
+            <div class="mob-hub-lbl">Góp ý</div>
+          </button>
+          <button class="mob-hub-btn" data-hub="tongkim">
+            <div class="mob-hub-icon">⚔️</div>
+            <div class="mob-hub-lbl">Chiến trường</div>
+          </button>
+        </div>
+
+        <!-- Việc cần làm (To-Do Widget) -->
+        <div class="mob-todo-wrap">
+          ${(typeof todoHTML === 'function') ? todoHTML() : ''}
+        </div>
+
+        <!-- Thanh Tiến Trình Ải (Stage Banner) -->
+        <div class="mob-stage-bar">
+          <div class="mob-stage-info">
+            <b>${esc(z.n || '')}</b> · <span>Ải ${inZoneNum}/${zoneStagesNum}</span>${isBoss ? ' <span style="color:#ef4444;font-weight:bold;">(Trùm)</span>' : ''}
           </div>
-          <div class="row" style="justify-content:space-between;margin-bottom:6px;">
-            <div style="display:flex;gap:4px;">
-              <button class="jx-action-btn" id="bPrev" style="padding:2px 8px;">◀</button>
-              <button class="jx-action-btn ${(S && S.push) ? 'gold' : ''}" id="bPush" style="padding:2px 10px;">${(S && S.push) ? '⚔ Vượt ải' : '🛡 Luyện công'}</button>
-              <button class="jx-action-btn" id="bNext" style="padding:2px 8px;" ${(S && S.stage < S.maxStage) ? '' : 'disabled'}>▶</button>
-            </div>
-            <small class="dim" style="font-size:10px;">Quái hệ: ${(typeof seriesMix === 'function' && z ? seriesMix(z) : '')}${counterText}</small>
-          </div>
-          <div style="font-size:11px;color:#cbd5e1;">
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cAutoMap" ${(S && S.autoMap !== false) ? 'checked' : ''} class="accent-amber-500"> Tự động đổi bản đồ phù hợp cấp độ</label>
+          <div class="mob-stage-actions">
+            <button class="mob-stage-btn ${(S && S.push) ? 'push-on' : 'farm-on'}" id="bPush">
+              ${(S && S.push) ? 'Vượt' : 'Luyện công'}
+            </button>
           </div>
         </div>
-        <div class="jx-box" style="margin-bottom:6px;padding:4px 6px;">
-          <div class="jx-box-header" style="margin-bottom:4px;padding-bottom:2px;">
-            <span>📜 Nhật Ký Giang Hồ</span>
-          </div>
-          <div class="log" id="logBox" style="max-height:100px;overflow-y:auto;font-size:11px;padding:2px 4px;">${logList.map(l => `<div>${l}</div>`).join('')}</div>
-        </div>
-        <div class="jx-box">
-          <div class="jx-box-header" style="display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <span>🗺 Bản Đồ Luyện Công</span>
-              <small style="font-size:10px;color:#a39276;">(Chọn bản đồ & bãi luyện)</small>
+
+        <!-- Khối Bản Đồ & Nhật Ký Chi Tiết (Có thể thu gọn/mở rộng) -->
+        <details class="mob-hub-details" style="margin-top:6px;">
+          <summary style="font-size:11px;color:#a39276;cursor:pointer;padding:5px 8px;background:rgba(20,15,10,0.85);border:1px solid #3d2f1d;border-radius:4px;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+            <span>🗺️ Bản Đồ Luyện Công & Nhật Ký Chi Tiết</span>
+            <span style="font-size:10px;color:#ffd700;">▼ Xem thêm</span>
+          </summary>
+          <div style="margin-top:6px;">
+            <div class="jx-box" style="margin-bottom:6px;padding:4px 6px;">
+              <div class="jx-box-header" style="margin-bottom:4px;padding-bottom:2px;">
+                <span>📜 Nhật Ký Giang Hồ</span>
+              </div>
+              <div class="log" id="logBox" style="max-height:100px;overflow-y:auto;font-size:11px;padding:2px 4px;">${logList.map(l => `<div>${l}</div>`).join('')}</div>
             </div>
-            <button class="jx-action-btn gold sm" id="bOpenXaPhuInLog" style="padding:2px 8px;font-size:11px;cursor:pointer;" title="Mở Xa Phu dịch chuyển thành thị, thôn trấn">🗺️ Xa Phu</button>
+            <div class="jx-box">
+              <div class="jx-box-header" style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <span>🗺 Bản Đồ Luyện Công</span>
+                  <small style="font-size:10px;color:#a39276;">(Chọn bản đồ & bãi luyện)</small>
+                </div>
+                <button class="jx-action-btn gold sm" id="bOpenXaPhuInLog" style="padding:2px 8px;font-size:11px;cursor:pointer;" title="Mở Xa Phu dịch chuyển thành thị, thôn trấn">🗺️ Xa Phu</button>
+              </div>
+              <div class="zlist" style="max-height:220px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;">${zl}</div>
+            </div>
           </div>
-          <div class="zlist" style="max-height:220px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;">${zl}</div>
-        </div>`;
+        </details>`;
 
       el.innerHTML = html;
 
@@ -324,6 +426,7 @@ function renderLog(forceRebuild = false) {
 
       const q = s => el.querySelector(s), qa = s => el.querySelectorAll(s);
       if (typeof bindTodo === 'function') bindTodo();
+      bindMobHub(el);
       const bp = q('#bPrev'); if (bp) bp.onclick = () => gotoStage(S.stage - 1);
       const bn = q('#bNext'); if (bn) bn.onclick = () => gotoStage(S.stage + 1);
       const bps = q('#bPush'); if (bps) bps.onclick = () => { if (typeof togglePushMode === 'function') togglePushMode(); else { S.push = !S.push; renderLog(); } };
@@ -411,6 +514,173 @@ function renderLogOnly() {
       b.innerHTML = logList.map(l => `<div>${l}</div>`).join('');
       if (atBottom) b.scrollTop = b.scrollHeight;
     }
+  });
+}
+
+function bindMobHub(el) {
+  if (!el) return;
+  const on = (hub, fn) => {
+    const btn = el.querySelector(`[data-hub="${hub}"]`);
+    if (btn) btn.onclick = (e) => { e.preventDefault(); fn(); };
+  };
+
+  on('today', () => {
+    const b = $('#jxToday');
+    if (b) b.click();
+    else if (typeof todayModal === 'function') todayModal();
+  });
+
+  on('log', () => {
+    const logList = (typeof R !== 'undefined' && R && Array.isArray(R.logs)) ? R.logs : [];
+    modal(`
+      <div class="jx-client-window" style="margin:-14px;border:none;">
+        <div class="jx-window-header">
+          <div class="jx-window-title"><span>📜 NHẬT KÝ CHIẾN TRƯỜNG & GIANG HỒ</span></div>
+        </div>
+        <div style="padding:10px 12px;">
+          <div style="max-height:60vh;overflow-y:auto;font-size:11.5px;color:#cbd5e1;line-height:1.6;background:#0d0a07;border:1px solid #3d2f1d;border-radius:4px;padding:8px 10px;">
+            ${logList.map(l => `<div style="border-bottom:1px dashed #241910;padding:3px 0;">${l}</div>`).join('') || '<div style="color:#888;">Chưa có nhật ký nào.</div>'}
+          </div>
+          <div style="text-align:center;margin-top:8px;">
+            <button class="jx-action-btn gold" onclick="closeModal();">Đóng</button>
+          </div>
+        </div>
+      </div>
+    `);
+  });
+
+  on('casino', () => {
+    if (window.CASINO) CASINO.openHub();
+    else if ($('#casinoBtn')) $('#casinoBtn').click();
+  });
+
+  on('auto', () => {
+    showTab('auto');
+  });
+
+  on('mount', () => {
+    if (typeof mountModal === 'function') mountModal();
+    else if ($('#mountBtn')) $('#mountBtn').click();
+  });
+
+  on('donate', () => {
+    modal(`
+      <div class="jx-client-window" style="margin:-14px;border:none;">
+        <div class="jx-window-header">
+          <div class="jx-window-title"><span>❤️ ỦNG HỘ & PHÁT TRIỂN GAME</span></div>
+        </div>
+        <div style="padding:14px;text-align:center;color:#e2e8f0;">
+          <div style="font-size:15px;font-weight:bold;color:#ffd700;margin-bottom:6px;">VÕ LÂM TRUYỀN KỲ IDLE WEB</div>
+          <div style="font-size:11.5px;color:#a39276;margin-bottom:10px;">Dự án tâm huyết tái hiện hoàn hảo Võ Lâm 2003 trên nền tảng Web & Mobile.</div>
+          <div style="background:rgba(20,15,10,0.9);border:1px solid #8e6c38;border-radius:6px;padding:10px;margin-bottom:12px;font-size:12px;line-height:1.6;">
+            <div>Tác giả: <b>Mr Chinh</b></div>
+            <div style="color:#4ade80;">Cảm ơn tất cả các đồng đạo đã luôn đồng hành và ủng hộ Võ Lâm Idle!</div>
+          </div>
+          <button class="jx-action-btn gold" onclick="closeModal();">Xác Nhận</button>
+        </div>
+      </div>
+    `);
+  });
+
+  on('tower', () => {
+    if (typeof giftModal === 'function') {
+      window.giftTab = 'tower';
+      giftModal();
+    }
+  });
+
+  on('dungeon', () => {
+    if (window.VIP_DUNGEON) VIP_DUNGEON.openDungeonHub();
+    else if (typeof openDungeonModal === 'function') openDungeonModal();
+  });
+
+  on('ach', () => {
+    if (typeof giftModal === 'function') {
+      window.giftTab = 'ach';
+      giftModal();
+    }
+  });
+
+  on('event', () => {
+    if (window.EVENT_SYSTEM) EVENT_SYSTEM.openModal();
+    else if (typeof giftModal === 'function') {
+      window.giftTab = 'event';
+      giftModal();
+    }
+  });
+
+  on('clan', () => {
+    if (window.PARTY) PARTY.openManageModal();
+    else if (typeof openPartyWin === 'function') openPartyWin();
+    else showTab('party');
+  });
+
+  on('forge', () => {
+    if (window.FORGE_HUB) FORGE_HUB.openModal();
+    else if ($('#forgeBtn')) $('#forgeBtn').click();
+    else if (typeof htModal === 'function') htModal();
+  });
+
+  on('stash', () => {
+    if (typeof openStashModal === 'function') openStashModal();
+    else if (typeof stashMenu === 'function') stashMenu();
+  });
+
+  on('guide', () => {
+    if (typeof encyclopediaModal === 'function') encyclopediaModal();
+    else if (typeof guideModal === 'function') guideModal();
+  });
+
+  on('phucduyen', () => {
+    if (typeof giftModal === 'function') {
+      window.giftTab = 'chest';
+      giftModal();
+    }
+  });
+
+  on('reborn', () => {
+    if (typeof giftModal === 'function') {
+      window.giftTab = 'reborn';
+      giftModal();
+    }
+  });
+
+  on('train', () => {
+    if (typeof svStart === 'function') svStart();
+    else toast('Chế độ Luyện Công Sinh Tồn mở từ cấp 30');
+  });
+
+  on('companion', () => {
+    if (window.COMPANION_SYSTEM) COMPANION_SYSTEM.toggleWindow();
+    else if (typeof giftModal === 'function') {
+      window.giftTab = 'pet';
+      giftModal();
+    }
+  });
+
+  on('rank', () => {
+    if (typeof openRankModal === 'function') openRankModal();
+  });
+
+  on('feedback', () => {
+    modal(`
+      <div class="jx-client-window" style="margin:-14px;border:none;">
+        <div class="jx-window-header">
+          <div class="jx-window-title"><span>✉️ GÓP Ý & BÁO LỖI</span></div>
+        </div>
+        <div style="padding:14px;color:#cbd5e1;font-size:12px;line-height:1.6;">
+          <p>Mọi ý kiến đóng góp, phản hồi lỗi tính năng hoặc cân bằng môn phái, xin liên hệ ban quản trị để được hỗ trợ tốt nhất.</p>
+          <div style="text-align:center;margin-top:12px;">
+            <button class="jx-action-btn gold" onclick="closeModal();">Đã Hiểu</button>
+          </div>
+        </div>
+      </div>
+    `);
+  });
+
+  on('tongkim', () => {
+    if (window.TONGKIM) TONGKIM.openRegisterModal();
+    else toast('Chiến Trường Tống Kim mở vào lúc 11h, 15h, 20h hằng ngày');
   });
 }
 
@@ -961,11 +1231,17 @@ function renderInv() {
       <div class="jx-inv-ctrl-col">
         <!-- Ngân lượng & Mảnh trang bị -->
         <div style="background:#1e150d;border:1px solid #5a4425;border-radius:4px;padding:4px 6px;text-align:center;">
-          <div style="font-size:9.5px;color:#a39276;">NGÂN LƯỢNG · MẢNH TRANG BỊ</div>
+          <div style="font-size:9.5px;color:#a39276;">NGÂN LƯỢNG · MẢNH TRANG BỊ · HOÀNG KIM</div>
           <div style="font-size:11.5px;font-weight:700;color:#ffd700;">${goldStr}</div>
-          <div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:2px;">
-            <span style="font-size:10px;color:#93c5fd;">Mảnh Trang Bị:</span>
-            <b style="font-size:11.5px;color:#60a5fa;">${(typeof matHave === 'function') ? matHave('misc', 'equip_shard') : (S.mats && S.mats.misc && S.mats.misc.equip_shard || 0)}</b>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:3px;background:rgba(0,0,0,0.3);padding:3px 4px;border-radius:3px;">
+            <div style="display:flex;flex-direction:column;align-items:center;">
+              <span style="font-size:9px;color:#93c5fd;">Mảnh Xanh</span>
+              <b style="font-size:11px;color:#60a5fa;">${(typeof matHave === 'function') ? matHave('misc', 'equip_shard') : (S.mats && S.mats.misc && S.mats.misc.equip_shard || 0)}</b>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;">
+              <span style="font-size:9px;color:#fbbf24;">Mảnh HK</span>
+              <b style="font-size:11px;color:#fde047;">${((S.mats && S.mats.shard && S.mats.shard.gold_shard) || 0) + Object.entries((S.mats && S.mats.shard) || {}).filter(([k]) => k !== 'gold_shard').reduce((a, [k, v]) => a + (v || 0), 0) + ((S.mats && S.mats.misc && S.mats.misc.gold_shard) || 0)}</b>
+            </div>
           </div>
         </div>
 
@@ -1505,6 +1781,11 @@ function updateTop() {
   const lvEl = $('#lv'); if (lvEl) lvEl.textContent = S.lvl;
   const goldEl = $('#gold'); if (goldEl) goldEl.textContent = fmt(S.gold);
   const nameEl = $('#heroName'); if (nameEl) nameEl.textContent = FAC[S.fac] ? FAC[S.fac].n : '';
+  const facEl = $('#hudFacName'); if (facEl) facEl.textContent = (FAC[S.fac] ? FAC[S.fac].n : 'Thiếu Lâm') + ' phái';
+  const powerEl = $('#hudPowerVal'); if (powerEl) powerEl.textContent = Math.round(R.power || 0);
+  const hpCntEl = $('#potHpCount'); if (hpCntEl && typeof stockCount === 'function') hpCntEl.textContent = stockCount('life');
+  const mpCntEl = $('#potMpCount'); if (mpCntEl && typeof stockCount === 'function') mpCntEl.textContent = stockCount('mana');
+  const autoPill = $('#mobAutoPill'); if (autoPill) autoPill.classList.toggle('on', !!(S.auto && S.auto.on));
   const stageEl = $('#stageLbl');
   if (stageEl) {
     if (S.push) {

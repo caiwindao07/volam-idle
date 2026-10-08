@@ -82,7 +82,8 @@ const XP_SLOW_FROM = 60, XP_SLOW_K = 2, XP_SLOW_P = 1.1;
 const xpSlow = L => L <= XP_SLOW_FROM ? 1 : 1 + XP_SLOW_K * Math.pow((L - XP_SLOW_FROM) / 120, XP_SLOW_P);
 function expFor(L) {
   const need = (typeof expNeed === 'function' ? expNeed(L) : (J.exp[clamp(L, 1, MAX_LEVEL) - 1] || 1000));
-  return need / (10 + L * 1.4);
+  // Giảm EXP khi train quái để cày lâu lên cấp đúng chất võ lâm cày cuốc
+  return (need / (40 + L * 3.5)) * 0.35;
 }
 function makeEnemy(tid, L, cls, x, y) {
   const m = MON[tid], z = zoneOf(S.stage), st = enemyStats(L, cls), D = diffOf(); st.hp *= D.hp; st.dmg *= D.dmg;
@@ -711,7 +712,15 @@ function onKill(e) {
   for (const it of rollDrops(e)) dropToGround(it, e);
   const matDrops = typeof allDrops === 'function' ? allDrops(e) : [];
   for (const m of matDrops) log(`Nhặt được <b style="color:${RAR_COL[3]}">${esc(m)}</b>`);
-  const gold = rollSetDrop(e); if (gold) { dropToGround(gold, e); log(`<b style="color:${RAR_COL[gold.r]}">${esc(gold.n)}</b> rơi ra!`); }
+  const isBoss = !!(e.cls === 'boss' || e.stageBoss || e.goldBoss || e.worldBoss);
+  if (isBoss) {
+    const shardCount = (e.worldBoss || e.goldBoss) ? (2 + Math.floor(Math.random() * 3)) : (1 + (Math.random() < 0.35 ? 1 : 0));
+    if (typeof matAdd === 'function') {
+      matAdd('shard', 'gold_shard', shardCount);
+      addText(e.x, e.y - 48, `+${shardCount} Mảnh HK`, '#ffd700', 13);
+      log(`💎 Tiêu diệt Boss thu thập được <b style="color:#fbbf24">${shardCount} Mảnh Hoàng Kim</b>!`);
+    }
+  }
   // Boss xanh (elite/leader) có xác xuất 10% rơi lửa trại tại vị trí đánh, tối đa 3 lửa trại
   const isBlueBoss = (e.cls === 'elite' || e.isElite || e.cls === 'leader');
   if (isBlueBoss && Math.random() < 0.10) {

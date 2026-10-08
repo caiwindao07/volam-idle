@@ -347,6 +347,7 @@ function createInitialHeroState(heroName, fac) {
         5: { id: 5, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } }
       }
     },
+    vip: { lvl: 1, exp: 0, lastClaim: '', pts: 0 },
     rw: { stat: { kills: 0, elite: 0, boss: 0, chests: 0 }, fd: 0 },
     last: Date.now()
   };
@@ -436,6 +437,14 @@ function sanitizeAndValidateState(serverState, incomingState, username) {
   if (incomingState.pkValue !== undefined) serverState.pkValue = Math.max(0, Number(incomingState.pkValue) || 0);
   if (incomingState.jailUntil !== undefined) serverState.jailUntil = Math.max(0, Number(incomingState.jailUntil) || 0);
   if (incomingState.lastPkReduceT !== undefined) serverState.lastPkReduceT = Number(incomingState.lastPkReduceT) || Date.now();
+  if (incomingState.vip && typeof incomingState.vip === 'object') {
+    serverState.vip = {
+      lvl: Math.max(1, Math.min(10, Math.floor(Number(incomingState.vip.lvl) || 1))),
+      exp: Math.max(0, Math.floor(Number(incomingState.vip.exp) || 0)),
+      lastClaim: String(incomingState.vip.lastClaim || ''),
+      pts: Math.max(0, Math.floor(Number(incomingState.vip.pts) || 0))
+    };
+  }
   serverState.lastSyncT = Date.now();
   serverState.lastSave = Date.now();
 
@@ -1848,6 +1857,7 @@ wss.on('connection', (ws) => {
             skPts: uState.skPts,
             attr: uState.attr,
             sk: uState.sk,
+            vip: uState.vip,
             pkValue: uState.pkValue || 0,
             jailUntil: uState.jailUntil || 0,
             lastPkReduceT: uState.lastPkReduceT || Date.now()

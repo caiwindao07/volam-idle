@@ -256,9 +256,9 @@ function trainVipWithGold() {
     return;
   }
   const curLvl = Math.max(1, v.lvl);
-  const cost = 8000000 * curLvl;
+  const cost = 800000000 * curLvl;
   if (S.gold < cost) {
-    toast(`Không đủ ngân lượng! Cần ${fmt(cost)} lượng (8.000.000 x VIP ${curLvl}) để nhận +300 điểm VIP.`);
+    toast(`Không đủ ngân lượng! Cần ${fmt(cost)} lượng (800.000.000 x VIP ${curLvl}) để nhận +300 điểm VIP.`);
     return;
   }
   S.gold -= cost;
@@ -277,7 +277,7 @@ function vipModal() {
   const pct = curLvl >= 10 ? 100 : Math.min(100, Math.floor((v.exp - prevExp) / (nextExp - prevExp) * 100));
   const t = typeof today === 'function' ? today() : new Date().toDateString();
   const claimed = v.lastClaim === t;
-  const curTrainCost = 8000000 * Math.max(1, curLvl);
+  const curTrainCost = 800000000 * Math.max(1, curLvl);
 
   let perkListHtml = '';
   for (let i = 1; i <= 10; i++) {
@@ -331,7 +331,7 @@ function vipModal() {
           <span style="font-size:9px;">${pct}%</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:10px;color:#cbd5e1;">Quy đổi: 300 điểm VIP = 8.000.000 x Cấp VIP (${fmt(curTrainCost)} lượng)</span>
+          <span style="font-size:10px;color:#cbd5e1;">Quy đổi: 300 điểm VIP = 800.000.000 x Cấp VIP (${fmt(curTrainCost)} lượng)</span>
           <button class="jx-action-btn" id="bTrainVip" style="padding:2px 8px;font-size:10px;">
             ⚡ Tu luyện (+300 điểm / ${fmt(curTrainCost)} lượng)
           </button>

@@ -71,6 +71,7 @@ function newSave() {
         5: { id: 5, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } }
       }
     },
+    vip: { lvl: 1, exp: 0, lastClaim: '', pts: 0 },
     last: Date.now() };
 }
 /* Chu ky file luu (cyrb53 + muoi): phat hien sua tay localStorage / ma xuat. Khong ngan duoc nguoi quyet tam (game chay hoan toan o may nguoi choi) nhung chan sua vo tinh va nhap ma da bi doi. */
@@ -175,6 +176,12 @@ function migrate(o) {
       5: { id: 5, lvl: 1, exp: 0, intimacy: 0, maxIntimacy: 100, star: 0, equips: { weapon: 0, helm: 0, armor: 0, gloves: 0, boots: 0 } }
     }
   };
+  s.vip = (o.vip && typeof o.vip === 'object') ? {
+    lvl: Math.max(1, Math.min(10, Math.floor(Number(o.vip.lvl) || 1))),
+    exp: Math.max(0, Math.floor(Number(o.vip.exp) || 0)),
+    lastClaim: String(o.vip.lastClaim || ''),
+    pts: Math.max(0, Math.floor(Number(o.vip.pts) || 0))
+  } : { lvl: 1, exp: 0, lastClaim: '', pts: 0 };
   s.v = SAVE_V;
   if (typeof secureObjectState === 'function') {
     secureObjectState(s);

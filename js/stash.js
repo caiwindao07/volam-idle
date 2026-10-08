@@ -83,8 +83,8 @@ function stashMat(dir, group, key, n) {
 }
 function matName(group, key) {
   if (group === 'ht') return `Huyền Tinh cấp ${key}`;
-  if (group === 'shard') return `Mảnh ${key}`;
-  if (group === 'misc') return key === 'wc' ? 'Thủy Tinh Trắng' : key === 'mys' ? 'Thần Bí Khoáng Thạch' : key === 'equip_shard' ? 'Mảnh Trang Bị' : key;
+  if (group === 'shard') return key === 'gold_shard' ? 'Mảnh Hoàng Kim' : `Mảnh ${key}`;
+  if (group === 'misc') return key === 'wc' ? 'Thủy Tinh Trắng' : key === 'mys' ? 'Thần Bí Khoáng Thạch' : key === 'equip_shard' ? 'Mảnh Trang Bị' : key === 'gold_shard' ? 'Mảnh Hoàng Kim' : key;
   const o = oreParse(key), r = oreRows(o.a)[0]; return `Khoáng dòng ${o.place + 1} · ${r ? r.n : attrName(o.a)} · cấp ${o.lvl}`;
 }
 

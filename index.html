@@ -16,7 +16,7 @@
 <body>
 <div id="app">
   <header id="top">
-    <!-- Top Left Cluster: Clock, Level, 3D HP/MP/SP/XP Bars, Rank -->
+    <!-- Top Left Cluster: Clock, Level, Avatar, Meta, Bars -->
     <div class="hud-left-cluster">
       <div class="hud-clock" id="topClock">10-06 11:35</div>
       <div class="lvbox" id="lvBox" title="Cấp độ nhân vật">
@@ -24,26 +24,35 @@
         <span class="lvlbl">Cấp</span>
         <b id="lv">1</b>
       </div>
+      <div class="hud-hero-meta" id="hudHeroMeta">
+        <div class="hud-fac-name" id="hudFacName">Thiếu Lâm phái</div>
+        <div class="hud-server-badge" id="hudServerBadge">S2 · Đồ Xanh</div>
+      </div>
       <div class="hud-bars-col">
         <div class="hud-bars-row">
           <div class="bar hp" title="Sinh Lực"><i id="hpBar"></i><span id="hpTxt">0 / 0</span></div>
           <div class="bar mp" title="Nội Lực"><i id="mpBar"></i><span id="mpTxt">0 / 0</span></div>
         </div>
-        <div class="hud-bars-row">
+        <div class="hud-bars-row xp-row">
           <div class="bar sp" title="Thể Lực"><i id="spBar"></i><span id="spTxt">100 / 100</span></div>
           <div class="bar xp" title="Kinh Nghiệm"><i id="xpBar"></i><span id="xpTxt">0.0%</span></div>
         </div>
       </div>
-      <div class="hud-rank-tag" id="hudRankTag" onclick="openRankModal()" title="Nhấp xem Bảng Xếp Hạng Giang Hồ (Đẳng cấp, Phú hộ, Môn phái, Tống Kim, Ác Nhân)">Hạng #1 Võ Lâm</div>
+      <div class="hud-rank-tag" id="hudRankTag" onclick="openRankModal()" title="Nhấp xem Bảng Xếp Hạng Giang Hồ">Hạng #1 Võ Lâm</div>
     </div>
 
-    <!-- Center: Stage & Hero Name & Push/PK mode -->
+    <!-- Center: Power Box, Stage & Hero Name & Push/PK mode -->
     <div class="topmid">
-      <div class="row">
-        <b id="heroName">Võ Lâm Idle</b>
-        <button id="btnPushMode" class="push-mode-btn farm-on" title="Nhấp để chuyển đổi giữa Vượt Ải và Luyện Công">🛡 LUYỆN CÔNG</button>
-        <button id="btnPkMode" class="pk-mode-btn peace" title="[Phím F9] Chế độ PK: Luyện Công / PK / Đồ Sát">🛡️ Luyện công</button>
+      <div class="hud-power-box" id="hudPowerBox" onclick="if(typeof powerModal==='function')powerModal();" title="Lực Chiến Tổng">
+        <span class="lbl">Lực Chiến</span>
+        <b id="hudPowerVal">0</b>
       </div>
+      <div class="hud-stage-box" id="hudStageBox" title="Ải hiện tại">
+        <span id="stageLbl">Ải 1/10</span>
+      </div>
+      <b id="heroName" class="desktop-only">Võ Lâm Idle</b>
+      <button id="btnPushMode" class="push-mode-btn farm-on desktop-only" title="Nhấp để chuyển đổi giữa Vượt Ải và Luyện Công">🛡 LUYỆN CÔNG</button>
+      <button id="btnPkMode" class="pk-mode-btn peace desktop-only" title="[Phím F9] Chế độ PK: Luyện Công / PK / Đồ Sát">🛡️ Luyện công</button>
     </div>
 
     <!-- Top Right Cluster: Gold, Map Coordinates Banner & Function Buttons -->
@@ -62,7 +71,7 @@
       <button id="actBtn" class="act-top-btn" title="Hoạt Động / Phó Bản / Tháp">⚔ Hoạt Động</button>
       <button id="forgeBtn" class="forge-top-btn" title="Dã Luyện Thần Binh (+16, Chế Hoàng Kim, Bạch Kim)">🔨 Rèn Đồ</button>
       <button id="casinoBtn" class="casino-top-btn" title="Tửu Quán Tiêu Dao (Tài Xỉu, Bầu Cua, Oản Tù Tì)">🎲 Tửu Quán</button>
-      <button id="giftBtn" title="Phần thưởng">🎁</button>
+      <button id="giftBtn" title="Phần thưởng" class="gift-top-btn">🎁<em class="dot" id="dotGift"></em></button>
       <button id="compactBtn" title="Thu gọn / mở rộng sân đấu">⛶</button>
     </div>
   </header>
@@ -73,6 +82,24 @@
     <div id="hud">
       <div id="mainSk"></div>
     </div>
+
+    <!-- Mobile Viewport Overlay (hoainiem2003 / Media Screenshot) -->
+    <div id="mobBattleOverlay" class="mob-battle-overlay">
+      <div class="mob-status-center">
+        <div class="mob-status-title">Võ Lâm Idle · 6 N.T.T</div>
+        <div class="mob-status-online">🟢 <span id="mobOnlineTxt">771</span> người đang online</div>
+        <div class="mob-status-event" id="mobStatusEvent">👑 Trùm Đại Náo</div>
+      </div>
+      <div class="mob-top-controls">
+        <button id="mobSettingsBtn" class="mob-icon-btn" onclick="showTab('more')" title="Cài đặt hệ thống">⚙</button>
+        <div class="mob-auto-pill" id="mobAutoPill" onclick="if(typeof toggleAuto==='function')toggleAuto();else if(window.AUTO_SYSTEM)AUTO_SYSTEM.toggle();" title="Bật / Tắt Tự động đánh">
+          <span>Auto</span>
+          <div class="mob-switch-track"><div class="mob-switch-thumb"></div></div>
+        </div>
+      </div>
+    </div>
+    <div id="mobAutoCombatNotice" class="mob-autocombat-notice">Tự động đánh</div>
+
     <button id="rebornBtn" class="chip" title="Chuyển Sinh - Quay về cấp 1, nhận bảo vật quý hiếm">🌟 Chuyển Sinh</button>
     <button id="ktcBtn" class="chip">💎 Kỳ Trân</button>
     <button id="inBtn" class="chip"></button>
@@ -228,20 +255,20 @@
 
     <!-- Cụm chiêu thức võ công 1-4 & Cụm thuốc hỗ trợ nổi trên màn hình chiến đấu -->
     <div class="jx-skill-belt" id="pad">
-      <!-- Cụm thuốc & phụ trợ nổi trên mobile (HP, MP, Về thành, Cưỡi ngựa) -->
-      <div class="pad-pots-group" id="padPots">
-        <button class="pbtn pot hp" id="bHp" title="Bơm Sinh Lực (HP)"><div class="cd"></div><span>HP</span></button>
-        <button class="pbtn pot mp" id="bMp" title="Bơm Nội Lực (MP)"><div class="cd"></div><span>MP</span></button>
-        <button class="pbtn pot tp" id="bTp" title="Thổ Địa Phù"><div class="cd"></div><span>Về</span></button>
-        <button class="pbtn pot mount" id="bMount" title="Chiến Mã [Phím 4]"><div class="cd"></div><span>Mã</span></button>
-      </div>
-
       <!-- Cụm chiêu thức võ công 1-4 -->
       <div class="pad-skills-group" id="padSkills">
         <button class="pbtn sk" data-i="0" title="Chiêu 1 [Phím 1]"><span class="key-tag">1</span><i></i><b>1</b></button>
         <button class="pbtn sk" data-i="1" title="Chiêu 2 [Phím 2]"><span class="key-tag">2</span><i></i><b>2</b></button>
         <button class="pbtn sk" data-i="2" title="Chiêu 3 [Phím 3]"><span class="key-tag">3</span><i></i><b>3</b></button>
         <button class="pbtn sk" data-i="3" title="Chiêu 4 [Phím 4]"><span class="key-tag">4</span><i></i><b>4</b></button>
+      </div>
+
+      <!-- Cụm thuốc & phụ trợ nổi trên mobile (HP, MP, Về thành, Cưỡi ngựa) -->
+      <div class="pad-pots-group" id="padPots">
+        <button class="pbtn pot hp" id="bHp" title="Bơm Sinh Lực (HP)"><span class="pot-badge" id="potHpCount">85</span><div class="cd"></div><span>HP</span></button>
+        <button class="pbtn pot mp" id="bMp" title="Bơm Nội Lực (MP)"><span class="pot-badge" id="potMpCount">46</span><div class="cd"></div><span>MP</span></button>
+        <button class="pbtn pot mount" id="bMount" title="Chiến Mã [Phím 4]"><div class="cd"></div><span>Mã</span></button>
+        <button class="pbtn pot tp" id="bTp" title="Thổ Địa Phù"><div class="cd"></div><span>Về thành</span></button>
       </div>
     </div>
 

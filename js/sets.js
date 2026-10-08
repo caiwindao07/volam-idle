@@ -15,27 +15,9 @@ function makeSetItem(kind, row, luck) {
   it.ext = row.ext.map(i => geValue(i, g())).filter(Boolean);
   return it;
 }
-/* Rơi đồ bộ Hoàng Kim & Bạch Kim: Chỉ rơi từ Boss hoặc leo tháp, khiêu chiến tầng cuối, quái thường KHÔNG rơi */
+/* Rơi đồ bộ Hoàng Kim & Bạch Kim: Bỏ rơi trực tiếp theo yêu cầu người chơi (chỉ chế tạo/ghép mảnh) */
 function rollSetDrop(e) {
-  const isBoss = !!(e.cls === 'boss' || e.stageBoss || e.goldBoss || e.worldBoss || (typeof R !== 'undefined' && ((R.tower && e.cls === 'boss') || (R.dungeon && e.cls === 'boss'))));
-  if (!isBoss) return null; // Quái thường & quái tinh anh không bao giờ rớt đồ Hoàng Kim / Bạch Kim
-
-  const isTowerFinal = typeof R !== 'undefined' && R.tower && (R.towerWave >= 5 || R.towerFloor % 5 === 0);
-  const isDungeonFinal = typeof R !== 'undefined' && R.dungeon && (R.dungeonWave >= 5);
-  const isFinalBoss = e.worldBoss || e.goldBoss || isTowerFinal || isDungeonFinal;
-
-  // Tỷ lệ rơi cố định 1% (0.01) khi tiêu diệt Boss theo yêu cầu người chơi
-  const chance = 0.01;
-  if (Math.random() >= chance) return null;
-
-  const kind = (e.L >= 90 || isFinalBoss) && Math.random() < 0.2 ? 'platina' : 'gold';
-  const lvCap = Math.max(S.lvl, e.L) + 10, fid = FAC[S.fac] ? FAC[S.fac].id : -1;
-  const reqOf = (r, id) => (r.req.find(q => q[0] === id) || [0, -1])[1];
-  let pool = J.sets[kind].filter(r => reqOf(r, 36) <= lvCap && sexReqOk(r.req));
-  const mine = pool.filter(r => reqOf(r, 39) === fid);
-  if (mine.length && Math.random() < 0.7) pool = mine;
-  if (!pool.length) return null;
-  return makeSetItem(kind, pick(pool), R.P ? Math.min(10, Math.floor(R.P.lucky / 10)) : 0);
+  return null;
 }
 /* IsEnoughToActive: co mot bo dang mac du NeedToActive2 mon -> mo het dong an cua MOI trang bi */
 function setCounts(eq) {
