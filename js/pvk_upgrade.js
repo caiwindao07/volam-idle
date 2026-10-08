@@ -569,7 +569,7 @@ const PVK_MOUNTS = [
 ];
 
 function pvkEnsureMount() {
-  if (!S) return;
+  if (typeof S === 'undefined' || !S) return;
   if (!S.mount || typeof S.mount !== 'object') {
     S.mount = { tier: 1, lvl: 1, exp: 0, fodder: 10 };
   }
@@ -580,8 +580,9 @@ function pvkEnsureMount() {
 
 function mountCurrent() {
   pvkEnsureMount();
+  if (typeof S === 'undefined' || !S || !S.mount) return PVK_MOUNTS[0];
   const t = clamp(S.mount.tier || 1, 1, 11);
-  return PVK_MOUNTS[t - 1];
+  return PVK_MOUNTS[t - 1] || PVK_MOUNTS[0];
 }
 
 function mountAttr(A) {

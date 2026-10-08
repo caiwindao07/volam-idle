@@ -118,8 +118,11 @@ const ACH = [
   ['tower20', 'Leo tháp tầng 20', () => RW().stat.towerBest >= 20, { set: 1 }, ['attackspeed_v', 6]],
   ['reborn1', 'Chuyển sinh', () => RW().stat.reborn >= 1, { fd: 50 }, ['lifemax_p', 8]],
   ['gold5', 'Săn trùm Hoàng Kim', () => RW().stat.goldBoss >= 5, { fd: 20 }, ['lucky_v', 10]],
-  ['login30', 'Giang hồ lão luyện', () => RW().login.total >= 30, { set: 1 }, ['manamax_p', 6]],
 ];
+if (typeof window !== 'undefined' && window._pendingACH) {
+  ACH.push(...window._pendingACH);
+  delete window._pendingACH;
+}
 function achCheck() {
   if (!S || !S.fac) return;
   const r = RW();

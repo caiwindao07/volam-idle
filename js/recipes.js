@@ -6,11 +6,12 @@
    Khoang ung dong k (0..5): dong chan = hien (tien to), dong le = an (hau to); khong khop he hoac loai mon thi khong kham duoc.
    Hang so cong thuc: window.RCP (tools/export_tables.py). Gia tri dong: affixLevel (magicattriblevel.txt), hang chon theo (cap HT + cap khoang)/2 (Uoc luong cach danh so hang). */
 'use strict';
-const RCP_R = window.RCP.recipes;
-const VIO_SLOTS = 6, HT_MAX = 10, ORE_MAX = 10;
+const RCP_R = (window.RCP && window.RCP.recipes) || {};
+const VIO_SLOTS = 6, ORE_MAX = 10;
+window.HT_MAX = window.HT_MAX || 10; var HT_MAX = window.HT_MAX;
 let rcRand = Math.random;                    // test thay the
 const rcInt = (a, b) => a + Math.floor(rcRand() * (b - a + 1));
-const rcFail = f => rcInt(0, f[1] - 1) < f[0];   // GetRandomNumber(0,10) <= 1 -> 2/11
+const rcFail = f => f ? rcInt(0, f[1] - 1) < f[0] : false;   // GetRandomNumber(0,10) <= 1 -> 2/11
 
 const mats = () => { const m = S.mats || (S.mats = {}); for (const g of ['ht', 'ore', 'shard', 'misc']) m[g] = m[g] || {}; return m; };
 const oreKey = (place, a, lvl) => `${place}:${a}:${lvl}`;
@@ -19,8 +20,8 @@ function matAdd(group, key, n = 1) { const m = mats()[group]; m[key] = (m[key] |
 const matHave = (group, key) => mats()[group][key] || 0;
 
 /* ---------- hop Huyen Tinh tu 3 mon ---------- */
-const FUSE_SLOTS = RCP_R.violet_fuse.inputs[0].detail;      // nhan, day chuyen, ngoc boi
-const fuseCost = () => RCP_R.violet_fuse.cost.luong;
+const FUSE_SLOTS = (RCP_R.violet_fuse && RCP_R.violet_fuse.inputs && RCP_R.violet_fuse.inputs[0].detail) || [3, 4, 9];      // nhan, day chuyen, ngoc boi
+const fuseCost = () => (RCP_R.violet_fuse && RCP_R.violet_fuse.cost && RCP_R.violet_fuse.cost.luong) || 1000;
 /* chong dupe / tham chieu cu: chi thao tac mon dang nam trong hanh trang (hoac dang mac, voi kham / thang cap) */
 const ownedInv = it => !!it && S.inv.includes(it);
 const owned = it => ownedInv(it) || (!!it && Object.values(S.eq).includes(it));
@@ -104,8 +105,8 @@ function oreDrop(e) {
 }
 
 /* ======================= MANH HOANG KIM (questkey.txt "Manh <ten> (k/N)", N = 9 / 6 / 4) ======================= */
-const SHARDS = window.RCP.shards;
-const shardRows = (() => { const m = new Map(); for (const r of J.sets.gold) if (SHARDS[r.n] && !m.has(r.n)) m.set(r.n, r); return m; })();
+const SHARDS = (window.RCP && window.RCP.shards) || {};
+const shardRows = (() => { const m = new Map(); const goldSets = (typeof J !== 'undefined' && J && J.sets && J.sets.gold) ? J.sets.gold : []; for (const r of goldSets) if (SHARDS[r.n] && !m.has(r.n)) m.set(r.n, r); return m; })();
 const reqOfRow = (r, id) => (r.req.find(q => q[0] === id) || [0, -1])[1];
 function shardDrop(e) {
   if (Math.random() >= dropP('shard', e)) return null;
@@ -130,10 +131,10 @@ function combineShards(name) {
 
 /* ======================= BACH KIM: CHE +0 VA THANG CAP 1..10 (bang CLAUDE.md, nhan Cong dong) =======================
    Phi tinh theo "van" (1 van = 10.000 luong, Uoc luong) nhan he so kinh te idle PLAT_COST_SCALE (Uoc luong). */
-const PLAT_MAKE = RCP_R['platina_make:0'], PLAT_UP = [...Array(10)].map((_, i) => RCP_R['platina_up:' + (i + 1)]);
+const PLAT_MAKE = RCP_R['platina_make:0'] || { inputs: [], cost: { van: 0 } }, PLAT_UP = [...Array(10)].map((_, i) => RCP_R['platina_up:' + (i + 1)] || {});
 const PLAT_COST_SCALE = 0.03, VAN = 10000, PLAT_MAX = 10;
-const platCost = van => Math.round(van * VAN * PLAT_COST_SCALE);
-const platByBase = (() => { const m = new Map(); for (const r of J.sets.platina) { const b = r.n.replace(/^\[[^\]]*\]\s*/, ''); (m.get(b) || m.set(b, []).get(b)).push(r); } return m; })();
+const platCost = van => Math.round((van || 0) * VAN * PLAT_COST_SCALE);
+const platByBase = (() => { const m = new Map(); const platSets = (typeof J !== 'undefined' && J && J.sets && J.sets.platina) ? J.sets.platina : []; for (const r of platSets) { const b = r.n.replace(/^\[[^\]]*\]\s*/, ''); (m.get(b) || m.set(b, []).get(b)).push(r); } return m; })();
 const canPlatBase = it => ownedInv(it) && it.set && it.set.kind === 'gold' && platByBase.has(it.n) && !Object.values(S.eq).includes(it);
 function makePlatina(a, b) {
   if (!canPlatBase(a) || !canPlatBase(b) || a === b || a.n !== b.n) return { ok: false, msg: 'Cần 2 món Hoàng Kim giống nhau, chưa mặc' };
