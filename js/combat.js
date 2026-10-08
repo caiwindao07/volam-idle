@@ -419,6 +419,7 @@ function heroAttack() {
   R.moveTo = null;
   R.mana -= a.cost;
   const c = a.around ? H : t, splash = a.around ? a.rad + 40 : 110; // form 7: quanh nguoi danh
+  const targets = list.filter(e => e !== t && Math.hypot(e.x - c.x, e.y - c.y) < (a.targets > 1 ? splash : 0)).slice(0, a.targets - 1);
   targets.unshift(t);
   for (const e of targets) { heroHit(a, e); }
   skillFx(H, t, a);
