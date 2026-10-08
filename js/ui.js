@@ -213,7 +213,7 @@ function itemModal(it, slot) {
 }
 
 /* ---------- the: chien truong ---------- */
-function renderLog() {
+function renderLog(forceRebuild = false) {
   try {
     const maxStages = typeof STAGES !== 'undefined' ? STAGES : 160;
     const curStage = Math.min(Math.max(1, (S && S.stage) || 1), maxStages);
@@ -222,66 +222,105 @@ function renderLog() {
     if (!targets.length) return;
 
     const curI = typeof zoneIdx === 'function' ? zoneIdx(curStage) : 0;
-    const mySeries = (typeof heroSeries === 'function') ? heroSeries() : ((typeof FAC !== 'undefined' && S && S.fac && FAC[S.fac]) ? FAC[S.fac].series : 0);
-    const counterText = (typeof FAC !== 'undefined' && S && S.fac && FAC[S.fac] && typeof KHAC !== 'undefined' && typeof SERIES !== 'undefined' && typeof SERIES_COL !== 'undefined') ? ` · bạn hệ <span style="color:${SERIES_COL[mySeries] || '#ffd700'}">${SERIES[mySeries] || ''}</span>: khắc <span style="color:${SERIES_COL[KHAC[mySeries]] || '#ffd700'}">${SERIES[KHAC[mySeries]] || ''}</span> (+10%), bị <span style="color:${SERIES_COL[+Object.keys(KHAC).find(k => KHAC[k] === mySeries)] || '#ffd700'}">${SERIES[+Object.keys(KHAC).find(k => KHAC[k] === mySeries)] || ''}</span> khắc (−10%)` : '';
-
-    const zonesList = (typeof ZONES !== 'undefined' && Array.isArray(ZONES)) ? ZONES : [];
-    const zl = zonesList.map((s, a) => {
-      if (!s) return '';
-      const c = (typeof zoneOpen === 'function') ? zoneOpen(a) : true;
-      const o = curI === a;
-      const h = (typeof ZALT !== 'undefined' ? ZALT[a] : null);
-      const u = (S && S.zalt ? S.zalt[a] : 0) || 0;
-      const f = (h && u && h[u - 1]) || s;
-      const name = (f && f.n) || (s && s.n) || `Khu vực ${a + 1}`;
-      const r = (h && c) ? `<div class="zalt">${[s].concat(h).map((p, m) => `<button class="chip2${m === u ? ' on' : ''}" data-za="${a}:${m}">${esc((p && p.n) || '')}</button>`).join('')}</div>` : '';
-      return `<button class="zrow${o ? ' cur' : ''}${c ? '' : ' lock'}" data-z="${a}" ${c ? '' : 'disabled'}><b>${esc(name)}</b><span>${(typeof seriesDots === 'function' && f ? seriesDots(f) : '')} Cấp ${s.lo || 1}–${s.hi || 100}${h ? ` · ${h.length + 1} bản đồ` : ''}</span></button>${r}`;
-    }).join('');
-
     const inZoneNum = typeof inZone === 'function' ? inZone(S ? S.stage : 1) : 1;
     const zoneStagesNum = typeof ZONE_STAGES !== 'undefined' ? ZONE_STAGES : 10;
     const isBoss = typeof isBossStage === 'function' && isBossStage(S ? S.stage : 1);
     const stgLv = typeof stageLevel === 'function' ? stageLevel(S ? S.stage : 1) : 1;
     const logList = (typeof R !== 'undefined' && R && Array.isArray(R.logs)) ? R.logs : [];
 
-    const html = `
-      ${(typeof todoHTML === 'function') ? todoHTML() : ''}
-      <div class="jx-box" style="margin-bottom:6px;">
-        <div class="jx-box-header">
-          <span id="curStageTitle">⚔️ Ải Hiện Tại: <b style="color:#ffd700;">${esc(z.n || '')}</b> (Ải ${inZoneNum}/${zoneStagesNum})${isBoss ? ' <span style="color:#ef4444;font-weight:bold;">(Trùm)</span>' : ''}</span>
-          <span id="curStageLv" style="font-size:10px;color:#a39276;">Quái cấp ${stgLv}</span>
-        </div>
-        <div class="row" style="justify-content:space-between;margin-bottom:6px;">
-          <div style="display:flex;gap:4px;">
-            <button class="jx-action-btn" id="bPrev" style="padding:2px 8px;">◀</button>
-            <button class="jx-action-btn ${(S && S.push) ? 'gold' : ''}" id="bPush" style="padding:2px 10px;">${(S && S.push) ? '⚔ Vượt ải' : '🛡 Luyện công'}</button>
-            <button class="jx-action-btn" id="bNext" style="padding:2px 8px;" ${(S && S.stage < S.maxStage) ? '' : 'disabled'}>▶</button>
-          </div>
-          <small class="dim" style="font-size:10px;">Quái hệ: ${(typeof seriesMix === 'function' && z ? seriesMix(z) : '')}${counterText}</small>
-        </div>
-        <div style="font-size:11px;color:#cbd5e1;">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cAutoMap" ${(S && S.autoMap !== false) ? 'checked' : ''} class="accent-amber-500"> Tự động đổi bản đồ phù hợp cấp độ</label>
-        </div>
-      </div>
-      <div class="jx-box" style="margin-bottom:6px;padding:4px 6px;">
-        <div class="jx-box-header" style="margin-bottom:4px;padding-bottom:2px;">
-          <span>📜 Nhật Ký Giang Hồ</span>
-        </div>
-        <div class="log" id="logBox" style="max-height:100px;overflow-y:auto;font-size:11px;padding:2px 4px;">${logList.map(l => `<div>${l}</div>`).join('')}</div>
-      </div>
-      <div class="jx-box">
-        <div class="jx-box-header" style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <span>🗺 Bản Đồ Luyện Công</span>
-            <small style="font-size:10px;color:#a39276;">(Chọn bản đồ & bãi luyện)</small>
-          </div>
-          <button class="jx-action-btn gold sm" id="bOpenXaPhuInLog" style="padding:2px 8px;font-size:11px;cursor:pointer;" title="Mở Xa Phu dịch chuyển thành thị, thôn trấn">🗺️ Xa Phu</button>
-        </div>
-        <div class="zlist" style="max-height:220px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;">${zl}</div>
-      </div>`;
-
     targets.forEach(el => {
+      const existingZlist = el.querySelector('.zlist');
+      if (existingZlist && !forceRebuild) {
+        // Cập nhật mượt mà trực tiếp, KHÔNG hủy DOM zlist để tránh giật/nhảy thanh cuộn
+        const cst = el.querySelector('#curStageTitle');
+        if (cst) cst.innerHTML = `⚔️ Ải Hiện Tại: <b style="color:#ffd700;">${esc(z.n || '')}</b> (Ải ${inZoneNum}/${zoneStagesNum})${isBoss ? ' <span style="color:#ef4444;font-weight:bold;">(Trùm)</span>' : ''}`;
+        const csl = el.querySelector('#curStageLv');
+        if (csl) csl.textContent = `Quái cấp ${stgLv}`;
+        const bps = el.querySelector('#bPush');
+        if (bps) {
+          bps.className = `jx-action-btn ${(S && S.push) ? 'gold' : ''}`;
+          bps.textContent = (S && S.push) ? '⚔ Vượt ải' : '🛡 Luyện công';
+        }
+        const bn = el.querySelector('#bNext');
+        if (bn) bn.disabled = !(S && S.stage < S.maxStage);
+        const lb = el.querySelector('#logBox');
+        if (lb) {
+          const atBottom = Math.abs(lb.scrollHeight - lb.clientHeight - lb.scrollTop) < 30;
+          lb.innerHTML = logList.map(l => `<div>${l}</div>`).join('');
+          if (atBottom) lb.scrollTop = lb.scrollHeight;
+        }
+        el.querySelectorAll('.zrow').forEach(b => {
+          const a = +b.dataset.z;
+          b.classList.toggle('cur', curI === a);
+          const c = (typeof zoneOpen === 'function') ? zoneOpen(a) : true;
+          b.classList.toggle('lock', !c);
+          b.disabled = !c;
+        });
+        el.querySelectorAll('[data-za]').forEach(b => {
+          const [a, m] = b.dataset.za.split(':').map(Number);
+          const curU = (S && S.zalt ? S.zalt[a] : 0) || 0;
+          b.classList.toggle('on', m === curU);
+        });
+        return;
+      }
+
+      const savedZScroll = existingZlist ? existingZlist.scrollTop : 0;
+      const mySeries = (typeof heroSeries === 'function') ? heroSeries() : ((typeof FAC !== 'undefined' && S && S.fac && FAC[S.fac]) ? FAC[S.fac].series : 0);
+      const counterText = (typeof FAC !== 'undefined' && S && S.fac && FAC[S.fac] && typeof KHAC !== 'undefined' && typeof SERIES !== 'undefined' && typeof SERIES_COL !== 'undefined') ? ` · bạn hệ <span style="color:${SERIES_COL[mySeries] || '#ffd700'}">${SERIES[mySeries] || ''}</span>: khắc <span style="color:${SERIES_COL[KHAC[mySeries]] || '#ffd700'}">${SERIES[KHAC[mySeries]] || ''}</span> (+10%), bị <span style="color:${SERIES_COL[+Object.keys(KHAC).find(k => KHAC[k] === mySeries)] || '#ffd700'}">${SERIES[+Object.keys(KHAC).find(k => KHAC[k] === mySeries)] || ''}</span> khắc (−10%)` : '';
+
+      const zonesList = (typeof ZONES !== 'undefined' && Array.isArray(ZONES)) ? ZONES : [];
+      const zl = zonesList.map((s, a) => {
+        if (!s) return '';
+        const c = (typeof zoneOpen === 'function') ? zoneOpen(a) : true;
+        const o = curI === a;
+        const h = (typeof ZALT !== 'undefined' ? ZALT[a] : null);
+        const u = (S && S.zalt ? S.zalt[a] : 0) || 0;
+        const f = (h && u && h[u - 1]) || s;
+        const name = (f && f.n) || (s && s.n) || `Khu vực ${a + 1}`;
+        const r = (h && c) ? `<div class="zalt">${[s].concat(h).map((p, m) => `<button class="chip2${m === u ? ' on' : ''}" data-za="${a}:${m}">${esc((p && p.n) || '')}</button>`).join('')}</div>` : '';
+        return `<button class="zrow${o ? ' cur' : ''}${c ? '' : ' lock'}" data-z="${a}" ${c ? '' : 'disabled'}><b>${esc(name)}</b><span>${(typeof seriesDots === 'function' && f ? seriesDots(f) : '')} Cấp ${s.lo || 1}–${s.hi || 100}${h ? ` · ${h.length + 1} bản đồ` : ''}</span></button>${r}`;
+      }).join('');
+
+      const html = `
+        ${(typeof todoHTML === 'function') ? todoHTML() : ''}
+        <div class="jx-box" style="margin-bottom:6px;">
+          <div class="jx-box-header">
+            <span id="curStageTitle">⚔️ Ải Hiện Tại: <b style="color:#ffd700;">${esc(z.n || '')}</b> (Ải ${inZoneNum}/${zoneStagesNum})${isBoss ? ' <span style="color:#ef4444;font-weight:bold;">(Trùm)</span>' : ''}</span>
+            <span id="curStageLv" style="font-size:10px;color:#a39276;">Quái cấp ${stgLv}</span>
+          </div>
+          <div class="row" style="justify-content:space-between;margin-bottom:6px;">
+            <div style="display:flex;gap:4px;">
+              <button class="jx-action-btn" id="bPrev" style="padding:2px 8px;">◀</button>
+              <button class="jx-action-btn ${(S && S.push) ? 'gold' : ''}" id="bPush" style="padding:2px 10px;">${(S && S.push) ? '⚔ Vượt ải' : '🛡 Luyện công'}</button>
+              <button class="jx-action-btn" id="bNext" style="padding:2px 8px;" ${(S && S.stage < S.maxStage) ? '' : 'disabled'}>▶</button>
+            </div>
+            <small class="dim" style="font-size:10px;">Quái hệ: ${(typeof seriesMix === 'function' && z ? seriesMix(z) : '')}${counterText}</small>
+          </div>
+          <div style="font-size:11px;color:#cbd5e1;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cAutoMap" ${(S && S.autoMap !== false) ? 'checked' : ''} class="accent-amber-500"> Tự động đổi bản đồ phù hợp cấp độ</label>
+          </div>
+        </div>
+        <div class="jx-box" style="margin-bottom:6px;padding:4px 6px;">
+          <div class="jx-box-header" style="margin-bottom:4px;padding-bottom:2px;">
+            <span>📜 Nhật Ký Giang Hồ</span>
+          </div>
+          <div class="log" id="logBox" style="max-height:100px;overflow-y:auto;font-size:11px;padding:2px 4px;">${logList.map(l => `<div>${l}</div>`).join('')}</div>
+        </div>
+        <div class="jx-box">
+          <div class="jx-box-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <span>🗺 Bản Đồ Luyện Công</span>
+              <small style="font-size:10px;color:#a39276;">(Chọn bản đồ & bãi luyện)</small>
+            </div>
+            <button class="jx-action-btn gold sm" id="bOpenXaPhuInLog" style="padding:2px 8px;font-size:11px;cursor:pointer;" title="Mở Xa Phu dịch chuyển thành thị, thôn trấn">🗺️ Xa Phu</button>
+          </div>
+          <div class="zlist" style="max-height:220px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;">${zl}</div>
+        </div>`;
+
       el.innerHTML = html;
+
+      const newZlist = el.querySelector('.zlist');
+      if (newZlist && savedZScroll > 0) newZlist.scrollTop = savedZScroll;
 
       const q = s => el.querySelector(s), qa = s => el.querySelectorAll(s);
       if (typeof bindTodo === 'function') bindTodo();
@@ -314,7 +353,7 @@ function renderLog() {
         }
         gotoStage(a * ZONE_STAGES + 1);
         save();
-        renderLog();
+        renderLog(true);
       };
 
       qa('.zrow').forEach(b => b.onclick = () => pickZone(+b.dataset.z));
@@ -354,7 +393,7 @@ function renderLog() {
           gotoStage(targetStage);
         }
         save();
-        renderLog();
+        renderLog(true);
       });
     });
   } catch (err) {
@@ -367,7 +406,11 @@ function renderLogOnly() {
   const logList = (typeof R !== 'undefined' && R && Array.isArray(R.logs)) ? R.logs : [];
   targets.forEach(el => {
     const b = el.querySelector('#logBox');
-    if (b) b.innerHTML = logList.map(l => `<div>${l}</div>`).join('');
+    if (b) {
+      const atBottom = Math.abs(b.scrollHeight - b.clientHeight - b.scrollTop) < 30;
+      b.innerHTML = logList.map(l => `<div>${l}</div>`).join('');
+      if (atBottom) b.scrollTop = b.scrollHeight;
+    }
   });
 }
 

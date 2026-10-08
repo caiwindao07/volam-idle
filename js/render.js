@@ -30,16 +30,9 @@ function fxLine(a, b, atk) {
 }
 /* ---------- hieu ung chieu goc (Missles.txt -> tools/extract_fx.py -> fx.js): dan bay theo huong + no tai muc tieu ----------
    chieu can chien: phat hoat anh tai muc tieu; thieu hinh thi ve tia nhu cu */
-const JFX = window.JFX || { m: {}, s: {}, c: {}, f: {} }, FX_SCALE = 1.65, FX_MAX = 90;
+const JFX = window.JFX || { m: {}, s: {}, c: {}, f: {} }, FX_SCALE = 1.4, FX_MAX = 90;
 const dir16 = (vx, vy) => (((Math.round(Math.atan2(-vx, vy) / (Math.PI / 8)) % 16) + 16) % 16);
 const animDur = s => s ? Math.min(3.2, (s.n || 1) * (s.ms || 60) / 1000) : 0.5;
-function skillFxColor(atk) {
-  let el = 'phys', v = 0;
-  for (const e in atk && atk.parts || {}) {
-    if (atk.parts[e] > v) { v = atk.parts[e]; el = e; }
-  }
-  return ELEM_COL[el] || ELEM_COL.phys;
-}
 let lastCastT = 0;
 /* hieu ung tai cho nguoi ra chieu (PreCastSpr cua skills.txt) */
 function castFx(atk, caster) {
@@ -49,44 +42,7 @@ function castFx(atk, caster) {
   const cst = caster || (typeof H !== 'undefined' ? H : { x: 0, y: 0 });
   const f = atk && atk.id && JFX.f && JFX.f[atk.id], c = f && f.pre && JFX.c && JFX.c[f.pre];
   if (!c || R.quiet || R.fx.length > FX_MAX) return;
-  R.fx.push({ k: 'boom', s: c, x: cst.x, y: cst.y - 6, t: 0, life: animDur(c), dir: 0, scale: 1.6, color: skillFxColor(atk) });
-}
-function drawFxFallback(f) {
-  const c = CX, color = f.sparkCol || f.color || ELEM_COL.phys;
-  c.save();
-  c.strokeStyle = color;
-  c.fillStyle = color;
-  c.lineCap = 'round';
-  c.lineJoin = 'round';
-  if (f.k === 'mis') {
-    const k = clamp(f.t / Math.max(0.01, f.life), 0, 1), x = f.x1 + (f.x2 - f.x1) * k, y = f.y1 + (f.y2 - f.y1) * k;
-    c.globalAlpha = 0.75;
-    c.lineWidth = 2.5;
-    c.beginPath();
-    c.moveTo(f.x1, f.y1);
-    for (let i = 1; i <= 5; i++) {
-      const q = i / 5, wobble = q < k ? Math.sin(f.t * 34 + i * 1.7) * 5 : 0;
-      c.lineTo(f.x1 + (x - f.x1) * q, f.y1 + (y - f.y1) * q + wobble);
-    }
-    c.stroke();
-    c.globalAlpha = 1;
-    c.beginPath();
-    c.arc(x, y, 4.5, 0, 7);
-    c.fill();
-  } else {
-    const k = clamp(f.t / Math.max(0.01, f.life), 0, 1), r = 7 + k * 35;
-    c.globalAlpha = 0.9 * (1 - k * 0.55);
-    c.lineWidth = 3 - k;
-    c.beginPath();
-    c.ellipse(f.x, f.y, r, r * 0.55, 0, 0, 7);
-    c.stroke();
-    c.globalAlpha = 0.7 * (1 - k);
-    c.beginPath();
-    c.arc(f.x, f.y, 3 + (1 - k) * 3, 0, 7);
-    c.fill();
-  }
-  c.restore();
-  return true;
+  R.fx.push({ k: 'boom', s: c, x: cst.x, y: cst.y - 6, t: 0, life: animDur(c), dir: 0 });
 }
 
 function skillFx(a, b, atk) {
@@ -96,109 +52,32 @@ function skillFx(a, b, atk) {
   castFx(atk, a);
   fxLine(a, b, atk);
 }
-function drawFxSprite(s, dir, t, x, y, loop, scale = FX_SCALE, alpha = 1) {
+
+function drawFxSprite(s, dir, t, x, y, loop, scale = FX_SCALE) {
   const im = img(s.f); if (!im || !im.complete || !im.naturalWidth) return false;
   const fr = loop ? Math.floor(t * 1000 / s.ms) % s.n : Math.min(s.n - 1, Math.floor(t * 1000 / s.ms));
   const row = s.d > 1 ? Math.round(dir * s.d / 16) % s.d : 0;
   const sc = scale || FX_SCALE;
-  const dw = s.w * sc, dh = s.h * sc;
-  const dx = x - s.ax * sc, dy = y - s.ay * sc;
-
-  const prevAlpha = CX.globalAlpha;
-  CX.globalAlpha = clamp(alpha * prevAlpha, 0, 1);
-  CX.drawImage(im, fr * s.w, row * s.h, s.w, s.h, dx, dy, dw, dh);
-
-  // Hiệu ứng hào quang phát sáng (glow layer) nhẹ nhàng tôn màu sắc võ lâm
-  if (!S.lowFx && (s.f.includes('hit') || sc >= 1.65)) {
-    CX.globalCompositeOperation = 'lighter';
-    CX.globalAlpha = clamp(0.32 * alpha * prevAlpha, 0, 1);
-    CX.drawImage(im, fr * s.w, row * s.h, s.w, s.h, dx, dy, dw, dh);
-    CX.globalCompositeOperation = 'source-over';
-  }
-  CX.globalAlpha = prevAlpha;
+  CX.drawImage(im, fr * s.w, row * s.h, s.w, s.h, x - s.ax * sc, y - s.ay * sc, s.w * sc, s.h * sc);
   return true;
 }
+
 function stepFx(f, dt) { // tra ve false khi het; dan toi dich thi doi sang no
   f.t += dt; if (f.t < 0) return true;     // dang cho (phat dan lien tiep)
-  if (f.k === 'mis') {
-    // Luu lich su toa do cho tan anh (ghost trail)
-    if (f.trail && f.curX !== undefined) {
-      if (!f.history) f.history = [];
-      f.history.unshift({ x: f.curX, y: f.curY, dir: f.curDir !== undefined ? f.curDir : f.dir, t: f.t });
-      if (f.history.length > 4) f.history.pop();
-    }
-    if (f.t >= f.life) {
-      if (f.hit) {
-        Object.assign(f, {
-          k: 'boom',
-          s: f.hit,
-          s2: f.end || null,
-          x: f.x2,
-          y: f.y2,
-          t: 0,
-          life: Math.max(animDur(f.hit), f.end ? animDur(f.end) : 0),
-          scale: f.scale || FX_SCALE
-        });
-        if (f.shake) shakeCamera(f.shake, 0.16);
-        if (f.sparks) addSparks(f.x2, f.y2, f.sparkCol || '#ffd700', f.sparks, 150);
-        return true;
-      }
-      return false;
-    }
+  if (f.k === 'mis' && f.t >= f.life) {
+    if (f.hit) { Object.assign(f, { k: 'boom', s: f.hit, x: f.x2, y: f.y2, t: 0, life: animDur(f.hit) }); return true; }
+    return false;
   }
   return f.t < f.life;
 }
+
 function drawFx(f) {
   if (f.t < 0) return false;
   if (f.k === 'mis') {
     const k = clamp(f.t / f.life, 0, 1);
-    let curX = f.x1 + (f.x2 - f.x1) * k;
-    let curY = f.y1 + (f.y2 - f.y1) * k;
-    let curDir = f.dir;
-
-    // 1. Quỹ đạo sóng uốn lượn (sin-wave) cho rồng Cái Bang / ám khí
-    if (f.wave) {
-      const ang = Math.atan2(f.y2 - f.y1, f.x2 - f.x1);
-      const perpX = -Math.sin(ang), perpY = Math.cos(ang);
-      const wPhase = (f.wavePhase || 0) + k * (f.waveFreq || (Math.PI * 4));
-      const envelope = Math.sin(k * Math.PI);
-      const offset = Math.sin(wPhase) * f.wave * envelope;
-      curX += perpX * offset;
-      curY += perpY * offset;
-      if (f.curX !== undefined && (Math.abs(curX - f.curX) > 0.5 || Math.abs(curY - f.curY) > 0.5)) {
-        curDir = dir16(curX - f.curX, curY - f.curY);
-      }
-    }
-
-    // 2. Quỹ đạo cung tròn (arc) cho lựu đạn / bẫy ném
-    if (f.arc) {
-      curY -= Math.sin(k * Math.PI) * f.arc;
-    }
-
-    f.curX = curX;
-    f.curY = curY;
-    f.curDir = curDir;
-
-    // 3. Vẽ tàn ảnh (ghost trail)
-    if (f.trail && f.history && f.history.length > 0) {
-      for (let h = 0; h < f.history.length; h++) {
-        const hist = f.history[h];
-        const hAlpha = 0.32 / (h + 1.2);
-        drawFxSprite(f.s, hist.dir, hist.t, hist.x, hist.y, true, (f.scale || FX_SCALE) * 0.96, hAlpha);
-      }
-    }
-
-    const drawn = drawFxSprite(f.s, curDir, f.t, curX, curY, true, f.scale || FX_SCALE, 1);
-    if (!drawn) return drawFxFallback(f);
-    return true;
+    return drawFxSprite(f.s, f.dir, f.t, f.x1 + (f.x2 - f.x1) * k, f.y1 + (f.y2 - f.y1) * k, true, f.scale || FX_SCALE);
   }
-  if (f.s2 && f.t < animDur(f.s2)) drawFxSprite(f.s2, f.dir, f.t, f.x, f.y, false, f.scale || FX_SCALE);
-  if (f.t < (f.s && f.s.n ? animDur(f.s) : Infinity)) {
-    const drawn = drawFxSprite(f.s, f.dir, f.t, f.x, f.y, false, f.scale || FX_SCALE, 1);
-    if (!drawn) return drawFxFallback(f);
-    return true;
-  }
-  return !!f.s2;
+  return drawFxSprite(f.s, f.dir, f.t * (f.sp || 1), f.x, f.y, false, f.scale || FX_SCALE);
 }
 /* Giao dien di dong ti le 1:1 chuan responsive, toa do cam ung va canvas sac net tuyet doi */
 const UI_SCALE_MOBILE = 1;
