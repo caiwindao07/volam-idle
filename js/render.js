@@ -118,9 +118,18 @@ function shakeCamera(mag = 4, dur = 0.15) {
 }
 /* ---------- nen ban do: anh 3x3 vung that (BG_TILE diem) lat guong xen ke -> ghep lien, khong thay mep, the gioi rong tuy y ---------- */
 const BG_TILE = 1536;
+let _defaultBgImg = null;
+function getDefaultBg() {
+  if (!_defaultBgImg) _defaultBgImg = img('img/z/140.jpg');
+  return _defaultBgImg;
+}
 function drawTiledBg(c, bg) {
-  if (!(bg && bg.complete && bg.naturalWidth)) { c.fillStyle = '#26301f'; c.fillRect(CAM.x - 40, CAM.y - 40, AR.w + 80, AR.h + 80); return; }
-  if (R.town || OBS.g || (typeof S !== 'undefined' && S && S.chosenZone === 386)) { c.drawImage(bg, 0, 0, WORLD.w, WORLD.h); return; }          // ban do that rong, khong lat guong
+  if (!(bg && bg.complete && bg.naturalWidth)) {
+    const def = getDefaultBg();
+    if (def && def.complete && def.naturalWidth) bg = def;
+    else { c.fillStyle = '#26301f'; c.fillRect(CAM.x - 40, CAM.y - 40, AR.w + 80, AR.h + 80); return; }
+  }
+  if (R.town || OBS.g || (typeof S !== 'undefined' && S && S.chosenZone === 386)) { c.drawImage(bg, 0, 0, WORLD.w || 3072, WORLD.h || 3072); return; }          // ban do that rong, khong lat guong
   const T = BG_TILE, i0 = Math.floor((CAM.x - 40) / T), i1 = Math.floor((CAM.x + AR.w + 40) / T), j0 = Math.floor((CAM.y - 40) / T), j1 = Math.floor((CAM.y + AR.h + 40) / T);
   for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
     const fx = i & 1, fy = j & 1;
@@ -133,11 +142,12 @@ const MINI = { s: 92, m: 8, top: 62 };
 function drawMinimap(c) {
   if (R.town || S.miniMap === false) return;
   c.save();
-  const s = MINI.s, x0 = AR.w - s - MINI.m, y0 = MINI.top, k = s / WORLD.w;
-  const bg = R.bgImg || (typeof zoneOf === 'function' && typeof S !== 'undefined' && S ? (R.bgImg = img(zoneOf(S.stage || 1).bg)) : null);
+  const s = MINI.s, x0 = AR.w - s - MINI.m, y0 = MINI.top, k = s / (WORLD.w || 3072);
+  let bg = R.bgImg || (typeof zoneOf === 'function' && typeof S !== 'undefined' && S ? (R.bgImg = img(zoneOf(S.stage || 1).bg)) : null);
+  if (!(bg && bg.complete && bg.naturalWidth)) bg = getDefaultBg();
   if (bg && bg.complete && bg.naturalWidth) {
     if (OBS.g) c.drawImage(bg, x0, y0, s, s);
-    else { const n = Math.round(WORLD.w / BG_TILE), h = s / n;                   // cung cach ghep lat guong nhu nen tran dau
+    else { const n = Math.round((WORLD.w || 3072) / BG_TILE), h = s / n;                   // cung cach ghep lat guong nhu nen tran dau
     for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { c.save(); c.translate(x0 + i * h + (i & 1 ? h : 0), y0 + j * h + (j & 1 ? h : 0)); c.scale(i & 1 ? -1 : 1, j & 1 ? -1 : 1); c.drawImage(bg, 0, 0, h, h); c.restore(); } }
   } else { c.fillStyle = '#26301f'; c.fillRect(x0, y0, s, s); }
   c.globalAlpha = 1;
