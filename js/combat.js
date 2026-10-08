@@ -875,6 +875,7 @@ function gainXp(x, maxLevels = 2) {
     allowedLevels--;
     window._legitExpGain = true;
     window._legitLevelTransition = true;
+    window._legitPtsGain = true;
     try {
       S.xp -= J.exp[S.lvl - 1];
       S.lvl++;
@@ -883,6 +884,7 @@ function gainXp(x, maxLevels = 2) {
     } finally {
       window._legitExpGain = false;
       window._legitLevelTransition = false;
+      window._legitPtsGain = false;
     }
     R.dirty = true;
     uiSfx('levelup');

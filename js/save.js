@@ -134,6 +134,11 @@ function migrate(o) {
     s.skPts += SKILL_PTS_PER_LEVEL;
   }
   s.gold = Number.isFinite(+s.gold) ? Math.max(0, +s.gold) : 0; s.skPts = Math.max(0, Math.floor(+s.skPts) || 0); s.attrPts = Math.max(0, Math.floor(+s.attrPts) || 0);
+  let spentMigrateAttr = 0; if (s.attr) { spentMigrateAttr = (s.attr.str || 0) + (s.attr.dex || 0) + (s.attr.vit || 0) + (s.attr.eng || 0); }
+  const minExpectedMigrateAttr = (Math.max(1, s.lvl) - 1) * PTS_PER_LEVEL;
+  if (spentMigrateAttr + s.attrPts < minExpectedMigrateAttr) {
+    s.attrPts = minExpectedMigrateAttr - spentMigrateAttr;
+  }
   let spentMigrateSk = 0; for (const id in s.sk) spentMigrateSk += (s.sk[id] || 0);
   const minExpectedMigrateSk = 1 + (Math.max(1, s.lvl) - 1) * 1;
   if (spentMigrateSk + s.skPts < minExpectedMigrateSk) {

@@ -83,8 +83,10 @@
         get() { return _realAttrPts; },
         set(val) {
           const target = Math.max(0, Math.floor(Number(val) || 0));
-          const maxAllowed = (_realLvl - 1) * 5 + ((obj.rw && obj.rw.stat && obj.rw.stat.reborn) || 0) * 100 + 100;
-          if (window._legitPtsGain || target <= _realAttrPts || target <= maxAllowed) {
+          const currentLvl = Math.max(_realLvl, Math.floor(Number(obj.lvl) || 1));
+          _realLvl = currentLvl;
+          const maxAllowed = (currentLvl - 1) * 5 + ((obj.rw && obj.rw.stat && obj.rw.stat.reborn) || 0) * 100 + 200;
+          if (window._legitPtsGain || window._legitLevelTransition || window._legitExpGain || target <= _realAttrPts || target <= maxAllowed) {
             _realAttrPts = target;
             return;
           }
@@ -101,8 +103,10 @@
         get() { return _realSkPts; },
         set(val) {
           const target = Math.max(0, Math.floor(Number(val) || 0));
-          const maxAllowed = 1 + (_realLvl - 1) * 1 + ((obj.rw && obj.rw.stat && obj.rw.stat.reborn) || 0) * 50 + 200;
-          if (window._legitPtsGain || target <= _realSkPts || target <= maxAllowed) {
+          const currentLvl = Math.max(_realLvl, Math.floor(Number(obj.lvl) || 1));
+          _realLvl = currentLvl;
+          const maxAllowed = 1 + (currentLvl - 1) * 1 + ((obj.rw && obj.rw.stat && obj.rw.stat.reborn) || 0) * 50 + 200;
+          if (window._legitPtsGain || window._legitLevelTransition || window._legitExpGain || target <= _realSkPts || target <= maxAllowed) {
             _realSkPts = target;
             return;
           }

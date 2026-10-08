@@ -44,13 +44,21 @@ try {
   const worldPath = path.join(ROOT_DIR, 'world.js');
   const dataPath = path.join(ROOT_DIR, 'data.js');
   const jmoPath = path.join(ROOT_DIR, 'jmo.js');
+  const jmo2Path = path.join(ROOT_DIR, 'jmo2.js');
+  const zones2Path = path.join(ROOT_DIR, 'zones2.js');
   if (fs.existsSync(worldPath) && fs.existsSync(dataPath)) {
     const sandbox = { window: {} };
     vm.createContext(sandbox);
     vm.runInContext(fs.readFileSync(dataPath, 'utf8'), sandbox);
     vm.runInContext(fs.readFileSync(worldPath, 'utf8'), sandbox);
+    if (fs.existsSync(zones2Path)) {
+      try { vm.runInContext(fs.readFileSync(zones2Path, 'utf8'), sandbox); } catch (e) {}
+    }
     if (fs.existsSync(jmoPath)) {
       vm.runInContext(fs.readFileSync(jmoPath, 'utf8'), sandbox);
+    }
+    if (fs.existsSync(jmo2Path)) {
+      try { vm.runInContext(fs.readFileSync(jmo2Path, 'utf8'), sandbox); } catch (e) {}
     }
     JW = sandbox.window.JW;
     JX = sandbox.window.JX;
