@@ -30,6 +30,11 @@ const STR_PER_DMG = 5, DEX_PER_DMG = 5, ENG_PER_DMG = 4;
 /* Can bang rieng game idle (ban goc khong co): 1 Noi cong = +1% sat thuong nguyen to cua chieu, 1 Suc manh (Than phap voi am khi) = +1% sat thuong vat ly */
 const ENG_PER_PCT = 1, STR_PER_PCT = 1, DEX_PCT_RANGED = 0.5, IDLE_LIFE_PER_LEVEL = 8; // +8 sinh luc moi cap cho moi he (quai danh lien tuc theo dot)
 const PTS_PER_LEVEL = 5, SKILL_PTS_PER_LEVEL = 1, MAX_LEVEL = Math.min(200, J.exp.length);   // gioi han cap 200 theo bang exp data.js
+const EXP_TAIL_R = (J.exp && J.exp.length > 98) ? (J.exp[98] / (J.exp[97] || 1)) : 1.1;
+function expNeed(L) {
+  const l = Math.max(1, Math.min(Math.floor(L) || 1, MAX_LEVEL));
+  return l <= 99 ? (J.exp[l - 1] || 1000) : Math.round((J.exp[98] || 25000000) * Math.pow(EXP_TAIL_R, l - 99));
+}
 
 /* ---------- thuoc tinh ma thuat ---------- */
 const ATTR_ID = Object.fromEntries(J.attr.map((n, i) => [n, i]));

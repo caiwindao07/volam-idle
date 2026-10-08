@@ -2218,10 +2218,19 @@ wss.on('connection', (ws) => {
 
           if (mob.hp <= 0) {
             map.delete(mobId);
-            const reqExp = (JX && JX.exp && JX.exp[mob.L - 1]) ? JX.exp[mob.L - 1] : (mob.L * 300);
+            const curLvl = (p.uKey && db.users[p.uKey] && db.users[p.uKey].state) ? (Number(db.users[p.uKey].state.lvl) || p.lvl || 1) : (p.lvl || 1);
+            const xpL = Math.min(mob.L, curLvl + 5);
+            const lvDiff = mob.L - curLvl;
+            let mult = 1.0;
+            if (lvDiff > 10) mult = 0.1;
+            else if (lvDiff > 5) mult = 0.5;
+            else if (lvDiff < -10) mult = 0.2;
+            else if (lvDiff < -5) mult = 0.6;
+
+            const reqExp = (JX && JX.exp && JX.exp[xpL - 1]) ? JX.exp[xpL - 1] : (xpL * 300);
             const party = getPlayerParty(p.id);
             const partyMul = (party && party.members.length > 1) ? (1 + (party.members.length - 1) * 0.1) : 1;
-            const expGain = Math.round((reqExp / Math.max(2, 6 + mob.L * 0.12)) * (mob.cls === 'elite' ? 3.5 : 1.5) * partyMul);
+            const expGain = Math.round((reqExp / (10 + xpL * 1.4)) * (mob.cls === 'elite' ? 3.5 : 1.5) * mult * partyMul);
             const goldDrop = Math.round(mob.L * 35 * (mob.cls === 'elite' ? 4 : 2));
 
             // Server-Authoritative: Cập nhật trực tiếp vào cơ sở dữ liệu nhân vật
@@ -2232,7 +2241,8 @@ wss.on('connection', (ws) => {
               uState.lvl = Math.max(1, Math.min(200, Number(uState.lvl) || 1));
               uState.xp = (uState.xp || 0) + expGain;
               let didLevelUp = false;
-              while (uState.lvl < 200) {
+              let maxServerLevels = 2;
+              while (uState.lvl < 200 && maxServerLevels > 0) {
                 const expNeeded = (JX && JX.exp && JX.exp[uState.lvl - 1]) ? JX.exp[uState.lvl - 1] : (uState.lvl * 1000);
                 if (uState.xp < expNeeded) break;
                 uState.xp -= expNeeded;
@@ -2240,6 +2250,13 @@ wss.on('connection', (ws) => {
                 uState.attrPts = (uState.attrPts || 0) + 5;
                 uState.skPts = (uState.skPts || 0) + 1;
                 didLevelUp = true;
+                maxServerLevels--;
+              }
+              if (maxServerLevels <= 0) {
+                const expNeeded = (JX && JX.exp && JX.exp[uState.lvl - 1]) ? JX.exp[uState.lvl - 1] : (uState.lvl * 1000);
+                if (uState.xp >= expNeeded) {
+                  uState.xp = Math.min(uState.xp, expNeeded * 0.95);
+                }
               }
               if (didLevelUp) {
                 p.lvl = uState.lvl;

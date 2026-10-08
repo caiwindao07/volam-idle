@@ -80,7 +80,10 @@ function enemyStats(L, cls) {
    -> cap 150 mat vai ngay choi (tests: pacing). */
 const XP_SLOW_FROM = 60, XP_SLOW_K = 2, XP_SLOW_P = 1.1;
 const xpSlow = L => L <= XP_SLOW_FROM ? 1 : 1 + XP_SLOW_K * Math.pow((L - XP_SLOW_FROM) / 120, XP_SLOW_P);
-function expFor(L) { return (J.exp[clamp(L, 1, MAX_LEVEL) - 1] || 1000) / Math.max(2, 6 + L * 0.12); }
+function expFor(L) {
+  const need = (typeof expNeed === 'function' ? expNeed(L) : (J.exp[clamp(L, 1, MAX_LEVEL) - 1] || 1000));
+  return need / (10 + L * 1.4);
+}
 function makeEnemy(tid, L, cls, x, y) {
   const m = MON[tid], z = zoneOf(S.stage), st = enemyStats(L, cls), D = diffOf(); st.hp *= D.hp; st.dmg *= D.dmg;
   const series = wpick([0, 1, 2, 3, 4], i => z.sw[i] + 1);
@@ -695,8 +698,14 @@ function killCheck() {
 function onKill(e) {
   R.stall = 0; // Đang tiêu diệt quái thành công -> xóa bộ đếm stall
   R.kills++; S.totalKills = (S.totalKills || 0) + 1;
-  const lvDiff = e.L - S.lvl, mult = lvDiff < -10 ? 0.2 : lvDiff < -5 ? 0.6 : 1;
-  gainXp(expFor(e.L) * CLS[e.cls].xp * mult * diffOf().rew);
+  const lvDiff = e.L - S.lvl;
+  let mult = 1.0;
+  if (lvDiff > 10) mult = 0.1;
+  else if (lvDiff > 5) mult = 0.5;
+  else if (lvDiff < -10) mult = 0.2;
+  else if (lvDiff < -5) mult = 0.6;
+  const xpL = Math.min(e.L, S.lvl + 5);
+  gainXp(expFor(xpL) * CLS[e.cls].xp * mult * diffOf().rew);
   const g = Math.round(moneyDrop(e) * diffOf().rew); S.gold += g;
   burst(e.x, e.y, SERIES_COL[e.series]);
   for (const it of rollDrops(e)) dropToGround(it, e);
@@ -840,7 +849,7 @@ function togglePushMode(forceVal) {
   if (typeof renderLog === 'function') renderLog();
 }
 
-function gainXp(x) {
+function gainXp(x, maxLevels = 2) {
   if (S.lvl >= MAX_LEVEL) return;
   const campMul = typeof campExpMul === 'function' ? campExpMul() : 1;
   const vipMul = typeof vipExpMul === 'function' ? vipExpMul() : 1;
@@ -852,7 +861,9 @@ function gainXp(x) {
   } finally {
     window._legitExpGain = false;
   }
-  while (S.lvl < MAX_LEVEL && S.xp >= (J.exp[S.lvl - 1] || Infinity)) {
+  let allowedLevels = (maxLevels !== undefined && maxLevels !== null) ? maxLevels : 2;
+  while (S.lvl < MAX_LEVEL && S.xp >= (J.exp[S.lvl - 1] || Infinity) && allowedLevels > 0) {
+    allowedLevels--;
     window._legitExpGain = true;
     window._legitLevelTransition = true;
     try {
@@ -870,6 +881,9 @@ function gainXp(x) {
     if (typeof onLevelUp === 'function') onLevelUp();
     if (typeof sendProfile === 'function') sendProfile();
     checkAutoMap();
+  }
+  if (allowedLevels <= 0 && S.xp >= (J.exp[S.lvl - 1] || Infinity)) {
+    S.xp = Math.min(S.xp, (J.exp[S.lvl - 1] || 1000) * 0.95);
   }
 }
 
