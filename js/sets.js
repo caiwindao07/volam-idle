@@ -24,11 +24,11 @@ function rollSetDrop(e) {
   const isDungeonFinal = typeof R !== 'undefined' && R.dungeon && (R.dungeonWave >= 5);
   const isFinalBoss = e.worldBoss || e.goldBoss || isTowerFinal || isDungeonFinal;
 
-  const baseChance = isFinalBoss ? 0.0175 : 0.006; // giam xuong 5% so voi cu (0.35 / 0.12)
-  const chance = baseChance + (typeof zoneIdx === 'function' ? zoneIdx(Math.min(S.stage || 1, STAGES)) * 0.00025 : 0);
+  // Tỷ lệ rơi cố định 1% (0.01) khi tiêu diệt Boss theo yêu cầu người chơi
+  const chance = 0.01;
   if (Math.random() >= chance) return null;
 
-  const kind = (e.L >= 90 || isFinalBoss) && Math.random() < 0.35 ? 'platina' : 'gold';
+  const kind = (e.L >= 90 || isFinalBoss) && Math.random() < 0.2 ? 'platina' : 'gold';
   const lvCap = Math.max(S.lvl, e.L) + 10, fid = FAC[S.fac] ? FAC[S.fac].id : -1;
   const reqOf = (r, id) => (r.req.find(q => q[0] === id) || [0, -1])[1];
   let pool = J.sets[kind].filter(r => reqOf(r, 36) <= lvCap && sexReqOk(r.req));

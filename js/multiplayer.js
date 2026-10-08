@@ -317,8 +317,9 @@ function handleServerMessage(msg) {
       window._legitExpGain = true;
       try {
         if (msg.gold !== undefined) S.gold = msg.gold;
-        if (msg.lvl !== undefined) S.lvl = msg.lvl;
-        if (msg.xp !== undefined) S.xp = msg.xp;
+        // Offline idle client làm chủ tiến trình; không bao giờ để server đè tụt cấp hoặc % kinh nghiệm
+        if (msg.lvl !== undefined && msg.lvl > S.lvl) S.lvl = msg.lvl;
+        if (msg.xp !== undefined && msg.lvl === S.lvl && msg.xp > S.xp) S.xp = msg.xp;
         if (msg.attrPts !== undefined) {
           const maxAttr = (S.lvl - 1) * 5 + ((S.rw && S.rw.stat && S.rw.stat.reborn) || 0) * 100 + 50;
           const spentAttr = ((S.attr && S.attr.str) || 0) + ((S.attr && S.attr.dex) || 0) + ((S.attr && S.attr.vit) || 0) + ((S.attr && S.attr.eng) || 0);

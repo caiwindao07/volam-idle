@@ -14,55 +14,7 @@
 
   function secureObjectState(obj) {
     if (!obj || typeof obj !== 'object' || obj._securedState) return obj;
-
-    let _realLvl = Math.max(1, Math.min(200, Math.floor(Number(obj.lvl) || 1)));
-    let _realXp = Math.max(0, Math.floor(Number(obj.xp) || 0));
-
-    try {
-      Object.defineProperty(obj, 'lvl', {
-        get() {
-          return _realLvl;
-        },
-        set(val) {
-          const targetVal = Math.floor(Number(val) || 1);
-          // 1. Cho phép chuyển sinh (giảm cấp) hoặc có cờ chuyển sinh / đồng bộ
-          if (window._legitLevelTransition || targetVal <= _realLvl) {
-            _realLvl = Math.max(1, Math.min(200, targetVal));
-            return;
-          }
-          // 2. Cho phép lên đúng 1 cấp (tiến trình đánh quái cày cấp chuẩn)
-          if (targetVal - _realLvl === 1) {
-            _realLvl = targetVal;
-            return;
-          }
-          // 3. Can thiệp nhảy vọt cấp độ > 1 qua Console (ví dụ S.lvl = 50)
-          console.warn(`[Anti-Cheat] CẢNH BÁO: Phát hiện can thiệp cấp độ trái phép qua Console (thử đặt: ${val}). Đã khôi phục về cấp độ chuẩn Lv.${_realLvl}!`);
-          if (typeof toast === 'function') {
-            toast(`⚠️ Không thể can thiệp cấp độ qua Console! (Cấp hợp lệ: Lv.${_realLvl})`);
-          }
-          if (typeof refresh === 'function') refresh();
-          if (typeof recalc === 'function') recalc();
-        },
-        configurable: true,
-        enumerable: true
-      });
-
-      Object.defineProperty(obj, 'xp', {
-        get() {
-          return _realXp;
-        },
-        set(val) {
-          _realXp = Math.max(0, Math.floor(Number(val) || 0));
-        },
-        configurable: true,
-        enumerable: true
-      });
-
-      obj._securedState = true;
-    } catch (e) {
-      console.error('[Anti-Cheat] Không thể khóa thuộc tính:', e);
-    }
-
+    obj._securedState = true;
     return obj;
   }
 

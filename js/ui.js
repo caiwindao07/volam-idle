@@ -1773,15 +1773,23 @@ function updateMountHudBtn() {
 
 function toggleMountRide() {
   if (typeof pvkEnsureMount === 'function') pvkEnsureMount();
-  S.mounted = !S.mounted;
-  const m = typeof mountCurrent === 'function' ? mountCurrent() : null;
-  if (S.mounted) {
+  if (typeof setMount === 'function') {
+    R.rideCd = 0;
+    setMount(!R.mounted);
+  } else {
+    S.mounted = !S.mounted;
+    R.mounted = S.mounted;
+  }
+  R.dirty = true;
+  const m = (S.eq && S.eq.horse) || (typeof mountCurrent === 'function' ? mountCurrent() : null);
+  if (R.mounted) {
     toast(`🏇 Đã lên ngựa [${m ? m.n : 'Chiến Mã'}]! Tốc độ di chuyển gia tăng!`);
-    uiSfx('use');
+    if (typeof uiSfx === 'function') uiSfx('use');
   } else {
     toast(`Đã xuống ngựa [${m ? m.n : 'Chiến Mã'}]!`);
   }
   updateMountHudBtn();
+  if (typeof refreshRideBtn === 'function') refreshRideBtn();
   recalc();
   if (typeof refresh === 'function') refresh();
   if (typeof sendMove === 'function') sendMove(0);

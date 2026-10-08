@@ -1144,7 +1144,9 @@ function draw(dt) {
       let heroY = H.y;
       let mountBob = 0;
       if (S && S.mounted) {
-        mountBob = drawHorseMount(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, S.mount);
+        if (!R.jx && typeof drawHorseMount === 'function') {
+          mountBob = drawHorseMount(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, S.mount);
+        }
         heroY = H.y - 14 + mountBob;
       } else {
         c.fillStyle = '#0007'; c.beginPath(); c.ellipse(H.x, H.y, 16, 6, 0, 0, 7); c.fill();

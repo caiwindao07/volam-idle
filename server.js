@@ -1865,20 +1865,10 @@ wss.on('connection', (ws) => {
           ? (Number(db.users[p.uKey].state.lvl) || 1)
           : (p.lvl || 1);
         if (data.lvl != null) {
-          const clientLvl = Number(data.lvl);
-          if (clientLvl - authLvl > 20) {
-            console.warn(`[Anti-Cheat] Phát hiện người chơi "${p.name}" gửi cấp độ ảo: Lv.${clientLvl} (Server: Lv.${authLvl}). Đã khôi phục về cấp chuẩn.`);
-            p.lvl = authLvl;
-            ws.send(JSON.stringify({
-              type: 'state_sync',
-              lvl: authLvl,
-              xp: (p.uKey && db.users[p.uKey]?.state) ? db.users[p.uKey].state.xp : 0
-            }));
-          } else {
-            p.lvl = clientLvl;
-            if (p.uKey && db.users[p.uKey] && db.users[p.uKey].state) {
-              db.users[p.uKey].state.lvl = clientLvl;
-            }
+          const clientLvl = Math.max(1, Math.min(200, Number(data.lvl) || 1));
+          p.lvl = clientLvl;
+          if (p.uKey && db.users[p.uKey] && db.users[p.uKey].state) {
+            db.users[p.uKey].state.lvl = clientLvl;
           }
         } else {
           p.lvl = authLvl;
