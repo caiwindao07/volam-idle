@@ -842,12 +842,24 @@ function gainXp(x) {
   const vipMul = typeof vipExpMul === 'function' ? vipExpMul() : 1;
   const partyMul = (typeof PARTY !== 'undefined' && PARTY.data && PARTY.data.members && PARTY.data.members.length > 1) ? (1 + (PARTY.data.members.length - 1) * 0.1) : 1;
   const addedXp = x * campMul * vipMul * partyMul * (1 + rebornBonus().xp) / xpSlow(S.lvl);
-  S.xp = Math.max(0, (S.xp || 0) + addedXp);
+  window._legitExpGain = true;
+  try {
+    S.xp = Math.max(0, (S.xp || 0) + addedXp);
+  } finally {
+    window._legitExpGain = false;
+  }
   while (S.lvl < MAX_LEVEL && S.xp >= (J.exp[S.lvl - 1] || Infinity)) {
-    S.xp -= J.exp[S.lvl - 1];
-    S.lvl++;
-    S.attrPts += PTS_PER_LEVEL;
-    S.skPts += SKILL_PTS_PER_LEVEL;
+    window._legitExpGain = true;
+    window._legitLevelTransition = true;
+    try {
+      S.xp -= J.exp[S.lvl - 1];
+      S.lvl++;
+      S.attrPts += PTS_PER_LEVEL;
+      S.skPts += SKILL_PTS_PER_LEVEL;
+    } finally {
+      window._legitExpGain = false;
+      window._legitLevelTransition = false;
+    }
     R.dirty = true;
     uiSfx('levelup');
     log(`<b class="up">Lên cấp ${S.lvl}!</b> +${PTS_PER_LEVEL} tiềm năng, +${SKILL_PTS_PER_LEVEL} kỹ năng`);
