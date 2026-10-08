@@ -8,5 +8,8 @@
   },
   "assets": {
     "directory": "."
+  },
+  "vars": {
+    "BACKEND_URL": "https://volam-idle.onrender.com"
   }
 }

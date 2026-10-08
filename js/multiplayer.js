@@ -44,6 +44,23 @@ function scheduleReconnect() {
   }, 2500);
 }
 
+function getWsUrl() {
+  if (window.JX_WS_URL) return window.JX_WS_URL;
+  if (window.JX_SERVER_URL) {
+    try {
+      const u = new URL(window.JX_SERVER_URL);
+      const wsProto = u.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${wsProto}//${u.host}`;
+    } catch (e) {}
+  }
+  const loc = window.location;
+  const isHttps = loc.protocol === 'https:';
+  const proto = isHttps ? 'wss://' : 'ws://';
+  const host = loc.hostname || 'localhost';
+  const port = loc.port ? `:${loc.port}` : '';
+  return `${proto}${host}${port}`;
+}
+
 function initMultiplayer() {
   if (typeof WebSocket === 'undefined') return;
   if (MP.connected) return;
@@ -53,13 +70,7 @@ function initMultiplayer() {
   if (_mpConnecting) return;
   _mpConnecting = true;
 
-  const loc = window.location;
-  const isHttps = loc.protocol === 'https:';
-  const proto = isHttps ? 'wss://' : 'ws://';
-  const host = loc.hostname || 'localhost';
-  const port = loc.port ? `:${loc.port}` : '';
-  const url = `${proto}${host}${port}`;
-
+  const url = getWsUrl();
   connectWs(url);
 }
 

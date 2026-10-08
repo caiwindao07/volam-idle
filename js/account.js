@@ -49,7 +49,13 @@ function saveLocalUserState(username, state) {
   } catch (e) {}
 }
 
-// Khởi tạo và kiểm tra trạng thái đăng nhập
+// Địa chỉ máy chủ API Online (nếu chạy frontend và backend khác domain)
+function getApiUrl(path) {
+  const base = (window.JX_SERVER_URL || '').replace(/\/+$/, '');
+  return base + path;
+}
+
+// Khởi tạo và kiểm tra trạng thái đăng nhập trực tuyến
 let _authChecking = false;
 function initAccountSystem(onReady) {
   if (ACC.isLoggedIn) {
@@ -64,40 +70,9 @@ function initAccountSystem(onReady) {
     ACC.token = null;
   }
 
-  // 1. Kiểm tra Token Cục bộ / Offline
-  if (ACC.token && (ACC.token.startsWith('local_') || ACC.token.startsWith('cf_'))) {
-    const u = ACC.token.replace(/^local_|^cf_/, '');
-    const users = getLocalUsers();
-    const user = users[u] || { username: u, heroName: u, fac: 'shaolin' };
-    ACC.user = user;
-    ACC.isLoggedIn = true;
-    _authChecking = false;
-
-    const state = getLocalUserState(u);
-    if (state) {
-      try {
-        if (typeof migrate === 'function') {
-          S = migrate(state);
-        } else {
-          S = state;
-        }
-        window.S = S;
-        if (typeof recalc === 'function') recalc();
-        if (typeof refresh === 'function') refresh();
-      } catch (e) {
-        console.error('[Account] Error migrating local state:', e);
-      }
-    }
-
-    updateAccountHeaderUI();
-    if (typeof enterGameWorld === 'function') enterGameWorld();
-    if (onReady) onReady(true);
-    return;
-  }
-
-  // 2. Kiểm tra Token qua API Server (nếu có backend)
+  // 1. Kiểm tra Token qua API Server Online (MongoDB Atlas)
   if (ACC.token) {
-    fetch('/api/me', {
+    fetch(getApiUrl('/api/me'), {
       headers: { 'Authorization': 'Bearer ' + ACC.token }
     })
     .then(async res => {
@@ -201,10 +176,6 @@ function showAuthModal(onSuccess) {
           </div>
           <div id="logErr" style="color:#ef4444;font-size:11.5px;margin-bottom:10px;display:none;"></div>
           <button id="btnDoLogin" class="jx-action-btn gold" style="width:100%;padding:10px 0;font-size:13px;font-weight:bold;letter-spacing:1px;">⚔ ĐĂNG NHẬP VÀO GAME</button>
-          
-          <div style="margin-top:10px;">
-            <button id="btnQuickPlay" type="button" class="jx-action-btn" style="width:100%;padding:8px 0;font-size:12px;color:#4ade80;border-color:#22c55e;" title="Chơi ngay không cần tài khoản, tự động lưu trên máy">⚡ CHƠI NGAY (LƯU TRÊN MÁY)</button>
-          </div>
 
           <div style="margin-top:12px;text-align:center;font-size:11.5px;color:#94a3b8;">
             Chưa có tài khoản? <a href="javascript:void(0)" id="linkGoReg" style="color:#ffd700;font-weight:bold;text-decoration:underline;">Đăng ký tài khoản mới tại đây</a>
@@ -359,7 +330,7 @@ function showAuthModal(onSuccess) {
       }
       if (err) err.style.display = 'none';
 
-      fetch('/api/login', {
+      fetch(getApiUrl('/api/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: u, password: p })
@@ -369,7 +340,7 @@ function showAuthModal(onSuccess) {
         try {
           return JSON.parse(text);
         } catch (x) {
-          throw new Error('API_UNAVAILABLE');
+          throw new Error('Máy chủ phản hồi không đúng chuẩn (' + r.status + ')');
         }
       })
       .then(res => {
@@ -383,40 +354,11 @@ function showAuthModal(onSuccess) {
         onAuthSuccess(res);
       })
       .catch(e => {
-        // Fallback tự động sang lưu trữ trên máy (LocalStorage)
-        console.warn('[Account] API không phản hồi, tự động đăng nhập trên thiết bị:', e);
-        const users = getLocalUsers();
-        let user = users[u.toLowerCase()];
-        if (!user) {
-          user = {
-            username: u,
-            password: p,
-            heroName: u,
-            fac: 'shaolin',
-            createdAt: Date.now()
-          };
-          users[u.toLowerCase()] = user;
-          saveLocalUsers(users);
-        } else if (user.password && user.password !== p) {
-          if (err) {
-            err.textContent = 'Mật khẩu không chính xác!';
-            err.style.display = 'block';
-          }
-          return;
+        console.error('[Account] Lỗi kết nối máy chủ online:', e);
+        if (err) {
+          err.textContent = '⚠️ Không thể kết nối máy chủ Online (' + (e.message || 'Lỗi mạng') + ')! Vui lòng kiểm tra lại.';
+          err.style.display = 'block';
         }
-
-        const state = getLocalUserState(u);
-        const localRes = {
-          ok: true,
-          token: 'local_' + u.toLowerCase(),
-          user: {
-            username: user.username,
-            heroName: user.heroName || user.username,
-            fac: user.fac || 'shaolin'
-          },
-          state: state
-        };
-        onAuthSuccess(localRes);
       });
     };
 
@@ -424,26 +366,6 @@ function showAuthModal(onSuccess) {
     if (btnLogin) btnLogin.onclick = doLogin;
     const inpPass = $('#logPass');
     if (inpPass) inpPass.onkeydown = e => { if (e.key === 'Enter') doLogin(); };
-
-    // Xử lý nút CHƠI NGAY
-    const btnQuick = $('#btnQuickPlay');
-    if (btnQuick) {
-      btnQuick.onclick = () => {
-        const guestUser = 'HiepKhach_' + Math.floor(1000 + Math.random() * 9000);
-        const state = getLocalUserState('guest') || getLocalUserState('default');
-        const localRes = {
-          ok: true,
-          token: 'local_' + guestUser.toLowerCase(),
-          user: {
-            username: guestUser,
-            heroName: guestUser,
-            fac: 'shaolin'
-          },
-          state: state
-        };
-        onAuthSuccess(localRes);
-      };
-    }
 
     // Xử lý nút ĐĂNG KÝ
     const doReg = () => {
@@ -477,7 +399,7 @@ function showAuthModal(onSuccess) {
       }
       if (err) err.style.display = 'none';
 
-      fetch('/api/register', {
+      fetch(getApiUrl('/api/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -492,7 +414,7 @@ function showAuthModal(onSuccess) {
         try {
           return JSON.parse(text);
         } catch (x) {
-          throw new Error('API_UNAVAILABLE');
+          throw new Error('Máy chủ phản hồi không đúng chuẩn (' + r.status + ')');
         }
       })
       .then(res => {
@@ -506,28 +428,11 @@ function showAuthModal(onSuccess) {
         onAuthSuccess(res);
       })
       .catch(e => {
-        // Fallback tự động đăng ký trên thiết bị
-        console.warn('[Account] API không phản hồi, tự động đăng ký trên thiết bị:', e);
-        const users = getLocalUsers();
-        users[u.toLowerCase()] = {
-          username: u,
-          password: p,
-          heroName: heroName || u,
-          fac: fac,
-          createdAt: Date.now()
-        };
-        saveLocalUsers(users);
-        const localRes = {
-          ok: true,
-          token: 'local_' + u.toLowerCase(),
-          user: {
-            username: u,
-            heroName: heroName || u,
-            fac: fac
-          },
-          state: null
-        };
-        onAuthSuccess(localRes);
+        console.error('[Account] Lỗi kết nối máy chủ online:', e);
+        if (err) {
+          err.textContent = '⚠️ Không thể kết nối máy chủ Online (' + (e.message || 'Lỗi mạng') + ')! Vui lòng kiểm tra lại.';
+          err.style.display = 'block';
+        }
       });
     };
 
@@ -564,10 +469,7 @@ function syncCloudSave() {
     saveLocalUserState(ACC.user.username, S);
   }
 
-  // Nếu là token local thì không cần fetch
-  if (ACC.token.startsWith('local_')) return;
-
-  fetch('/api/save', {
+  fetch(getApiUrl('/api/save'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -606,8 +508,8 @@ function syncCloudSave() {
 // Đăng xuất tài khoản
 function logoutAccount() {
   if (!confirm('Bạn có chắc chắn muốn đăng xuất tài khoản này?')) return;
-  if (ACC.token && !ACC.token.startsWith('local_')) {
-    fetch('/api/logout', {
+  if (ACC.token) {
+    fetch(getApiUrl('/api/logout'), {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + ACC.token }
     }).catch(() => {});

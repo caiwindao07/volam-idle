@@ -1,60 +1,38 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const backend = (env.BACKEND_URL || 'https://volam-idle.onrender.com').replace(/\/+$/, '');
 
-    // API endpoints cho game khi chạy trên Cloudflare
-    if (url.pathname.startsWith('/api/')) {
-      const headers = {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      };
+    // 1. Chuyển tiếp toàn bộ API và kết nối WebSocket về máy chủ backend Node.js (MongoDB Atlas + WebSocket Server)
+    if (url.pathname.startsWith('/api/') || request.headers.get('Upgrade') === 'websocket') {
+      const targetUrl = new URL(url.pathname + url.search, backend);
+      const newHeaders = new Headers(request.headers);
+      try {
+        newHeaders.set('Host', new URL(backend).host);
+      } catch (e) {}
 
-      if (request.method === 'OPTIONS') {
-        return new Response(null, { headers });
-      }
-
-      if (url.pathname === '/api/login' || url.pathname === '/api/register') {
-        try {
-          const body = await request.json();
-          const username = (body.username || 'user').trim();
-          const heroName = (body.heroName || username).trim();
-          const fac = body.fac || 'shaolin';
-          return new Response(JSON.stringify({
-            ok: true,
-            token: 'cf_' + username.toLowerCase(),
-            user: {
-              username: username,
-              heroName: heroName,
-              fac: fac
-            },
-            state: null
-          }), { headers });
-        } catch (e) {
-          return new Response(JSON.stringify({ ok: false, error: 'Dữ liệu không hợp lệ' }), { status: 400, headers });
-        }
-      }
-
-      if (url.pathname === '/api/me') {
+      try {
+        return await fetch(targetUrl.toString(), {
+          method: request.method,
+          headers: newHeaders,
+          body: (request.method !== 'GET' && request.method !== 'HEAD') ? request.body : null,
+          redirect: 'follow'
+        });
+      } catch (err) {
         return new Response(JSON.stringify({
-          ok: true,
-          user: { username: 'Hiệp Khách', heroName: 'Hiệp Khách', fac: 'shaolin' }
-        }), { headers });
+          ok: false,
+          error: `Máy chủ Online hiện đang bảo trì hoặc chưa khởi động (${err.message || 'Backend Offline'}). Vui lòng thử lại sau!`
+        }), {
+          status: 502,
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
       }
-
-      if (url.pathname === '/api/save') {
-        return new Response(JSON.stringify({ ok: true }), { headers });
-      }
-
-      if (url.pathname === '/api/logout') {
-        return new Response(JSON.stringify({ ok: true }), { headers });
-      }
-
-      return new Response(JSON.stringify({ ok: false, error: 'Endpoint not found' }), { status: 404, headers });
     }
 
-    // Phục vụ Static Assets tự động (HTML, JS, CSS, hình ảnh, âm thanh)
+    // 2. Phục vụ Static Assets tự động qua Cloudflare Edge (HTML, JS, CSS, 11.000 Sprite doll, Âm thanh MP3)
     return env.ASSETS.fetch(request);
   }
 };
