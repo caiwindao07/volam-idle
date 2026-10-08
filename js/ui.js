@@ -119,7 +119,9 @@ function itemCell(it) {
   if (!it) return '';
   const isSel = window.INV_SELECTED && window.INV_SELECTED.has(it.uid);
   const chkBadge = window.INV_SELECT_MODE ? `<span class="chk-mark" style="display:block;background:${isSel ? '#ef4444' : '#00000088'};">${isSel ? '✓' : ''}</span>` : '';
-  return `<button class="it r${it.r}${reqOk(it) ? '' : ' bad'}${isSel ? ' chk-sel' : ''}" data-uid="${it.uid}">${it.ic ? `<img src="${esc(it.ic)}" alt="">` : ''}<i>${it.lvl}</i>${it.s >= 0 ? `<b class="s5" style="background:${SERIES_COL[it.s]}"></b>` : ''}${betterThanEquipped(it) && S.inv.includes(it) ? '<em>▲</em>' : ''}${chkBadge}</button>`;
+  const isEquipped = (typeof S !== 'undefined' && S && S.eq && Object.values(S.eq).includes(it));
+  const isBad = !isEquipped && !reqOk(it);
+  return `<button class="it r${it.r}${isBad ? ' bad' : ''}${isSel ? ' chk-sel' : ''}" data-uid="${it.uid}">${it.ic ? `<img src="${esc(it.ic)}" alt="">` : ''}<i>${it.lvl}</i>${it.s >= 0 ? `<b class="s5" style="background:${SERIES_COL[it.s]}"></b>` : ''}${betterThanEquipped(it) && S.inv.includes(it) ? '<em>▲</em>' : ''}${chkBadge}</button>`;
 }
 function itemHTML(it) {
   return `<div class="idet"><div class="pic r${it.r}">${it.ic ? `<img src="${esc(it.ic)}" alt="">` : ''}</div><div><h4 style="color:${RAR_COL[it.r]}">${esc(it.n)}${it.enh ? ` <span class="enh">+${it.enh}</span>` : ''}</h4>
@@ -725,10 +727,27 @@ function renderCharAttrib(targetEl) {
     ? (CLOAK_MERIDIAN.getCloakInfo() || { tier: curTier, name: `Phi Phong Bậc ${curTier}/6`, color: '#4ade80', res: 15, hp: 800, crit: 2 })
     : (curTier > 0 ? { tier: curTier, name: `Phi Phong Bậc ${curTier}/6`, color: '#4ade80', res: 15, hp: 800, crit: 2 } : { tier: 0, name: 'Chưa có', color: '#94a3b8', res: 0, hp: 0, crit: 0 });
 
+  const hasAura = (S.eq && S.eq.armor && ((S.eq.armor.r >= 2) || (S.eq.armor.enh && S.eq.armor.enh >= 8))) || (curTier > 0);
+  const auraCol = (S.eq && S.eq.armor && S.eq.armor.r >= 4) ? '#38bdf8' : ((S.eq && S.eq.armor && S.eq.armor.r === 3) ? '#c084fc' : (curTier > 0 ? curCloak.color : '#ffd700'));
+  const hasWeapon = S.eq && S.eq.weapon;
+
   const eqCell = (k, vi, slotCls) => {
     const it = S.eq[k];
-    return `<div class="jx-equip-slot ${slotCls || ''} ${it ? (it.r >= 4 ? 'gold-border' : '') : ''}" data-slot="${k}">
-      ${it ? itemCell(it) : `<span class="jx-slot-label">${vi}</span>`}
+    if (!it) {
+      return `<div class="jx-equip-slot ${slotCls || ''} is-empty" data-slot="${k}">
+        <span class="jx-slot-label">${vi}</span>
+      </div>`;
+    }
+    const isAct = (typeof hiddenActive === 'function') ? (hiddenActive(it, S.eq) > 0) : false;
+    const rClass = `r${it.r != null ? it.r : 0}`;
+    const goldClass = (it.r >= 4) ? 'gold-border' : '';
+    const actClass = isAct ? 'is-active' : 'is-dim';
+    const enhBadge = (it.enh && it.enh > 0) ? `<span class="eq-enh-badge">+${it.enh}</span>` : '';
+    const actBadge = (it.s >= 0) ? `<span class="eq-act-badge ${isAct ? 'on' : 'off'}" title="${isAct ? 'Ngũ hành tương sinh đã kích hoạt (Sáng)' : 'Chưa kích hoạt tương sinh (Tối)'}">●</span>` : '';
+    return `<div class="jx-equip-slot ${slotCls || ''} has-item ${rClass} ${goldClass} ${actClass}" data-slot="${k}">
+      ${itemCell(it)}
+      ${enhBadge}
+      ${actBadge}
     </div>`;
   };
 
@@ -786,9 +805,12 @@ function renderCharAttrib(targetEl) {
         </div>
         <!-- Cot giua: Silhouette nhan vat & 3 Compact Bars -->
         <div class="jx-paperdoll-col jx-center">
-          <div class="jx-char-figure-box">
+          <div class="jx-char-figure-box ${hasAura ? 'has-aura' : ''}">
+            ${hasAura ? `<div class="jx-figure-aura-glow" style="border-color:${auraCol};box-shadow:0 0 16px ${auraCol};"></div>` : ''}
             <img src="img/pl/${f.key}.png" class="jx-figure-img" alt="${f.n}">
-            <div class="jx-figure-glow" style="border-color:${SERIES_COL[f.series]};"></div>
+            ${hasWeapon && hasWeapon.ic ? `<img src="${esc(hasWeapon.ic)}" class="jx-figure-weapon-sub" alt="" title="${esc(hasWeapon.n)}">` : ''}
+            <div class="jx-figure-glow" style="border-color:${SERIES_COL[f.series]};box-shadow:inset 0 0 10px ${SERIES_COL[f.series]}33;"></div>
+            ${curTier > 0 ? `<span class="jx-figure-cloak-badge" style="color:${curCloak.color};">PP Bậc ${curTier}</span>` : ''}
           </div>
           <div style="display:flex;flex-direction:column;gap:2px;width:100%;margin-top:2px;">
             <div class="jx-bar-compact hp"><i style="width:${Math.min(100, (R.life / (P.life || 1)) * 100)}%;"></i><span>HP: ${Math.round(R.life)}/${Math.round(P.life)}</span></div>

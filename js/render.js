@@ -688,8 +688,8 @@ function draw(dt) {
         drawn = 30;
       }
 
-      // Vẽ Res Ngoại Trang phụ trợ (nếu Paperdoll chưa vẽ)
-      if (!dollH && typeof drawHeroEquipment === 'function' && typeof S !== 'undefined' && S && S.eq) {
+      // Vẽ Ngoại Trang & Res Trang Bị trực quan (Vũ khí, Giáp, Khôi, Hào quang Thần Binh)
+      if (typeof drawHeroEquipment === 'function' && typeof S !== 'undefined' && S && S.eq) {
         drawHeroEquipment(c, H.x, mountedDrawY, H.dir || 0, H.face || 1, H.act || 'st', H.actT || 0, S.eq, (typeof heroSeries === 'function' ? heroSeries() : 0));
       }
 

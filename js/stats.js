@@ -47,7 +47,12 @@ function passiveApplies(s, name, p, wc) {
 const SKIP_PASSIVE = /^(skill_|missle_|addskilldamage)/;
 
 let IGNORE_REQ = null;                                   // equipCompare: CHI mon dang xem duoc tinh thu du chua du dieu kien (cac mon dang mac van xet dieu kien nhu that)
-const reqPass = it => it === IGNORE_REQ || reqOk(it);
+const reqPass = (it, eq) => {
+  if (it === IGNORE_REQ) return true;
+  if (!it) return false;
+  if (eq && (slotOfEquipped(it, eq) || (typeof S !== 'undefined' && S && S.eq && Object.values(S.eq).includes(it)))) return true;
+  return reqOk(it);
+};
 function calc(eq) {
   eq = eq || S.eq;
   const A = {}, lv = S.lvl, ser = heroSeries(), add = J.levelAdd[ser], st = heroStart();
@@ -63,7 +68,7 @@ function calc(eq) {
   };
   // trang bi: thuoc tinh goc + thuoc tinh ma thuat (bo qua mon chua du dieu kien)
   for (const k in eq) {
-    const it = eq[k]; if (!it || !reqPass(it)) continue;
+    const it = eq[k]; if (!it || !reqPass(it, eq)) continue;
     const em = enhMul(it);                                 // cuong hoa (forge.js): nhan thuoc tinh goc
     for (const [id, mn, mx] of it.base) addAttr(A, attrName(id), [(id === 28 || id === 29 ? mn : (mn + mx) / 2) * em, 0, 0]);
     const act = hiddenActive(it, eq);
@@ -270,7 +275,14 @@ function reqOk(it) {
   }
   return true;
 }
-function heroAttr(k) { const st = heroStart(); return st[k] + S.attr[k]; }
+function heroAttr(k) {
+  const st = heroStart();
+  const base = st[k] + ((S && S.attr && S.attr[k]) || 0);
+  if (typeof R !== 'undefined' && R.P && R.P[k] != null) {
+    return Math.max(base, R.P[k]);
+  }
+  return base;
+}
 const POWER_DPS_W = 0.7; // game idle: toc do ha quai quyet dinh tien trinh, mau chi can du song
 /* Luc chien: DPS thuc te (nhan ti le trung vs quai cung cap) ^0.6 x mau hieu dung (khang, ne) ^0.4 */
 function power(P) {

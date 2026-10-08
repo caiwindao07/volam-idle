@@ -915,8 +915,8 @@ function drawSingleOtherPlayer(c, dt, p) {
     drawn = 30;
   }
 
-  // 4. Vẽ Res Ngoại Trang phụ trợ nếu Paperdoll chưa vẽ
-  if (!dollH && typeof drawHeroEquipment === 'function' && p.eq) {
+  // 4. Vẽ Ngoại Trang & Res Trang Bị trực quan (Vũ khí, Giáp, Khôi, Hào quang Thần Binh)
+  if (typeof drawHeroEquipment === 'function' && p.eq) {
     drawHeroEquipment(c, p.x, playerY, p.dir || 0, p.face || 1, p.act || 'st', p.actT || 0, p.eq, p.series || 0);
   }
 
