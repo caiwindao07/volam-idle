@@ -465,136 +465,128 @@ function renderCharAttrib(targetEl) {
   const attrs = Object.entries(ATTR_VI).map(([k, vi]) => `<div class="row" style="font-size:11px;justify-content:space-between;padding:2px 0;"><span>${vi}</span><div style="display:flex;align-items:center;gap:4px;"><b style="color:#fde047;min-width:28px;text-align:right;">${S.attr[k]}</b><span class="pm"><button class="plus" data-a="${k}" ${S.attrPts ? '' : 'disabled'}>+</button><button class="minus" data-a="${k}" title="Rút lại 1 điểm" ${S.attr[k] > 0 ? '' : 'disabled'}>−</button></span></div></div>`).join('');
 
   el.innerHTML = `
-    <!-- Layout Trang Bị & Thuộc Tính (PC 2 Cột, Mobile 1 Cột) -->
-    <div class="jx-char-attrib-grid">
-      <!-- CỘT TRÁI: PROFILE & PAPERDOLL TRANG BỊ -->
-      <div style="display:flex;flex-direction:column;gap:5px;">
-        <!-- 1. Header Avatar & Chi so nhan vat -->
-        <div class="jx-char-profile-header" style="margin-bottom:0;">
-          <div class="jx-char-avatar-col">
-            <div class="jx-char-avatar-box">
-              <img src="img/pl/${f.key}.png" alt="${f.n}" class="jx-avatar-img">
-              <span class="jx-avatar-lvl-badge">Lv.${S.lvl}</span>
-            </div>
-          </div>
-          <div class="jx-char-info-col">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1px;">
-              <b style="color:#ffd700;font-size:12px;">${esc(S.heroName || 'BadBoyPK')}</b>
-              <span style="font-size:10.5px;color:${SERIES_COL[f.series]};font-weight:bold;">Hệ ${SERIES[f.series]}</span>
-            </div>
-            <div style="font-size:10px;color:#a39276;display:flex;justify-content:space-between;">
-              <span>Phái: <b style="color:#ffd700;">${esc(f.n)}</b></span>
-              <span>Danh hiệu: <b style="color:#f59e0b;">${vipLv >= 1 ? `Võ Lâm Chí Tôn (VIP ${vipLv})` : 'Hiệp Khách'}</b></span>
-            </div>
-            <div style="font-size:10px;color:#a39276;display:flex;justify-content:space-between;">
-              <span>Danh vọng: <b style="color:#a78bfa;">${S.fame || (S.lvl * 25 + 100)}</b></span>
-              <span>Lực chiến: <b style="color:#ef4444;">${fmt(R.power)}</b></span>
-            </div>
-            <div style="font-size:10px;color:#a39276;display:flex;justify-content:space-between;">
-              <span>Điểm PK: <b style="color:${(S.pkValue || 0) >= 10 ? '#ef4444' : (S.pkValue || 0) > 0 ? '#f59e0b' : '#4ade80'};">${S.pkValue || 0} điểm${(S.jailUntil && S.jailUntil > Date.now()) ? ' [THIÊN LAO]' : ''}</b></span>
-              <span>Trạng thái: <b style="color:${(S.jailUntil && S.jailUntil > Date.now()) ? '#ef4444' : '#ffd700'};">${(S.jailUntil && S.jailUntil > Date.now()) ? 'Giam Cầm' : 'Tự Do'}</b></span>
-            </div>
-            <div style="font-size:10px;color:#cbd5e1;display:flex;justify-content:space-between;margin-top:2px;background:rgba(255,215,0,0.06);padding:2px 5px;border-radius:3px;border:1px solid rgba(255,215,0,0.18);">
-              <span>Phi phong: <b style="color:${curCloak.color};cursor:pointer;text-decoration:underline;" onclick="if(window.CLOAK_MERIDIAN)CLOAK_MERIDIAN.toggleWindow();" title="Bấm để mở Bảng Nâng Cấp Phi Phong & Kinh Mạch">${curCloak.name} (Bậc ${curTier}/6)</b></span>
-              <span style="color:#ffd700;font-weight:bold;">+${curCloak.res}% Kháng</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. Ma Tran Trang Bi (Paperdoll Matrix) -->
-        <div class="jx-box" style="margin-bottom:0;padding:4px 6px;">
-          <div class="jx-paperdoll-grid">
-            <!-- Cot trai: Mu, Ao, Lung, Giay, Ngua, Phi Phong -->
-            <div class="jx-paperdoll-col">
-              ${eqCell('helm', 'Mũ', 'h-mid')}
-              ${eqCell('armor', 'Áo', 'h-tall')}
-              ${eqCell('belt', 'Lưng', 'h-short')}
-              ${eqCell('boot', 'Giày', 'h-mid')}
-              ${eqCell('horse', 'Ngựa', 'h-short')}
-              <div class="jx-equip-slot h-short gold-border" style="cursor:pointer;background:linear-gradient(180deg,#1c1610,#2e2216);border:1px solid ${curCloak.color || '#ffd700'};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;box-shadow:inset 0 0 6px rgba(0,0,0,0.6);" onclick="if(window.CLOAK_MERIDIAN)CLOAK_MERIDIAN.toggleWindow();" title="[Phi Phong] ${curCloak.name} (Bậc ${curTier}/6)&#10;• Kháng Tất Cả: +${curCloak.res}%&#10;• Sinh Lực: +${curCloak.hp}&#10;• Chí Mạng: +${curCloak.crit || 0}%&#10;Bấm để mở nâng cấp Phi Phong & Kinh Mạch">
-                <span style="font-size:9px;color:#a39276;line-height:1;">Phi Phong</span>
-                <span style="font-size:9.5px;font-weight:bold;color:${curCloak.color};line-height:1.2;margin-top:1px;">Bậc ${curTier}/6</span>
-                <span style="font-size:8.5px;color:#ffd700;line-height:1;">+${curCloak.res}% Kháng</span>
-              </div>
-            </div>
-            <!-- Cot giua: Silhouette nhan vat & 3 Compact Bars -->
-            <div class="jx-paperdoll-col jx-center">
-              <div class="jx-char-figure-box">
-                <img src="img/pl/${f.key}.png" class="jx-figure-img" alt="${f.n}">
-                <div class="jx-figure-glow" style="border-color:${SERIES_COL[f.series]};"></div>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:2px;width:100%;margin-top:2px;">
-                <div class="jx-bar-compact hp"><i style="width:${Math.min(100, (R.life / (P.life || 1)) * 100)}%;"></i><span>HP: ${Math.round(R.life)}/${Math.round(P.life)}</span></div>
-                <div class="jx-bar-compact mp"><i style="width:${Math.min(100, (R.mana / (P.mana || 1)) * 100)}%;"></i><span>MP: ${Math.round(R.mana)}/${Math.round(P.mana)}</span></div>
-                <div class="jx-bar-compact xp"><i style="width:${Math.min(100, (S.xp / (J.exp[S.lvl - 1] || 1)) * 100)}%;"></i><span>EXP: ${Math.floor((S.xp / (J.exp[S.lvl - 1] || 1)) * 100)}%</span></div>
-              </div>
-            </div>
-            <!-- Cot phai: Ho uyen, Lien, Nhan 1, Nhan 2, Boi, Vu khi -->
-            <div class="jx-paperdoll-col">
-              ${eqCell('cuff', 'Hộ uyển', 'h-short')}
-              ${eqCell('amulet', 'Liên', 'h-sq')}
-              ${eqCell('ring1', 'Nhẫn 1', 'h-sq')}
-              ${eqCell('ring2', 'Nhẫn 2', 'h-sq')}
-              ${eqCell('pendant', 'Bội', 'h-short')}
-              ${eqCell('weapon', 'Vũ khí', 'h-tall')}
-            </div>
-          </div>
+    <!-- 1. Header Avatar & Chi so nhan vat (Chuan JX) -->
+    <div class="jx-char-profile-header">
+      <div class="jx-char-avatar-col">
+        <div class="jx-char-avatar-box">
+          <img src="img/pl/${f.key}.png" alt="${f.n}" class="jx-avatar-img">
+          <span class="jx-avatar-lvl-badge">Lv.${S.lvl}</span>
         </div>
       </div>
-
-      <!-- CỘT PHẢI: TIỀM NĂNG & THUỘC TÍNH CHIẾN ĐẤU -->
-      <div style="display:flex;flex-direction:column;gap:5px;">
-        <!-- 3. Diem Tiem Nang (Attributes) -->
-        <div class="jx-box" style="margin-bottom:0;padding:4px 6px;">
-          <div class="jx-box-header" style="margin-bottom:3px;padding-bottom:2px;">
-            <span>⚡ Điểm Tiềm Năng</span>
-            <div style="display:flex;align-items:center;gap:4px;">
-              <span style="font-size:10.5px;color:#cbd5e1;">Còn: <b style="color:#ef4444;font-size:12px;">${S.attrPts}</b> điểm</span>
-              <button class="jx-action-btn" id="bSugAt" style="padding:1px 5px;font-size:9.5px;">Gợi ý</button>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;">
-            ${attrs}
-          </div>
+      <div class="jx-char-info-col">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1px;">
+          <b style="color:#ffd700;font-size:12px;">${esc(S.heroName || 'BadBoyPK')}</b>
+          <span style="font-size:10.5px;color:${SERIES_COL[f.series]};font-weight:bold;">Hệ ${SERIES[f.series]}</span>
         </div>
-
-        <!-- 4. Thuoc Tinh Chien Dau & Khang Tinh (Combat Stats & Resists) -->
-        <div class="jx-box" style="margin-bottom:0;padding:4px 6px;flex:1;">
-          <div class="jx-box-header" style="margin-bottom:3px;padding-bottom:2px;">
-            <span>📊 Chiến Đấu & Kháng Tính</span>
-            <button class="jx-action-btn" id="bPower" style="padding:1px 5px;font-size:9.5px;">Chi tiết</button>
-          </div>
-          <div class="card stats" style="background:transparent;border:none;padding:0;margin:0;grid-template-columns:1fr 1fr;gap:2px 8px;font-size:10px;">
-            <span>Lực tay (Sát thương)</span><span style="color:#ffd700;">${Math.round(P.wmin)}–${Math.round(P.wmax)}</span>
-            <span>Phòng thủ / Giảm ST</span><span style="color:#cbd5e1;">${Math.round(P.def)}</span>
-            <span>Né tránh</span><span style="color:#cbd5e1;">${Math.round(P.def * 1.2)}</span>
-            <span>Chính xác</span><span style="color:#cbd5e1;">${Math.round(P.ar)}</span>
-            <span>Chí mạng</span><span style="color:#f87171;">${Math.round(P.main ? P.main.crit : 10)}%</span>
-            <span>Tốc đánh</span><span style="color:#60a5fa;">${P.aspd.toFixed(2)}</span>
-            <span>Phi Phong (Kháng)</span><span style="color:${curCloak.color};font-weight:bold;cursor:pointer;" onclick="if(window.CLOAK_MERIDIAN)CLOAK_MERIDIAN.toggleWindow();" title="Bấm để mở nâng cấp Phi Phong">${curCloak.name} (+${curCloak.res}%)</span>
-            <span>Kinh Mạch (Đới)</span><span style="color:#38bdf8;">+${(S.meridian && S.meridian.levels && S.meridian.levels.doi ? S.meridian.levels.doi * 8 : 8)}% Kháng</span>
-            <span>Kháng Băng (Hàn)</span><span style="color:#93c5fd;">${Math.round(P.res.cold || 0)}%</span>
-            <span>Kháng Lôi</span><span style="color:#fde047;">${Math.round(P.res.light || 0)}%</span>
-            <span>Kháng Hỏa</span><span style="color:#fb923c;">${Math.round(P.res.fire || 0)}%</span>
-            <span>Kháng Độc</span><span style="color:#4ade80;">${Math.round(P.res.poison || P.res.pois || 0)}%</span>
-            <span>Kháng Vật Lý</span><span style="color:#e2e8f0;">${Math.round(P.res.phys || 0)}%</span>
-            <span>Chiêu chính</span><span style="color:#ffd700;">${esc(P.main.n)}</span>
-          </div>
+        <div style="font-size:10px;color:#a39276;display:flex;justify-content:space-between;">
+          <span>Phái: <b style="color:#ffd700;">${esc(f.n)}</b></span>
+          <span>Danh hiệu: <b style="color:#f59e0b;">${vipLv >= 1 ? `Võ Lâm Chí Tôn (VIP ${vipLv})` : 'Hiệp Khách'}</b></span>
         </div>
-
-        <!-- 4.5 Bat / Tat Tu Mac Do Tot -->
-        <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.3);border:1px solid #3d2f1d;border-radius:4px;padding:3px 8px;font-size:10.5px;">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#e2e8f0;margin:0;" title="Bật hoặc Tắt tự động mặc trang bị tốt hơn khi nhặt hoặc lên cấp">
-            <input type="checkbox" id="chkCharAutoEquip" ${S.autoEquip ? 'checked' : ''} class="accent-amber-500">
-            <span>Tự động mặc đồ tốt hơn</span>
-          </label>
-          <span style="font-size:9.5px;color:${S.autoEquip ? '#4ade80' : '#94a3b8'};font-weight:bold;">${S.autoEquip ? 'ĐANG BẬT' : 'ĐANG TẮT'}</span>
+        <div style="font-size:10px;color:#a39276;display:flex;justify-content:space-between;">
+          <span>Danh vọng: <b style="color:#a78bfa;">${S.fame || (S.lvl * 25 + 100)}</b></span>
+          <span>Phúc duyên: <b style="color:#f472b6;">${(typeof RW === 'function' && RW().fd) || 0}</b></span>
+          <span>Lực chiến: <b style="color:#ef4444;">${fmt(R.power)}</b></span>
+        </div>
+        <div style="font-size:10px;color:#a39276;display:flex;justify-content:space-between;">
+          <span>Điểm PK: <b style="color:${(S.pkValue || 0) >= 10 ? '#ef4444' : (S.pkValue || 0) > 0 ? '#f59e0b' : '#4ade80'};">${S.pkValue || 0} điểm${(S.jailUntil && S.jailUntil > Date.now()) ? ' [THIÊN LAO]' : ''}</b></span>
+          <span>Trạng thái: <b style="color:${(S.jailUntil && S.jailUntil > Date.now()) ? '#ef4444' : '#ffd700'};">${(S.jailUntil && S.jailUntil > Date.now()) ? 'Giam Cầm' : 'Tự Do'}</b></span>
+        </div>
+        <div style="font-size:10px;color:#cbd5e1;display:flex;justify-content:space-between;margin-top:2px;background:rgba(255,215,0,0.06);padding:2px 5px;border-radius:3px;border:1px solid rgba(255,215,0,0.18);">
+          <span>Phi phong: <b style="color:${curCloak.color};cursor:pointer;text-decoration:underline;" onclick="if(window.CLOAK_MERIDIAN)CLOAK_MERIDIAN.toggleWindow();" title="Bấm để mở Bảng Nâng Cấp Phi Phong & Kinh Mạch">${curCloak.name} (Bậc ${curTier}/6)</b></span>
+          <span style="color:#ffd700;font-weight:bold;">+${curCloak.res}% Kháng</span>
         </div>
       </div>
     </div>
 
+    <!-- 2. Ma Tran Trang Bi (Paperdoll Matrix) -->
+    <div class="jx-box" style="margin-bottom:4px;padding:4px 6px;">
+      <div class="jx-paperdoll-grid">
+        <!-- Cot trai: Mu, Ao, Lung, Giay, Ngua, Phi Phong -->
+        <div class="jx-paperdoll-col">
+          ${eqCell('helm', 'Mũ', 'h-mid')}
+          ${eqCell('armor', 'Áo', 'h-tall')}
+          ${eqCell('belt', 'Lưng', 'h-short')}
+          ${eqCell('boot', 'Giày', 'h-mid')}
+          ${eqCell('horse', 'Ngựa', 'h-short')}
+          <div class="jx-equip-slot h-short gold-border" style="cursor:pointer;background:linear-gradient(180deg,#1c1610,#2e2216);border:1px solid ${curCloak.color || '#ffd700'};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;box-shadow:inset 0 0 6px rgba(0,0,0,0.6);" onclick="if(window.CLOAK_MERIDIAN)CLOAK_MERIDIAN.toggleWindow();" title="[Phi Phong] ${curCloak.name} (Bậc ${curTier}/6)&#10;• Kháng Tất Cả: +${curCloak.res}%&#10;• Sinh Lực: +${curCloak.hp}&#10;• Chí Mạng: +${curCloak.crit || 0}%&#10;Bấm để mở nâng cấp Phi Phong & Kinh Mạch">
+            <span style="font-size:9.5px;color:#a39276;line-height:1;">Phi Phong</span>
+            <span style="font-size:9.5px;font-weight:bold;color:${curCloak.color};line-height:1.2;margin-top:1px;">Bậc ${curTier}/6</span>
+            <span style="font-size:8.5px;color:#ffd700;line-height:1;">+${curCloak.res}% Kháng</span>
+          </div>
+        </div>
+        <!-- Cot giua: Silhouette nhan vat & 3 Compact Bars -->
+        <div class="jx-paperdoll-col jx-center">
+          <div class="jx-char-figure-box">
+            <img src="img/pl/${f.key}.png" class="jx-figure-img" alt="${f.n}">
+            <div class="jx-figure-glow" style="border-color:${SERIES_COL[f.series]};"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;width:100%;margin-top:2px;">
+            <div class="jx-bar-compact hp"><i style="width:${Math.min(100, (R.life / (P.life || 1)) * 100)}%;"></i><span>HP: ${Math.round(R.life)}/${Math.round(P.life)}</span></div>
+            <div class="jx-bar-compact mp"><i style="width:${Math.min(100, (R.mana / (P.mana || 1)) * 100)}%;"></i><span>MP: ${Math.round(R.mana)}/${Math.round(P.mana)}</span></div>
+            <div class="jx-bar-compact xp"><i style="width:${Math.min(100, (S.xp / (J.exp[S.lvl - 1] || 1)) * 100)}%;"></i><span>EXP: ${Math.floor((S.xp / (J.exp[S.lvl - 1] || 1)) * 100)}%</span></div>
+          </div>
+        </div>
+        <!-- Cot phai: Ho uyen, Lien, Nhan 1, Nhan 2, Boi, Vu khi -->
+        <div class="jx-paperdoll-col">
+          ${eqCell('cuff', 'Hộ uyển', 'h-short')}
+          ${eqCell('amulet', 'Liên', 'h-sq')}
+          ${eqCell('ring1', 'Nhẫn 1', 'h-sq')}
+          ${eqCell('ring2', 'Nhẫn 2', 'h-sq')}
+          ${eqCell('pendant', 'Bội', 'h-short')}
+          ${eqCell('weapon', 'Vũ khí', 'h-tall')}
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Diem Tiem Nang (Attributes) -->
+    <div class="jx-box" style="margin-bottom:4px;padding:4px 6px;">
+      <div class="jx-box-header" style="margin-bottom:3px;padding-bottom:2px;">
+        <span>⚡ Điểm Tiềm Năng</span>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span style="font-size:10.5px;color:#cbd5e1;">Còn: <b style="color:#ef4444;font-size:12px;">${S.attrPts}</b> điểm</span>
+          <button class="jx-action-btn" id="bSugAt" style="padding:1px 5px;font-size:9.5px;">Gợi ý</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;">
+        ${attrs}
+      </div>
+    </div>
+
+    <!-- 4. Thuoc Tinh Chien Dau & Khang Tinh (Combat Stats & Resists) -->
+    <div class="jx-box" style="margin-bottom:4px;padding:4px 6px;">
+      <div class="jx-box-header" style="margin-bottom:3px;padding-bottom:2px;">
+        <span>📊 Chiến Đấu & Kháng Tính</span>
+        <button class="jx-action-btn" id="bPower" style="padding:1px 5px;font-size:9.5px;">Chi tiết</button>
+      </div>
+      <div class="card stats" style="background:transparent;border:none;padding:0;margin:0;grid-template-columns:1fr 1fr;gap:2px 8px;font-size:10px;">
+        <span>Lực tay (Sát thương)</span><span style="color:#ffd700;">${Math.round(P.wmin)}–${Math.round(P.wmax)}</span>
+        <span>Phòng thủ / Giảm ST</span><span style="color:#cbd5e1;">${Math.round(P.def)}</span>
+        <span>Né tránh</span><span style="color:#cbd5e1;">${Math.round(P.def * 1.2)}</span>
+        <span>Chính xác</span><span style="color:#cbd5e1;">${Math.round(P.ar)}</span>
+        <span>Chí mạng</span><span style="color:#f87171;">${Math.round(P.main ? P.main.crit : 10)}%</span>
+        <span>Tốc đánh</span><span style="color:#60a5fa;">${P.aspd.toFixed(2)}</span>
+        <span>Phi Phong (Kháng)</span><span style="color:${curCloak.color};font-weight:bold;cursor:pointer;" onclick="if(window.CLOAK_MERIDIAN)CLOAK_MERIDIAN.toggleWindow();" title="Bấm để mở nâng cấp Phi Phong">${curCloak.name} (+${curCloak.res}%)</span>
+        <span>Kinh Mạch (Đới)</span><span style="color:#38bdf8;">+${(S.meridian && S.meridian.levels && S.meridian.levels.doi ? S.meridian.levels.doi * 8 : 8)}% Kháng</span>
+        <span>Kháng Băng (Hàn)</span><span style="color:#93c5fd;">${Math.round(P.res.cold || 0)}%</span>
+        <span>Kháng Lôi</span><span style="color:#fde047;">${Math.round(P.res.light || 0)}%</span>
+        <span>Kháng Hỏa</span><span style="color:#fb923c;">${Math.round(P.res.fire || 0)}%</span>
+        <span>Kháng Độc</span><span style="color:#4ade80;">${Math.round(P.res.poison || P.res.pois || 0)}%</span>
+        <span>Kháng Vật Lý</span><span style="color:#e2e8f0;">${Math.round(P.res.phys || 0)}%</span>
+        <span>Chiêu chính</span><span style="color:#ffd700;">${esc(P.main.n)}</span>
+      </div>
+    </div>
+
+    <!-- 4.5 Bat / Tat Tu Mac Do Tot -->
+    <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.3);border:1px solid #3d2f1d;border-radius:4px;padding:3px 8px;margin-bottom:6px;font-size:11px;">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#e2e8f0;margin:0;" title="Bật hoặc Tắt tự động mặc trang bị tốt hơn khi nhặt hoặc lên cấp">
+        <input type="checkbox" id="chkCharAutoEquip" ${S.autoEquip ? 'checked' : ''} class="accent-amber-500">
+        <span>Tự động mặc đồ tốt hơn</span>
+      </label>
+      <span style="font-size:10px;color:${S.autoEquip ? '#4ade80' : '#94a3b8'};font-weight:bold;">${S.autoEquip ? 'ĐANG BẬT' : 'ĐANG TẮT'}</span>
+    </div>
+
     <!-- 5. Hang Nut Chuc Nang duoi day -->
-    <div class="jx-btn-grid" style="grid-template-columns:repeat(5,1fr);margin-top:6px;">
+    <div class="jx-btn-grid" style="grid-template-columns:repeat(5,1fr);margin:0;">
       <button class="jx-action-btn gold" id="bBestEq" title="Tự động mặc trang bị tốt nhất">Mặc Tốt</button>
       <button class="jx-action-btn" id="bResetAttrs" title="Hoàn lại toàn bộ điểm tiềm năng">Tẩy Tủy</button>
       <button class="jx-action-btn" id="bFactionModal" title="Đổi sang môn phái khác">Đổi Phái</button>
