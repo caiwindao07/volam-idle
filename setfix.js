@@ -8,17 +8,18 @@ const SET_BAN =
     SET_BAN.test(t.replace(/^\[[^\]]*\]\s*/, "")) || SET_VARIANT.test(t.replace(/^\[Bạch Kim\]\s*/, ""))
   ),
   eqBanned = (t) => !!t && typeof t == "object" && !!t.set && t.set.kind !== "platina" && setBanned(t.n);
-if (
-  (JX.sets.gold && (JX.sets.gold = JX.sets.gold.filter((t) => !setBanned(t.n))),
-  JX.sets.platina &&
-    (JX.sets.platina = JX.sets.platina.filter((t) => !SET_BAN.test(String(t.n || "").replace(/^\[[^\]]*\]\s*/, "")))),
-  window.RCP && RCP.shards)
-)
-  for (const t of Object.keys(RCP.shards)) setBanned(t) && delete RCP.shards[t];
+if (typeof JX !== "undefined" && JX && JX.sets) {
+  if (Array.isArray(JX.sets.gold)) JX.sets.gold = JX.sets.gold.filter((t) => !setBanned(t.n));
+  if (Array.isArray(JX.sets.platina)) JX.sets.platina = JX.sets.platina.filter((t) => !SET_BAN.test(String(t.n || "").replace(/^\[[^\]]*\]\s*/, "")));
+}
+if (typeof RCP !== "undefined" && RCP && RCP.shards) {
+  for (const t of Object.keys(RCP.shards)) if (setBanned(t)) delete RCP.shards[t];
+}
 (function () {
+  if (typeof JX === "undefined" || !JX || !JX.sets || !Array.isArray(JX.sets.gold)) return;
   const t = JX.sets.gold,
-    a = JX.sets.platina,
-    f = JX.ge,
+    a = JX.sets.platina || [],
+    f = JX.ge || {},
     r = (n, s) => (n.req.find((e) => e[0] === s) || [0, -1])[1],
     l = (n) => String(n).replace(/^\[[^\]]*\]\s*/, "");
   let u = 1e5;

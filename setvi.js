@@ -1,5 +1,5 @@
 "use strict";
-((window.SET_VI = {
+var SET_VI = window.SET_VI = {
   伏魔之大慈佛戒: "Phục Ma Đại Từ Phật Giới",
   伏魔之大悲佛戒: "Phục Ma Đại Bi Phật Giới",
   四空之舍利佛珠: "Tứ Không Xá Lợi Phật Châu",
@@ -357,13 +357,18 @@
   "[限时白金]雾幻之太渊真武链": "[Hạn Thời Bạch Kim] Vụ Ảo Thái Uyên Chân Vũ Liên",
   "[限时白金]雾幻之束心指环": "[Hạn Thời Bạch Kim] Vụ Ảo Thúc Tâm Chỉ Hoàn",
   "[限时白金]雾幻之清影玄玉佩": "[Hạn Thời Bạch Kim] Vụ Ảo Thanh Ảnh Huyền Ngọc Bội",
-  "[限时白金]雾幻之松风雪影靴": "[Hạn Thời Bạch Kim] Vụ Ảo Tùng Phong Tuyết Ảnh Ngoa",
-}),
-  (function () {
-    const i = (h) => {
-      const n = /^(\[(?:Thiên Tứ|Bạch Kim)\]\s*)?(.*)$/.exec(h);
-      return n && SET_VI[n[2]] ? (n[1] || "") + SET_VI[n[2]] : h;
-    };
-    window.setNameVi = i;
-    for (const h of ["gold", "platina"]) for (const n of JX.sets[h]) n.n = i(n.n);
-  })());
+};
+(function () {
+  const i = (h) => {
+    const n = /^(\[(?:Thiên Tứ|Bạch Kim)\]\s*)?(.*)$/.exec(h);
+    return n && window.SET_VI && window.SET_VI[n[2]] ? (n[1] || "") + window.SET_VI[n[2]] : h;
+  };
+  window.setNameVi = i;
+  if (typeof JX !== "undefined" && JX && JX.sets) {
+    for (const h of ["gold", "platina"]) {
+      if (Array.isArray(JX.sets[h])) {
+        for (const n of JX.sets[h]) n.n = i(n.n);
+      }
+    }
+  }
+})();
