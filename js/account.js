@@ -1,7 +1,7 @@
 /* ==========================================================================
    HỆ THỐNG TÀI KHOẢN & ĐỒNG BỘ ĐÁM MÂY (VO LAM IDLE ACCOUNT SYSTEM)
-   Bắt buộc người chơi phải có tài khoản (Đăng nhập / Đăng ký) trước khi vào game.
-   Dữ liệu nhân vật, cấp độ, trang bị, ngân lượng được lưu trực tiếp vào Server DB.
+   Hỗ trợ đa nền tảng: Online API Server & LocalStorage Fallback tự động.
+   Đảm bảo chơi mượt mà trên Render, Cloudflare Workers/Pages, VPS hoặc Offline.
    ========================================================================== */
 'use strict';
 
@@ -11,6 +11,43 @@ const ACC = {
   isLoggedIn: false,
   lastCloudSaveT: 0
 };
+
+// Quản lý tài khoản cục bộ (LocalStorage Fallback)
+function getLocalUsers() {
+  try {
+    return JSON.parse(localStorage.getItem('jx_local_users') || '{}');
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveLocalUsers(users) {
+  try {
+    localStorage.setItem('jx_local_users', JSON.stringify(users));
+  } catch (e) {}
+}
+
+function getLocalUserState(username) {
+  try {
+    const key = 'jx_user_state_' + (username || 'guest').toLowerCase();
+    const raw = localStorage.getItem(key) || localStorage.getItem('jxidle_save_slot_0');
+    if (raw) {
+      const parsed = typeof unpack === 'function' ? unpack(raw).state : JSON.parse(raw);
+      if (parsed && (parsed.fac || parsed.lvl)) return parsed;
+    }
+  } catch (e) {}
+  return null;
+}
+
+function saveLocalUserState(username, state) {
+  try {
+    if (!state) return;
+    const key = 'jx_user_state_' + (username || 'guest').toLowerCase();
+    const data = typeof pack === 'function' ? pack(state) : JSON.stringify(state);
+    localStorage.setItem(key, data);
+    localStorage.setItem('jxidle_save_slot_0', data);
+  } catch (e) {}
+}
 
 // Khởi tạo và kiểm tra trạng thái đăng nhập
 let _authChecking = false;
@@ -27,13 +64,50 @@ function initAccountSystem(onReady) {
     ACC.token = null;
   }
 
+  // 1. Kiểm tra Token Cục bộ / Offline
+  if (ACC.token && (ACC.token.startsWith('local_') || ACC.token.startsWith('cf_'))) {
+    const u = ACC.token.replace(/^local_|^cf_/, '');
+    const users = getLocalUsers();
+    const user = users[u] || { username: u, heroName: u, fac: 'shaolin' };
+    ACC.user = user;
+    ACC.isLoggedIn = true;
+    _authChecking = false;
+
+    const state = getLocalUserState(u);
+    if (state) {
+      try {
+        if (typeof migrate === 'function') {
+          S = migrate(state);
+        } else {
+          S = state;
+        }
+        window.S = S;
+        if (typeof recalc === 'function') recalc();
+        if (typeof refresh === 'function') refresh();
+      } catch (e) {
+        console.error('[Account] Error migrating local state:', e);
+      }
+    }
+
+    updateAccountHeaderUI();
+    if (typeof enterGameWorld === 'function') enterGameWorld();
+    if (onReady) onReady(true);
+    return;
+  }
+
+  // 2. Kiểm tra Token qua API Server (nếu có backend)
   if (ACC.token) {
     fetch('/api/me', {
       headers: { 'Authorization': 'Bearer ' + ACC.token }
     })
-    .then(res => {
-      if (!res.ok) throw new Error('Token không hợp lệ hoặc đã hết hạn');
-      return res.json();
+    .then(async res => {
+      if (!res.ok) throw new Error('Token không hợp lệ hoặc máy chủ không phản hồi');
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        throw new Error('API_UNAVAILABLE');
+      }
     })
     .then(data => {
       if (data && data.ok && data.user) {
@@ -72,10 +146,7 @@ function initAccountSystem(onReady) {
       }
     })
     .catch(err => {
-      console.warn('[Account] Không thể kết nối API auth:', err);
-      try { localStorage.removeItem('jx_auth_token'); } catch (e) {}
-      ACC.token = null;
-      ACC.isLoggedIn = false;
+      console.warn('[Account] Không thể kết nối API auth, chuyển sang đăng nhập:', err);
       _authChecking = false;
       updateAccountHeaderUI();
       showAuthModal(onReady);
@@ -130,6 +201,11 @@ function showAuthModal(onSuccess) {
           </div>
           <div id="logErr" style="color:#ef4444;font-size:11.5px;margin-bottom:10px;display:none;"></div>
           <button id="btnDoLogin" class="jx-action-btn gold" style="width:100%;padding:10px 0;font-size:13px;font-weight:bold;letter-spacing:1px;">⚔ ĐĂNG NHẬP VÀO GAME</button>
+          
+          <div style="margin-top:10px;">
+            <button id="btnQuickPlay" type="button" class="jx-action-btn" style="width:100%;padding:8px 0;font-size:12px;color:#4ade80;border-color:#22c55e;" title="Chơi ngay không cần tài khoản, tự động lưu trên máy">⚡ CHƠI NGAY (LƯU TRÊN MÁY)</button>
+          </div>
+
           <div style="margin-top:12px;text-align:center;font-size:11.5px;color:#94a3b8;">
             Chưa có tài khoản? <a href="javascript:void(0)" id="linkGoReg" style="color:#ffd700;font-weight:bold;text-decoration:underline;">Đăng ký tài khoản mới tại đây</a>
           </div>
@@ -149,72 +225,70 @@ function showAuthModal(onSuccess) {
             <label style="display:block;font-size:11px;color:#c89b3c;margin-bottom:3px;font-weight:bold;">NHẬP LẠI MẬT KHẨU</label>
             <input type="password" id="regPass2" placeholder="Xác nhận mật khẩu..." maxlength="30" style="width:100%;background:#090705;border:1px solid #5a4425;color:#ffd700;padding:7px 10px;border-radius:4px;font-size:12px;outline:none;">
           </div>
-          <div style="display:flex;gap:8px;margin-bottom:12px;">
-            <div style="flex:1;">
-              <label style="display:block;font-size:11px;color:#c89b3c;margin-bottom:3px;font-weight:bold;">TÊN NHÂN VẬT</label>
-              <input type="text" id="regHeroName" placeholder="Tên hiệp khách..." maxlength="16" style="width:100%;background:#090705;border:1px solid #5a4425;color:#ffd700;padding:7px 10px;border-radius:4px;font-size:12px;outline:none;">
-            </div>
-            <div style="flex:1;">
-              <label style="display:block;font-size:11px;color:#c89b3c;margin-bottom:3px;font-weight:bold;">MÔN PHÁI</label>
-              <select id="regFac" style="width:100%;background:#090705;border:1px solid #5a4425;color:#ffd700;padding:7px 8px;border-radius:4px;font-size:12px;outline:none;">
-                ${facOptions.map(f => `<option value="${f.id}">${f.n}</option>`).join('')}
-              </select>
-            </div>
+          <div style="margin-bottom:8px;">
+            <label style="display:block;font-size:11px;color:#c89b3c;margin-bottom:3px;font-weight:bold;">TÊN NHÂN VẬT (Tùy chọn)</label>
+            <input type="text" id="regHeroName" placeholder="Để trống lấy theo Tên tài khoản" maxlength="20" style="width:100%;background:#090705;border:1px solid #5a4425;color:#ffd700;padding:7px 10px;border-radius:4px;font-size:12px;outline:none;">
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="display:block;font-size:11px;color:#c89b3c;margin-bottom:3px;font-weight:bold;">MÔN PHÁI BAN ĐẦU</label>
+            <select id="regFac" style="width:100%;background:#090705;border:1px solid #5a4425;color:#ffd700;padding:7px 10px;border-radius:4px;font-size:12px;outline:none;">
+              ${facOptions.map(f => `<option value="${f.id}">${f.n}</option>`).join('')}
+            </select>
           </div>
           <div id="regErr" style="color:#ef4444;font-size:11.5px;margin-bottom:10px;display:none;"></div>
-          <button id="btnDoReg" class="jx-action-btn gold" style="width:100%;padding:10px 0;font-size:13px;font-weight:bold;letter-spacing:1px;">✨ TẠO TÀI KHOẢN & BẮT ĐẦU</button>
+          <button id="btnDoReg" class="jx-action-btn gold" style="width:100%;padding:10px 0;font-size:13px;font-weight:bold;letter-spacing:1px;">⚔ XÁC NHẬN TẠO TÀI KHOẢN</button>
           <div style="margin-top:12px;text-align:center;font-size:11.5px;color:#94a3b8;">
-            Đã có tài khoản? <a href="javascript:void(0)" id="linkGoLog" style="color:#ffd700;font-weight:bold;text-decoration:underline;">Đăng nhập ngay tại đây</a>
+            Đã có tài khoản? <a href="javascript:void(0)" id="linkGoLogin" style="color:#ffd700;font-weight:bold;text-decoration:underline;">Đăng nhập tại đây</a>
           </div>
         </div>
       </div>
     </div>
   `;
 
-  // Mở modal bắt buộc
+  // Mở modal
   modal(html, () => {
-    const modalEl = $('#modal');
-    if (modalEl) modalEl.dataset.locked = '1';
+    // Khóa nút đóng X của modal
     const mx = $('#mClose');
     if (mx) mx.style.display = 'none';
 
-    const tabLog = $('#tabAuthLogin');
+    // Chuyển Tab Đăng Nhập / Đăng Ký
+    const tabLogin = $('#tabAuthLogin');
     const tabReg = $('#tabAuthReg');
-    const fLog = $('#formLogin');
-    const fReg = $('#formReg');
+    const formLogin = $('#formLogin');
+    const formReg = $('#formReg');
+    const linkGoReg = $('#linkGoReg');
+    const linkGoLogin = $('#linkGoLogin');
 
-    const switchToLogin = () => {
-      if (tabLog) tabLog.className = 'jx-action-btn gold';
-      if (tabReg) tabReg.className = 'jx-action-btn';
-      if (fLog) fLog.style.display = 'block';
-      if (fReg) fReg.style.display = 'none';
+    const switchTab = (isLogin) => {
+      if (isLogin) {
+        tabLogin.classList.add('gold');
+        tabReg.classList.remove('gold');
+        formLogin.style.display = 'block';
+        formReg.style.display = 'none';
+      } else {
+        tabReg.classList.add('gold');
+        tabLogin.classList.remove('gold');
+        formReg.style.display = 'block';
+        formLogin.style.display = 'none';
+      }
     };
 
-    const switchToReg = () => {
-      if (tabReg) tabReg.className = 'jx-action-btn gold';
-      if (tabLog) tabLog.className = 'jx-action-btn';
-      if (fLog) fLog.style.display = 'none';
-      if (fReg) fReg.style.display = 'block';
-    };
+    if (tabLogin) tabLogin.onclick = () => switchTab(true);
+    if (tabReg) tabReg.onclick = () => switchTab(false);
+    if (linkGoReg) linkGoReg.onclick = () => switchTab(false);
+    if (linkGoLogin) linkGoLogin.onclick = () => switchTab(true);
 
-    if (tabLog) tabLog.onclick = switchToLogin;
-    if (tabReg) tabReg.onclick = switchToReg;
-    const linkReg = $('#linkGoReg');
-    if (linkReg) linkReg.onclick = switchToReg;
-    const linkLog = $('#linkGoLog');
-    if (linkLog) linkLog.onclick = switchToLogin;
-
-    // Hàm áp dụng trạng thái sau khi đăng nhập/đăng ký thành công
+    // Callback khi đăng nhập / đăng ký thành công
     const onAuthSuccess = (res) => {
       ACC.token = res.token;
       ACC.user = res.user;
       ACC.isLoggedIn = true;
+
       try {
         localStorage.setItem('jx_auth_token', res.token);
-      } catch (e) {
-        console.warn('[Account] Không thể ghi localStorage (chế độ ẩn danh):', e);
-      }
+      } catch (e) {}
 
+      // Đồng bộ state nhân vật
       if (res.state && typeof res.state === 'object' && res.state.fac) {
         try {
           if (typeof migrate === 'function') {
@@ -223,14 +297,18 @@ function showAuthModal(onSuccess) {
             S = res.state;
           }
           window.S = S;
-          // Lưu cache cục bộ (account-keyed)
           if (typeof save === 'function') save();
         } catch (e) {
           console.error('[Account] Error migrating state:', e);
         }
       }
 
-      // Đóng modal cưỡng chế
+      // Lưu state cục bộ theo tên tài khoản
+      if (ACC.user && ACC.user.username && typeof S !== 'undefined' && S) {
+        saveLocalUserState(ACC.user.username, S);
+      }
+
+      // Đóng modal
       try {
         const modalEl = $('#modal');
         if (modalEl) modalEl.dataset.locked = '';
@@ -253,9 +331,9 @@ function showAuthModal(onSuccess) {
         console.error('[Account] enterGameWorld error:', e);
       }
 
-      // Kết nối WebSocket multiplayer (nếu chưa kết nối)
-      if (!MP.connected && typeof initMultiplayer === 'function') {
-        initMultiplayer();
+      // Kết nối WebSocket multiplayer (nếu có)
+      if (typeof MP !== 'undefined' && !MP.connected && typeof initMultiplayer === 'function') {
+        try { initMultiplayer(); } catch (e) {}
       }
 
       updateAccountHeaderUI();
@@ -286,9 +364,13 @@ function showAuthModal(onSuccess) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: u, password: p })
       })
-      .then(r => {
-        if (!r.ok && r.status >= 500) throw new Error('Máy chủ đang khởi động hoặc quá tải (' + r.status + '). Vui lòng thử lại sau giây lát!');
-        return r.json();
+      .then(async r => {
+        const text = await r.text();
+        try {
+          return JSON.parse(text);
+        } catch (x) {
+          throw new Error('API_UNAVAILABLE');
+        }
       })
       .then(res => {
         if (!res.ok) {
@@ -301,13 +383,40 @@ function showAuthModal(onSuccess) {
         onAuthSuccess(res);
       })
       .catch(e => {
-        console.error('[Auth Login Error]', e);
-        if (err) {
-          err.textContent = (e && e.message && !e.message.toLowerCase().includes('fetch'))
-            ? 'Lỗi: ' + e.message
-            : 'Lỗi kết nối tới máy chủ! Vui lòng thử lại.';
-          err.style.display = 'block';
+        // Fallback tự động sang lưu trữ trên máy (LocalStorage)
+        console.warn('[Account] API không phản hồi, tự động đăng nhập trên thiết bị:', e);
+        const users = getLocalUsers();
+        let user = users[u.toLowerCase()];
+        if (!user) {
+          user = {
+            username: u,
+            password: p,
+            heroName: u,
+            fac: 'shaolin',
+            createdAt: Date.now()
+          };
+          users[u.toLowerCase()] = user;
+          saveLocalUsers(users);
+        } else if (user.password && user.password !== p) {
+          if (err) {
+            err.textContent = 'Mật khẩu không chính xác!';
+            err.style.display = 'block';
+          }
+          return;
         }
+
+        const state = getLocalUserState(u);
+        const localRes = {
+          ok: true,
+          token: 'local_' + u.toLowerCase(),
+          user: {
+            username: user.username,
+            heroName: user.heroName || user.username,
+            fac: user.fac || 'shaolin'
+          },
+          state: state
+        };
+        onAuthSuccess(localRes);
       });
     };
 
@@ -315,6 +424,26 @@ function showAuthModal(onSuccess) {
     if (btnLogin) btnLogin.onclick = doLogin;
     const inpPass = $('#logPass');
     if (inpPass) inpPass.onkeydown = e => { if (e.key === 'Enter') doLogin(); };
+
+    // Xử lý nút CHƠI NGAY
+    const btnQuick = $('#btnQuickPlay');
+    if (btnQuick) {
+      btnQuick.onclick = () => {
+        const guestUser = 'HiepKhach_' + Math.floor(1000 + Math.random() * 9000);
+        const state = getLocalUserState('guest') || getLocalUserState('default');
+        const localRes = {
+          ok: true,
+          token: 'local_' + guestUser.toLowerCase(),
+          user: {
+            username: guestUser,
+            heroName: guestUser,
+            fac: 'shaolin'
+          },
+          state: state
+        };
+        onAuthSuccess(localRes);
+      };
+    }
 
     // Xử lý nút ĐĂNG KÝ
     const doReg = () => {
@@ -358,9 +487,13 @@ function showAuthModal(onSuccess) {
           fac: fac
         })
       })
-      .then(r => {
-        if (!r.ok && r.status >= 500) throw new Error('Máy chủ đang khởi động hoặc quá tải (' + r.status + '). Vui lòng thử lại sau giây lát!');
-        return r.json();
+      .then(async r => {
+        const text = await r.text();
+        try {
+          return JSON.parse(text);
+        } catch (x) {
+          throw new Error('API_UNAVAILABLE');
+        }
       })
       .then(res => {
         if (!res.ok) {
@@ -373,13 +506,28 @@ function showAuthModal(onSuccess) {
         onAuthSuccess(res);
       })
       .catch(e => {
-        console.error('[Auth Reg Error]', e);
-        if (err) {
-          err.textContent = (e && e.message && !e.message.toLowerCase().includes('fetch'))
-            ? 'Lỗi: ' + e.message
-            : 'Lỗi kết nối tới máy chủ! Vui lòng thử lại.';
-          err.style.display = 'block';
-        }
+        // Fallback tự động đăng ký trên thiết bị
+        console.warn('[Account] API không phản hồi, tự động đăng ký trên thiết bị:', e);
+        const users = getLocalUsers();
+        users[u.toLowerCase()] = {
+          username: u,
+          password: p,
+          heroName: heroName || u,
+          fac: fac,
+          createdAt: Date.now()
+        };
+        saveLocalUsers(users);
+        const localRes = {
+          ok: true,
+          token: 'local_' + u.toLowerCase(),
+          user: {
+            username: u,
+            heroName: heroName || u,
+            fac: fac
+          },
+          state: null
+        };
+        onAuthSuccess(localRes);
       });
     };
 
@@ -404,12 +552,20 @@ function updateAccountHeaderUI() {
   }
 }
 
-// Lưu dữ liệu đám mây (Cloud Save) & đồng bộ thẩm quyền Server
+// Lưu dữ liệu đám mây (Cloud Save) & lưu dự phòng cục bộ
 function syncCloudSave() {
   if (!ACC.isLoggedIn || !ACC.token || typeof S === 'undefined' || !S || !S.fac) return;
   const now = Date.now();
-  if (now - ACC.lastCloudSaveT < 8000) return; // giới hạn tối đa 1 lần / 8s
+  if (now - ACC.lastCloudSaveT < 8000) return; // Giới hạn tối đa 1 lần / 8s
   ACC.lastCloudSaveT = now;
+
+  // Luôn lưu bản sao dự phòng theo tên tài khoản vào LocalStorage
+  if (ACC.user && ACC.user.username) {
+    saveLocalUserState(ACC.user.username, S);
+  }
+
+  // Nếu là token local thì không cần fetch
+  if (ACC.token.startsWith('local_')) return;
 
   fetch('/api/save', {
     method: 'POST',
@@ -422,7 +578,6 @@ function syncCloudSave() {
   .then(res => res.json())
   .then(data => {
     if (data && data.ok && data.state && typeof S !== 'undefined' && S) {
-      // Đồng bộ lại các chỉ số chuẩn từ server nếu có sự chênh lệch do can thiệp F12
       const st = data.state;
       window._legitLevelTransition = true;
       window._legitExpGain = true;
@@ -451,7 +606,7 @@ function syncCloudSave() {
 // Đăng xuất tài khoản
 function logoutAccount() {
   if (!confirm('Bạn có chắc chắn muốn đăng xuất tài khoản này?')) return;
-  if (ACC.token) {
+  if (ACC.token && !ACC.token.startsWith('local_')) {
     fetch('/api/logout', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + ACC.token }
@@ -466,7 +621,7 @@ function logoutAccount() {
   location.reload();
 }
 
-// Hook tự động đồng bộ đám mây định kỳ 20 giây một lần
+// Hook tự động đồng bộ định kỳ 20 giây một lần
 setInterval(syncCloudSave, 20000);
 
 // Xuất ra window toàn cục
