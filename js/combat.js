@@ -127,7 +127,8 @@ function spawnWave() {
     }
     log(`<b class="boss">${esc(MON[z.boss].n)}</b> cùng tùy tùng xuất hiện!`);
   } else {
-    const n = 5 + irnd(1, 3);
+    const mul = typeof smMul === 'function' ? smMul() : 1;
+    const n = Math.min(25, (5 + irnd(1, 3)) * mul);
     for (let i = 0; i < n; i++) {
       const a = (i / n) * Math.PI * 2 + rnd(-0.25, 0.25);
       const sp = around(150, 230, a);
@@ -137,6 +138,7 @@ function spawnWave() {
       R.enemies.push(e);
     }
   }
+  if (typeof nhRabbitSpawn === 'function') nhRabbitSpawn(() => around(150, 230));
 }
 
 /* ---------- cong thuc trung / sat thuong ---------- */
@@ -735,6 +737,8 @@ function onKill(e) {
   if (typeof horseOnKill === 'function') horseOnKill(e);
   if (typeof sk9OnKill === 'function') sk9OnKill(e);
   if (typeof fieldOnKill === 'function') fieldOnKill();
+  if (typeof smDrop === 'function') smDrop(e);
+  if (typeof nhDrop === 'function') nhDrop(e);
 
   // TIẾN TRÌNH VƯỢT ẢI (PUSH STAGE PROGRESSION)
   if (S.push) {

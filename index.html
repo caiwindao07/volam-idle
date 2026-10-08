@@ -37,11 +37,10 @@
       <div class="hud-rank-tag" id="hudRankTag" onclick="openRankModal()" title="Nhấp xem Bảng Xếp Hạng Giang Hồ (Đẳng cấp, Phú hộ, Môn phái, Tống Kim, Ác Nhân)">Hạng #1 Võ Lâm</div>
     </div>
 
-    <!-- Center: Stage & Hero Name -->
+    <!-- Center: Stage & Hero Name & Push/PK mode -->
     <div class="topmid">
-      <div class="row" style="align-items:center;gap:6px;">
+      <div class="row">
         <b id="heroName">Võ Lâm Idle</b>
-        <span id="stageLbl" style="cursor:pointer;" title="Nhấp để đổi chế độ Vượt Ải / Luyện Công"></span>
         <button id="btnPushMode" class="push-mode-btn farm-on" title="Nhấp để chuyển đổi giữa Vượt Ải và Luyện Công">🛡 LUYỆN CÔNG</button>
         <button id="btnPkMode" class="pk-mode-btn peace" title="[Phím F9] Chế độ PK: Luyện Công / PK / Đồ Sát">🛡️ Luyện công</button>
       </div>
@@ -56,6 +55,9 @@
         <b id="hudZoneName">Hoa Sơn</b>
       </div>
       <span id="mpStatus" class="hud-online-badge">🟢 Trực tuyến</span>
+      <button id="jxSpd" class="spd-top-btn" title="Tốc độ game x1 / x1.5 / x2.5 (phím X)">⚡ x1</button>
+      <button id="jxAuto" class="auto-top-btn" title="Cày thông minh: bật Vượt ải + Tự nhặt + Xoay chiêu cùng lúc (phím Z)">🤖 Tự cày</button>
+      <button id="jxToday" class="today-top-btn" title="Việc hôm nay: điểm danh, nhiệm vụ, hoạt động còn lượt">📅 Hôm nay</button>
       <button id="vipBtn" class="vip-top-btn" title="Đặc Quyền VIP">👑 VIP 1</button>
       <button id="actBtn" class="act-top-btn" title="Hoạt Động / Phó Bản / Tháp">⚔ Hoạt Động</button>
       <button id="forgeBtn" class="forge-top-btn" title="Dã Luyện Thần Binh (+16, Chế Hoàng Kim, Bạch Kim)">🔨 Rèn Đồ</button>
@@ -355,7 +357,11 @@ if (window.caches) {
 <script src="js/auto.js?v=3.8"></script>
 <script src="js/guide.js?v=3.8"></script>
 <script src="js/stash.js?v=3.8"></script>
-<script src="js/survival.js?v=3.8"></script>
+<script src="js/survival.js?v=4.6"></script>
+<script src="js/svfinal.js?v=4.6"></script>
+<script src="js/weapon_policy.js?v=4.6"></script>
+<script src="js/stage_policy.js?v=4.6"></script>
+<script src="js/potion_policy.js?v=4.6"></script>
 <script src="js/siege.js?v=3.8"></script>
 <script src="js/pvk_upgrade.js?v=4.0"></script>
 <script src="js/vip_dungeon.js?v=3.7"></script>
@@ -372,11 +378,12 @@ if (window.caches) {
 <script src="js/map_expansion.js?v=3.7"></script>
 <script src="js/companion.js?v=3.7"></script>
 <script src="js/activity.js?v=3.7"></script>
+<script src="js/events.js?v=4.6"></script>
 <script src="js/blackmarket.js?v=3.7"></script>
 <script src="js/cloak_meridian.js?v=3.7"></script>
 <script src="js/item_tooltip.js?v=3.7"></script>
 <script src="js/skill_tooltip.js?v=3.7"></script>
 <script src="js/equip_shard.js?v=3.7"></script>
-<script src="js/main.js?v=3.7"></script>
+<script src="js/main.js?v=4.6"></script>
 </body>
 </html>

@@ -1517,7 +1517,7 @@ function updateTop() {
   const btnPushMode = $('#btnPushMode');
   if (btnPushMode) {
     btnPushMode.className = `push-mode-btn ${S.push ? 'push-on' : 'farm-on'}`;
-    btnPushMode.innerHTML = S.push ? `⚔ VƯỢT ẢI (${S.wave}/${WAVES})` : `🛡 LUYỆN CÔNG`;
+    btnPushMode.innerHTML = S.push ? `⚔ Ải ${S.stage} (${S.wave}/${WAVES})` : `🛡 Ải ${S.stage} (Luyện công)`;
     btnPushMode.title = S.push ? 'Đang ở chế độ Vượt Ải. Bấm để chuyển sang Luyện Công.' : 'Đang ở chế độ Luyện Công. Bấm để bắt đầu Vượt Ải.';
   }
 

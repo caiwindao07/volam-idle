@@ -61,8 +61,11 @@ function onLevelUp() { if (S.autoPts === true) { autoSpendAttrs(); autoSpendSkil
 const STEP = 1 / 60, MAX_STEPS = 10, LERP_MAX = 120;
 let simAcc = 0;
 function movers() { return [H, R.petPos].concat(SV.on ? SV.en : R.enemies).filter(Boolean); }
+const gameSpeed = () => typeof S !== 'undefined' && S && S.speed ? +S.speed : 1;
+window.gameSpeed = gameSpeed;
 function simulateFrame(dt) {
-  simAcc += dt; let n = 0;
+  const spd = typeof gameSpeed === 'function' ? gameSpeed() : 1;
+  simAcc += dt * spd; let n = 0;
   while (simAcc >= STEP && n < MAX_STEPS) {
     for (const o of movers()) { o._px = o.x; o._py = o.y; }
     if (SV.on) svTick(STEP); else tick(STEP);
