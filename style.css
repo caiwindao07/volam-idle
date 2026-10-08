@@ -892,6 +892,10 @@ body.deskland #jx-float-overlay {
   box-shadow: inset 0 0 20px rgba(142, 108, 56, 0.2), 0 16px 45px rgba(0,0,0,0.95), 0 0 0 1px #5a4425;
 }
 .jx-float-win.hidden { display: none !important; }
+#fw-inv {
+  width: 660px;
+  max-width: calc(96vw - 20px);
+}
 
 /* Header của floating win */
 .jx-float-header {
@@ -1546,8 +1550,13 @@ body.deskland #jx-float-overlay {
   font-weight: 700;
   padding: 2px 7px;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(244, 114, 182, 0.25);
-  text-shadow: 0 1px 2px #000;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.casino-top-btn:hover {
+  border-color: #f472b6;
+  color: #fff;
+}
 .spd-top-btn {
   background: linear-gradient(180deg, #164e63 0%, #083344 100%);
   color: #67e8f9;
