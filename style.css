@@ -4375,3 +4375,193 @@ body.deskland #jx-float-overlay {
   z-index: 5;
 }
 
+
+/* ================= LO EP DO & DO TIM (HUYEN TINH KHOANG THACH) ================= */
+.epdo-top-btn {
+  background: linear-gradient(180deg, #9333ea, #6b21a8);
+  color: #fff;
+  border: 1px solid #c084fc;
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.4);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.epdo-top-btn:hover {
+  filter: brightness(1.2);
+}
+
+.vtag {
+  color: #c77bff;
+  border: 1px solid #7a4fa0;
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 10px;
+}
+
+.ep-grid .it.ep-on {
+  outline: 2px solid #e6c67a;
+  box-shadow: 0 0 8px #e6c67a88;
+}
+
+.it.ep-st {
+  width: 46px;
+  flex: none;
+  background: #0a0a0a;
+  position: relative;
+}
+
+.it.ep-st img {
+  max-width: 80%;
+  image-rendering: pixelated;
+}
+
+.it .ep-pl {
+  color: #e6c67a;
+  font-weight: 700;
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  font-size: 10px;
+}
+
+.it .ep-n {
+  position: absolute;
+  left: 2px;
+  bottom: 0;
+  font: 10px sans-serif;
+  color: #fff;
+}
+
+.ep-opt {
+  display: grid;
+  grid-template-columns: 46px 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid #2a2a26;
+}
+
+.ep-slots {
+  display: grid;
+  gap: 3px;
+  margin: 8px 0;
+}
+
+.ep-slot {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 30px;
+  padding: 3px 6px;
+  background: #0c0c0b;
+  border: 1px solid #2e2e2a;
+}
+
+.ep-slot img {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+
+.ep-slot.next {
+  border-color: #e6c67a;
+}
+
+.ep-slot.done .vio {
+  color: #c77bff;
+}
+
+.ep-no {
+  min-width: 16px;
+  color: #e6c67a;
+}
+
+.ep-ht {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.ep-htc {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  background: #0a0a0a;
+  border: 1px solid #2e2e2a;
+}
+
+.ep-htc img {
+  width: 36px;
+  height: 30px;
+  image-rendering: pixelated;
+}
+
+.ep-htc i {
+  position: absolute;
+  right: 2px;
+  bottom: 0;
+  font: 10px sans-serif;
+  color: #94a3b8;
+}
+
+.ep-htc b {
+  position: absolute;
+  left: 2px;
+  top: 0;
+  font: 10px sans-serif;
+  color: #fff;
+}
+
+.ep-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.ep-stones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+button.ep-htc {
+  cursor: pointer;
+}
+
+.ep-htc.ep-on {
+  outline: 2px solid #e6c67a;
+  box-shadow: 0 0 8px #e6c67a88;
+}
+
+.it.ep-st img,
+.ep-htc img,
+.ep-slot img {
+  image-rendering: pixelated;
+}
+
+.ep-slot img {
+  height: 22px;
+}
+
+.ep-stones.ep-hide {
+  display: none;
+}
+
+.ep-otg {
+  background: none;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 2px 0;
+  font: inherit;
+}
+
+.ep-otg:hover {
+  color: #ffe9a8;
+}

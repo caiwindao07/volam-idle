@@ -70,6 +70,7 @@
       <button id="vipBtn" class="vip-top-btn" title="Đặc Quyền VIP">👑 VIP 1</button>
       <button id="actBtn" class="act-top-btn" title="Hoạt Động / Phó Bản / Tháp">⚔ Hoạt Động</button>
       <button id="forgeBtn" class="forge-top-btn" title="Dã Luyện Thần Binh (+16, Chế Hoàng Kim, Bạch Kim)">🔨 Rèn Đồ</button>
+      <button id="epdoBtn" class="epdo-top-btn" onclick="if(typeof epModal==='function')epModal();" title="Lò Ép Đồ (Huyền Tinh, Chế Phôi, Khảm Nạm Đồ Tím, Kho Rèn)">🔮 Ép Đồ</button>
       <button id="casinoBtn" class="casino-top-btn" title="Tửu Quán Tiêu Dao (Tài Xỉu, Bầu Cua, Oản Tù Tì)">🎲 Tửu Quán</button>
       <button id="giftBtn" title="Phần thưởng" class="gift-top-btn">🎁<em class="dot" id="dotGift"></em></button>
       <button id="compactBtn" title="Thu gọn / mở rộng sân đấu">⛶</button>
@@ -121,6 +122,7 @@
       </span>
       <span style="background:#15803d;color:#fff;font-size:10px;padding:2px 6px;border-radius:3px;font-weight:bold;">🕊️ Khu An Toàn (Nghỉ Ngơi)</span>
       <button class="btn sm" id="bTownTravel" onclick="if(typeof openMapTravelModal==='function')openMapTravelModal();" title="Mở Xa Phu dịch chuyển thành thị, thôn trấn, bãi quái">🗺️ Xa Phu</button>
+      <button class="btn sm" id="bTownEpdo" onclick="if(typeof epModal==='function')epModal();" title="Mở Lò Ép Đồ (Thợ Rèn Ép Đồ Tím, Luyện Huyền Tinh, Khảm Nạm)">🔮 Lò Ép Đồ</button>
       <button class="btn sm" id="bTownStall" onclick="if(window.STALL)STALL.toggle();" title="Mở Sạp Bày Bán hàng rong trong thành">🏪 Bày bán</button>
       <button class="btn sm" id="bTownTrade" onclick="if(window.TRADE)TRADE.openRequestModal();" title="Giao dịch vật phẩm & ngân lượng">🤝 Giao dịch</button>
       <button class="btn sm" id="bShop">Cửa hàng</button>
@@ -335,6 +337,8 @@ if (window.caches) {
 </script>
 <script src="js/anti_cheat.js?v=5.0"></script>
 <script src="data.js?v=3.7"></script>
+<script src="setvi.js?v=363"></script>
+<script src="setfix.js?v=363"></script>
 <script src="world.js?v=3.7"></script>
 <script src="zones2.js?v=4.3"></script>
 <script src="sound.js?v=3.7"></script>
@@ -359,7 +363,6 @@ if (window.caches) {
 <script src="js/partyui.js?v=363"></script>
 <script src="js/kytran.js?v=363"></script>
 <script src="js/thanma.js?v=363"></script>
-<script src="js/epdo.js?v=363"></script>
 <script src="js/dungeon.js?v=363"></script>
 <script src="js/migu.js?v=363"></script>
 <script src="js/ride.js?v=4.0"></script>
@@ -371,9 +374,9 @@ if (window.caches) {
 <script src="js/stats.js?v=3.7"></script>
 <script src="js/loot.js?v=3.7"></script>
 <script src="js/gear_policy.js?v=3.8"></script>
-<script src="rdata.js?v=3.7"></script>
-<script src="js/sets.js?v=3.7"></script>
-<script src="js/recipes.js?v=4.2"></script>
+<script src="rdata.js?v=363"></script>
+<script src="js/sets.js?v=363"></script>
+<script src="js/recipes.js?v=363"></script>
 <script src="js/combat.js?v=4.7"></script>
 <script src="js/save.js?v=3.8"></script>
 <script src="js/town_npc.js?v=3.7"></script>
@@ -389,9 +392,12 @@ if (window.caches) {
 <script src="js/control.js?v=4.3"></script>
 <script src="js/quick.js?v=4.2"></script>
 <script src="js/shop.js?v=3.8"></script>
+<script src="shopdata.js?v=363"></script>
+<script src="js/npcshop.js?v=363"></script>
 <script src="js/rewards.js?v=4.0"></script>
 <script src="js/depth.js?v=4.0"></script>
 <script src="js/forge.js?v=3.8"></script>
+<script src="js/epdo.js?v=363"></script>
 <script src="js/auto.js?v=3.8"></script>
 <script src="js/guide.js?v=3.8"></script>
 <script src="js/stash.js?v=3.8"></script>

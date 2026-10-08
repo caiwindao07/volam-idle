@@ -30,10 +30,11 @@ function sweepJunk() {
   if (n) invDirty = true; return n;
 }
 function addItem(it, quiet, picked, keep) {
-  if (!picked && !lootMatch(it)) { S.gold += itemValue(it); return false; } // khong qua mat dat (offline): mon khong khop bo loc tu ban
+  if (typeof epAutoStore === 'function' && epAutoStore(it)) { invDirty = true; return true; }
+  if (!picked && !lootMatch(it) && !(typeof epWant === 'function' && epWant(it))) { S.gold += itemValue(it); return false; } // khong qua mat dat (offline): mon khong khop bo loc tu ban
   if (S.inv.length >= INV_MAX && (it.set || it.vio || it.plv)) makeRoom(it, true);   // do quy (bo / Tim / Bach Kim): nhuong cho bang cach ban mon yeu nhat
   if (S.inv.length >= INV_MAX) { S.gold += itemValue(it); if (!quiet) log('<span class="dim">Túi đầy, tự bán ' + esc(it.n) + '</span>'); return false; }
-  if (!keep && S.autoJunk !== false && isJunk(it)) { S.gold += itemValue(it); return false; }   // do thua: tu ban, khong chat hanh trang
+  if (!keep && S.autoJunk !== false && isJunk(it) && !(typeof epWant === 'function' && epWant(it))) { S.gold += itemValue(it); return false; }   // do thua: tu ban, khong chat hanh trang
   S.inv.unshift(it); invDirty = true;
   if (!quiet && it.r >= 2) log(`Nhặt được <span style="color:${RAR_COL[it.r]}">${esc(it.n)}</span>`);
   if (S.autoEquip && betterThanEquipped(it)) equip(it, true);
@@ -196,15 +197,16 @@ function itemModal(it, slot) {
       : ((it.r === 1 || it.r === 2) && it.d <= 9 && !it.set && !it.plv && !it.vio && it.r !== 3)
   );
   modal(`${itemHTML(it)}${cmpLines(it, slot)}${cur ? `<div class="cmp"><small class="dim">Đang mặc:</small>${itemHTML(cur)}</div>` : ''}
-    <div class="btnrow" style="gap:6px;margin-top:12px;">${slot ? `<button class="jx-action-btn" id="bUn">Tháo</button>` : `<button class="jx-action-btn gold" id="bEq" ${reqOk(it) ? '' : 'disabled'}>Trang bị</button>${!reqOk(it) && Object.keys(reqDeficit(it)).length && reqProblems(it).length === Object.keys(reqDeficit(it)).length ? '<button class="jx-action-btn" id="bReqPts">Cộng điểm</button>' : ''}<button class="jx-action-btn" style="color:#f87171;" id="bSell">Bán (${fmt(itemValue(it))})</button>${isBlueInInv ? '<button class="jx-action-btn" style="color:#60a5fa;" id="bDisBlue">🔨 Rã (1~3 Mảnh)</button>' : ''}${S.inv.includes(it) ? '<button class="jx-action-btn" id="bStashIt">Gửi kho</button>' : ''}`}${findItem(it.uid) && it.d <= 10 ? '<button class="jx-action-btn gold" id="bForge">Rèn đồ</button>' : ''}</div>`,
+    <div class="btnrow" style="gap:6px;margin-top:12px;">${slot ? `<button class="jx-action-btn" id="bUn">Tháo</button>` : `<button class="jx-action-btn gold" id="bEq" ${reqOk(it) ? '' : 'disabled'}>Trang bị</button>${!reqOk(it) && Object.keys(reqDeficit(it)).length && reqProblems(it).length === Object.keys(reqDeficit(it)).length ? '<button class="jx-action-btn" id="bReqPts">Cộng điểm</button>' : ''}<button class="jx-action-btn" style="color:#f87171;" id="bSell">Bán (${fmt(itemValue(it))})</button>${isBlueInInv ? '<button class="jx-action-btn" style="color:#60a5fa;" id="bDisBlue">🔨 Rã (1~3 Mảnh)</button>' : ''}${S.inv.includes(it) ? '<button class="jx-action-btn" id="bStashIt">Gửi kho</button>' : ''}`}${findItem(it.uid) && it.d <= 10 ? '<button class="jx-action-btn gold" id="bForge">Rèn đồ</button>' : ''}${(typeof verVio === 'function' && verVio() && (it.vio || (it.mag && it.mag.length) || (it.r || 0) <= 2) && it.d <= 9 && !it.set) ? '<button class="jx-action-btn" style="color:#c084fc;" id="bEpdoIt">🔮 Ép đồ</button>' : ''}</div>`,
   () => {
-    const b1 = $('#bEq'), b2 = $('#bSell'), b3 = $('#bUn'), b4 = $('#bForge'), bDis = $('#bDisBlue');
+    const b1 = $('#bEq'), b2 = $('#bSell'), b3 = $('#bUn'), b4 = $('#bForge'), bDis = $('#bDisBlue'), bEp = $('#bEpdoIt');
     const bs = $('#bStashIt'); if (bs) bs.onclick = () => { const r = stashDeposit(it); toast(r.msg); if (r.ok) { closeModal(); refresh(); } };
     const bp = $('#bReqPts'); if (bp) bp.onclick = () => { if (fixReqPoints(it)) { if (reqOk(it)) equip(it); else itemModal(it, slot); } };
     if (b1) b1.onclick = () => equip(it);
     if (b2) b2.onclick = () => sell(it);
     if (b3) b3.onclick = () => unequip(slot);
     if (b4) b4.onclick = () => forgeModal(it);
+    if (bEp) bEp.onclick = () => { closeModal(); if (typeof epModal === 'function') epModal(it.vio ? 'kham' : (it.mag && it.mag.length) ? 'hut' : 'phoi', it.uid); };
     if (bDis) bDis.onclick = () => {
       if (window.EQUIP_SHARD) {
         window.EQUIP_SHARD.dismantleSingle(it);

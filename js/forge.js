@@ -59,7 +59,7 @@ function forgeModal(it) {
     $('#fEnh').onclick = () => enhance(it); $('#fRe').onclick = () => reroll(it);
     const k = $('#fKham'), lo = $('#fHtLo');
     if (k) k.onclick = () => afterRc(enchase(it, +$('#cHt').value, $('#cOre').value), () => forgeModal(it));
-    if (lo) lo.onclick = () => htModal();
+    if (lo) lo.onclick = () => { if (typeof epModal === 'function') epModal('kham', it.uid); else htModal(); };
     const pu = $('#fPlat'); if (pu) pu.onclick = () => afterRc(upgradePlatina(it), () => forgeModal(it));
   });
 }
@@ -70,6 +70,7 @@ function htModal() {
   htSel = htSel.filter(i => pool.includes(i));
   const shards = Object.keys(mats().shard), gpool = S.inv.filter(canPlatBase); pkSel = pkSel.filter(i => gpool.includes(i));
   modal(`<h3>Lò Huyền Tinh · Mảnh · Bạch Kim <small>${fmt(S.gold)} lượng</small></h3>
+    ${(typeof verVio === 'function' && verVio()) ? '<div class="card"><b>🔮 Lò Ép Đồ (Đồ Tím · Huyền Tinh · Khảm Nạm)</b> <div class="btnrow"><button class="btn gold" id="htEpdoFull">Mở Lò Ép Đồ Toàn Diện</button></div></div>' : ''}
     <div class="card"><b>Hợp thành</b> <small class="dim">3 món nhẫn / dây chuyền / ngọc bội → Huyền Tinh · ${fmt(fuseCost())} lượng</small>
       <div class="btnrow" id="htPool">${pool.map(i => `<button class="btn ${htSel.includes(i) ? 'red' : ''}" data-u="${i.uid}">${esc(i.n)}</button>`).join('') || '<small class="dim">Hành trang không có món phù hợp</small>'}</div>
       <div class="btnrow"><button class="btn" id="htFuse" ${htSel.length === 3 && S.gold >= fuseCost() ? '' : 'disabled'}>Hợp (${htSel.length}/3)</button></div></div>
@@ -93,6 +94,7 @@ function htModal() {
       if (k >= 0) pkSel.splice(k, 1); else if (pkSel.length < 2) pkSel.push(it);
       htModal();
     });
+    const bEpFull = $('#htEpdoFull'); if (bEpFull) bEpFull.onclick = () => { closeModal(); if (typeof epModal === 'function') epModal(); };
     $('#pkMake').onclick = () => { const r = makePlatina(pkSel[0], pkSel[1]); pkSel = []; afterRc(r, htModal); };
     $('#htFuse').onclick = () => { const r = fuse(htSel.slice()); htSel = []; afterRc(r, htModal); };
     document.querySelectorAll('#mBody [data-up]').forEach(b => b.onclick = () => afterRc(upgradeHT(+b.dataset.up), htModal));

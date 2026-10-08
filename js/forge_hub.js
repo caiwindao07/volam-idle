@@ -155,6 +155,7 @@ function openForgeHub(initialTab = 'enh') {
           <button class="jx-action-btn ${curTab === 'enh' ? 'gold' : ''}" id="tabBtnEnh" style="padding:4px 10px;font-size:11px;">⚡ Cường Hóa (+16)</button>
           <button class="jx-action-btn ${curTab === 'craft' ? 'gold' : ''}" id="tabBtnCraft" style="padding:4px 10px;font-size:11px;">🔮 Đúc Đồ Hoàng Kim</button>
           <button class="jx-action-btn ${curTab === 'plat' ? 'gold' : ''}" id="tabBtnPlat" style="padding:4px 10px;font-size:11px;">💎 Thăng Cấp Bạch Kim</button>
+          <button class="jx-action-btn" id="tabBtnEpDo" style="padding:4px 10px;font-size:11px;color:#c084fc;">🔮 Lò Ép Đồ Tím</button>
           <button class="jx-action-btn" id="tabBtnHtLo" style="padding:4px 10px;font-size:11px;">🏺 Lò Huyền Tinh & Khảm</button>
           <button class="jx-action-btn" id="tabBtnEquipShard" style="padding:4px 10px;font-size:11px;color:#60a5fa;">💠 Rã & Ghép Mảnh</button>
         </div>
@@ -175,6 +176,7 @@ function openForgeHub(initialTab = 'enh') {
     const b1 = $('#tabBtnEnh'); if (b1) b1.onclick = () => { curTab = 'enh'; openForgeHub('enh'); };
     const b2 = $('#tabBtnCraft'); if (b2) b2.onclick = () => { curTab = 'craft'; openForgeHub('craft'); };
     const b3 = $('#tabBtnPlat'); if (b3) b3.onclick = () => { curTab = 'plat'; openForgeHub('plat'); };
+    const bEp = $('#tabBtnEpDo'); if (bEp) bEp.onclick = () => { closeModal(); if (typeof epModal === 'function') epModal(); };
     const b4 = $('#tabBtnHtLo'); if (b4) b4.onclick = () => { closeModal(); if (typeof htModal === 'function') htModal(); };
     const b5 = $('#tabBtnEquipShard'); if (b5) b5.onclick = () => { closeModal(); if (window.EQUIP_SHARD) window.EQUIP_SHARD.openModal(); };
   });

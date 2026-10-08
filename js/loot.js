@@ -159,12 +159,44 @@ const LOOT_SPECIFIC_ATTRS = [
   { id: 'addphysicsdamage_p', n: 'Sát thương vật lý (%)' }
 ];
 
+const bareName = n => String(n || '').replace(/^\[[^\]]*\]\s*/, '');
+const SET_FAMILIES = [
+  ['An Bang', 4], ['Định Quốc', 4], ['Hiệp Cốt', 4], ['Nhu Tình', 4],
+  ['Kim Phong', 9], ['Thiên Hoàng', 10], ['Động Sát', 4],
+  ['Thanh Câu', 3], ['Vân Lộc', 3], ['Thương Lang', 3],
+  ['Tử Mãng', 3], ['Kim Ô', 3], ['Bạch Hổ', 3], ['Xích Lân', 3],
+  ['Minh Phượng', 3], ['Huyền Viên', 3], ['Tinh Sương', 3],
+  ['Tống Kim', 3], ['Đằng Long', 3],
+  ['Môn phái', 3], ['Bộ chung', 4]
+];
+const SET_NAMED = SET_FAMILIES.filter(([n]) => !['Môn phái', 'Tống Kim', 'Bộ chung'].includes(n));
+const setFac = n => ((n.req || []).find(e => e[0] === 39) || [0, -1])[1];
+function setFamily(n) {
+  if (!n || !n.set) return null;
+  const e = bareName(n.n), t = SET_NAMED.find(([r]) => e.startsWith(r));
+  return t ? t[0] : n.n.includes('Tống Kim') ? 'Tống Kim' : setFac(n) >= 0 ? 'Môn phái' : 'Bộ chung';
+}
+
+function epWant(n) {
+  const e = (typeof lootFilter === 'function' ? lootFilter().ep : null) || {};
+  return !e || typeof verVio !== 'function' || !verVio() || !n || n.set || n.vio || n.thanma || !(n.d >= 0 && n.d <= 9)
+    ? ''
+    : e.jew && (typeof FUSE_SLOTS !== 'undefined' ? FUSE_SLOTS : [3, 4, 9]).includes(n.d) && (n.r || 0) <= 2 && !(typeof betterThanEquipped === 'function' && betterThanEquipped(n))
+      ? 'jew'
+      : e.white && (n.r || 0) === 0 && !(n.mag || []).length
+        ? 'white'
+        : e.blue && (n.r === 1 || n.r === 2) && (n.mag || []).some(t => typeof oreRows === 'function' && oreRows(t.a).length && (typeof hutLevel === 'function' ? hutLevel(t) : 1) >= (e.blueLv || 1))
+          ? 'blue'
+          : '';
+}
+
 function lootFilter() {
-  const f = S.lootF || (S.lootF = { minRar: 0, minLvl: 1, groups: [], series: [], targetAttr: '', minAttrVal: 0, auto: true });
+  const f = S.lootF || (S.lootF = { minRar: 0, minLvl: 1, groups: [], series: [], targetAttr: '', minAttrVal: 0, auto: true, ep: { white: true, jew: true, blue: true, blueLv: 3, dest: 'box' } });
   if (f.minRar === undefined || f.minRar === null) f.minRar = 0;
   if (f.auto === undefined) f.auto = true;
   if (f.targetAttr === undefined) f.targetAttr = '';
   if (f.minAttrVal === undefined) f.minAttrVal = 0;
+  if (!f.ep) f.ep = { white: true, jew: true, blue: true, blueLv: 3, dest: 'box' };
   return f;
 }
 function lootMatch(it) {
@@ -222,6 +254,14 @@ function pickUp(drop, quiet) {
   const i = R.ground.indexOf(drop); if (i < 0) return false;
   if (!drop.it) { R.ground.splice(i, 1); return true; }
 
+  // 0. Neu mon do phu hop de cat vao Kho Ren / Kho chung (phoi tim, da, trang suc luyen HT)
+  if (typeof epAutoStore === 'function' && epAutoStore(drop.it)) {
+    R.ground.splice(i, 1);
+    questTick('picked');
+    if (R.pickTarget === drop) R.pickTarget = null;
+    return true;
+  }
+
   // 1. Neu tui con cho -> nhat vao tui binh thuong
   if (S.inv.length < INV_MAX) {
     R.ground.splice(i, 1);
@@ -263,8 +303,8 @@ function updateGround(dt) {
     const vacR = (typeof vipVacuumRadius === 'function') ? Math.max(150, vipVacuumRadius()) : VACUUM_R;
     for (const d of R.ground.slice()) {
       if (d.age < 0.05) continue;
-      // Chi hut mon khop bo loc, tru khi nguoi choi chu dong click tay vao mon do
-      if (!lootMatch(d.it) && R.pickTarget !== d) continue;
+      // Chi hut mon khop bo loc hoac can cho ep do, tru khi nguoi choi chu dong click tay vao mon do
+      if (!lootMatch(d.it) && !epWant(d.it) && R.pickTarget !== d) continue;
       const dist = Math.hypot(d.x - H.x, d.y - H.y);
       if (dist <= vacR) {
         pickUp(d, true);
@@ -282,8 +322,8 @@ function updateGround(dt) {
     let best = null, bd = 1500;
     for (const d of R.ground) {
       if (d.age < 0.1) continue;
-      // Chi chay lai nhat mon thoa man bo loc!
-      if (!lootMatch(d.it)) continue;
+      // Chi chay lai nhat mon thoa man bo loc hoac can cho ep do!
+      if (!lootMatch(d.it) && !epWant(d.it)) continue;
       const k = Math.hypot(d.x - H.x, d.y - H.y);
       if (k < bd) { bd = k; best = d; }
     }
