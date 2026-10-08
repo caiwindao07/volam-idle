@@ -66,7 +66,9 @@
       <span id="mpStatus" class="hud-online-badge">🟢 Trực tuyến</span>
       <button id="jxSpd" class="spd-top-btn" title="Tốc độ game x1 / x1.5 / x2.5 (phím X)">⚡ x1</button>
       <button id="jxAuto" class="auto-top-btn" title="Cày thông minh: bật Vượt ải + Tự nhặt + Xoay chiêu cùng lúc (phím Z)">🤖 Tự cày</button>
-      <button id="jxToday" class="today-top-btn" title="Việc hôm nay: điểm danh, nhiệm vụ, hoạt động còn lượt">📅 Hôm nay</button>
+      <button id="jxToday" class="today-top-btn" onclick="if(typeof openTodayDashboardModal==='function')openTodayDashboardModal();" title="Việc hôm nay: điểm danh, nhiệm vụ, hoạt động còn lượt">📅 Hôm nay</button>
+      <button id="warBtn" class="war-top-btn" onclick="if(typeof openWarModal==='function')openWarModal();" title="Chiến Trường Tống Kim & Công Thành Xưng Bá" style="background:#7c2d12;border:1.5px solid #ea580c;color:#ffedd5;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;">⚔️ Chiến Trường</button>
+      <button id="arcadeBtn" class="arcade-top-btn" onclick="if(typeof openArcadeModal==='function')openArcadeModal();" title="Khu Giải Trí Arcade (Rắn Săn Mồi & Xếp Gạch)" style="background:#0f766e;border:1.5px solid #14b8a6;color:#ccfbf1;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;">🎮 Giải Trí</button>
       <button id="vipBtn" class="vip-top-btn" title="Đặc Quyền VIP">👑 VIP 1</button>
       <button id="actBtn" class="act-top-btn" title="Hoạt Động / Phó Bản / Tháp">⚔ Hoạt Động</button>
       <button id="forgeBtn" class="forge-top-btn" title="Dã Luyện Thần Binh (+16, Chế Hoàng Kim, Bạch Kim)">🔨 Rèn Đồ</button>
@@ -127,6 +129,9 @@
       <button class="btn sm" id="bTownTrade" onclick="if(window.TRADE)TRADE.openRequestModal();" title="Giao dịch vật phẩm & ngân lượng">🤝 Giao dịch</button>
       <button class="btn sm" id="bShop">Cửa hàng</button>
       <button class="btn sm" id="bStashT">Kho chung</button>
+      <button class="btn sm" id="bTownWar" onclick="if(typeof openWarModal==='function')openWarModal();" title="Chiến Trường Tống Kim & Công Thành Xưng Đế">⚔️ Chiến Trường</button>
+      <button class="btn sm" id="bTownArcade" onclick="if(typeof openArcadeModal==='function')openArcadeModal();" title="Khu Giải Trí Arcade (Rắn Săn Mồi & Xếp Gạch)">🎮 Giải Trí</button>
+      <button class="btn sm" id="bTownStashIo" onclick="if(typeof openStashIoModal==='function')openStashIoModal();" title="Xuất / Nạp Kho Ra File">🧰 Xuất/Nạp Kho</button>
       <button class="btn sm" id="bSellTown">Bán rác</button>
       <button class="btn sm on" id="bBack" title="Rời thành để trở lại chiến trường / ải luyện công">⚔️ Rời thành</button>
     </div>
@@ -429,6 +434,11 @@ if (window.caches) {
 <script src="js/item_tooltip.js?v=3.7"></script>
 <script src="js/skill_tooltip.js?v=3.7"></script>
 <script src="js/equip_shard.js?v=3.7"></script>
+<script src="js/mutations.js?v=3.8"></script>
+<script src="js/war.js?v=3.8"></script>
+<script src="js/arcade.js?v=3.8"></script>
+<script src="js/today_journal.js?v=3.8"></script>
+<script src="js/stash_io.js?v=3.8"></script>
 <script src="js/main.js?v=4.6"></script>
 </body>
 </html>

@@ -229,8 +229,12 @@ function dropToGround(it, at) {
   const [x, y] = inWorld(at.x + Math.cos(a) * d, at.y + Math.sin(a) * d);
   R.ground.push({ it, x, y, age: 0 });
   if (R.ground.length > GROUND_MAX) { let i = R.ground.findIndex(d => !d.it.set && !d.it.vio && !d.it.plv); if (i < 0) i = 0; const old = R.ground.splice(i, 1)[0]; S.gold += itemValue(old.it); } // qua nhieu: mon cu nhat tu ban (khong ban do bo / Tim / Bach Kim neu con mon khac)
-  if (!R.quiet) uiSfx(it.d <= 1 ? 'dropWeapon' : it.d === 2 || it.d === 7 ? 'dropCloth' : 'dropOther');
   if (it.r >= 2 && !R.quiet) log(`Rơi xuống đất: <span style="color:${RAR_COL[it.r]}">${esc(it.n)}</span>`);
+  if (typeof journalAdd === 'function') {
+    if (it.set || it.r >= 4) journalAdd("set", 1);
+    else if (it.r === 3) journalAdd("r3", 1);
+    else if (it.r === 2) journalAdd("r2", 1);
+  }
 }
 /* Hanh trang day: tu ban mon kem nhat (khong phai do bo) neu mon moi tot hon -> treo may lau van thay do moi */
 function makeRoom(it, force) {

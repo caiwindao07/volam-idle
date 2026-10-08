@@ -86,7 +86,9 @@ function expFor(L) {
   return (need / (40 + L * 3.5)) * 1.05;
 }
 function makeEnemy(tid, L, cls, x, y) {
-  const m = MON[tid], z = zoneOf(S.stage), st = enemyStats(L, cls), D = diffOf(); st.hp *= D.hp; st.dmg *= D.dmg;
+  const m = MON[tid], z = zoneOf(S.stage), st = enemyStats(L, cls), D = diffOf();
+  const mobMut = (typeof mutationMobMul === 'function') ? mutationMobMul() : 1;
+  st.hp *= D.hp * mobMut; st.dmg *= D.dmg * mobMut;
   const series = wpick([0, 1, 2, 3, 4], i => z.sw[i] + 1);
   const res = {}; ELEM.forEach((e, i) => { res[e] = Math.min(m.rmax[i] || 75, L * 0.35 + (cls === 'boss' ? 10 : 0)); });
   return { id: Math.random(), tid, n: m.n, img: m.img ? img(m.img) : null, sz: m.sz, L, cls, series, res,
@@ -699,6 +701,7 @@ function killCheck() {
 function onKill(e) {
   R.stall = 0; // Đang tiêu diệt quái thành công -> xóa bộ đếm stall
   R.kills++; S.totalKills = (S.totalKills || 0) + 1;
+  if (typeof checkWarMonsterKill === 'function') checkWarMonsterKill(e);
   const lvDiff = e.L - S.lvl;
   let mult = 1.0;
   if (lvDiff > 10) mult = 0.1;
@@ -706,8 +709,14 @@ function onKill(e) {
   else if (lvDiff < -10) mult = 0.2;
   else if (lvDiff < -5) mult = 0.6;
   const xpL = Math.min(e.L, S.lvl + 5);
-  gainXp(expFor(xpL) * CLS[e.cls].xp * mult * diffOf().rew);
-  const g = Math.round(moneyDrop(e) * diffOf().rew); S.gold += g;
+  const mXp = (typeof mutationXpMul === 'function') ? mutationXpMul() : 1;
+  gainXp(expFor(xpL) * CLS[e.cls].xp * mult * diffOf().rew * mXp);
+  const mGold = (typeof mutationGoldMul === 'function') ? mutationGoldMul() : 1;
+  const g = Math.round(moneyDrop(e) * diffOf().rew * mGold); S.gold += g;
+  if (typeof journalAdd === 'function') {
+    journalAdd("kills", 1);
+    journalAdd("gold", g);
+  }
   burst(e.x, e.y, SERIES_COL[e.series]);
   for (const it of rollDrops(e)) dropToGround(it, e);
   const matDrops = typeof allDrops === 'function' ? allDrops(e) : [];
@@ -867,6 +876,7 @@ function gainXp(x, maxLevels = 2) {
   window._legitExpGain = true;
   try {
     S.xp = Math.max(0, (S.xp || 0) + addedXp);
+    if (typeof journalAdd === 'function') journalAdd("xp", addedXp);
   } finally {
     window._legitExpGain = false;
   }
@@ -926,6 +936,7 @@ function waveCleared() {
 function heroDeath(pvpPenalty = false) {
   if (R.enemies.some(e => e.goldBoss && !e.dead)) RW().gbT = GB_RETRY;
   R.deadT = 3; R.life = 0; R.enemies = [];
+  if (typeof journalAdd === 'function') journalAdd("dead", 1);
   log('<span class="bad">Bạn đã trọng thương.</span>');
 
   // "PK = 10 khi bị đánh chết thì văng hết tiền và đồ đang mặc"
