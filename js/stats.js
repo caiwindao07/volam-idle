@@ -26,7 +26,7 @@ function hiddenActive(it, eq = S.eq) {
   for (const k of ACTIVATED_BY[slot] || []) if (eq[k] && accrues(eq[k].s, it.s)) n++;
   return n;
 }
-function heroStart() { const f = FAC[S.fac]; return J.start[f.series * 2 + (S.sex || 0)] || J.start[0]; }
+function heroStart() { const f = (S && S.fac && FAC[S.fac]) ? FAC[S.fac] : { series: 0 }; return J.start[f.series * 2 + (S.sex || 0)] || J.start[0]; }
 function heroSeries() { return FAC[S.fac] ? FAC[S.fac].series : 0; }
 function weaponCode(eq) {
   const w = eq.weapon; if (!w) return 9;               // 9 = tay khong (Quyen/Chuong phap)

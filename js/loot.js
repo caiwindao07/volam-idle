@@ -159,7 +159,7 @@ const LOOT_SPECIFIC_ATTRS = [
   { id: 'addphysicsdamage_p', n: 'Sát thương vật lý (%)' }
 ];
 
-const bareName = n => String(n || '').replace(/^\[[^\]]*\]\s*/, '');
+var bareName = window.bareName = window.bareName || (n => String(n || '').replace(/^\[[^\]]*\]\s*/, ''));
 const SET_FAMILIES = [
   ['An Bang', 4], ['Định Quốc', 4], ['Hiệp Cốt', 4], ['Nhu Tình', 4],
   ['Kim Phong', 9], ['Thiên Hoàng', 10], ['Động Sát', 4],

@@ -18,9 +18,9 @@ function geValueJX(n) {
       }
     : null;
 }
-const PLAT_TAG = "[Bạch Kim] ",
-  bareName = (n) => String(n || "").replace(/^\[[^\]]*\]\s*/, ""),
-  platName = (n) => (/^\[/.test(n) ? n : PLAT_TAG + n);
+const PLAT_TAG = "[Bạch Kim] ";
+var bareName = window.bareName = window.bareName || ((n) => String(n || "").replace(/^\[[^\]]*\]\s*/, ""));
+const platName = (n) => (/^\[/.test(n) ? n : PLAT_TAG + n);
 function makeSetItem(n, t, e) {
   const s = Math.min(6, e | 0),
     h = () => clamp(Math.round(s + (10 - s) * Math.pow(Math.random(), SET_LINE_SKEW)), 0, 10),

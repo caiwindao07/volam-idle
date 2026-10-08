@@ -359,7 +359,7 @@ function vipModal() {
 /* ==========================================================================
    2. HE THONG PHO BAN KIEM VUC (DUNGEON CHALLENGE)
    ========================================================================== */
-const DUNGEONS = [
+const VIP_DUNGEONS = [
   {
     id: 'thienlao',
     name: 'Thiên Lao Mật Đạo',
@@ -420,7 +420,7 @@ function getDungeonState() {
 }
 
 function dungeonStart(dId) {
-  const d = DUNGEONS.find(x => x.id === dId);
+  const d = VIP_DUNGEONS.find(x => x.id === dId);
   if (!d) return;
   if (S.lvl < d.reqLvl) {
     toast(`Cần đạt đẳng cấp ${d.reqLvl} để tiến vào ${d.name}!`);
@@ -543,7 +543,7 @@ function openActivityHub() {
   const curFloor = R.tower ? R.tower.floor : (tb > 0 ? tb : 1);
   const vipLv = vipLevel();
 
-  const dungeonsHtml = DUNGEONS.map(d => {
+  const dungeonsHtml = VIP_DUNGEONS.map(d => {
     const locked = S.lvl < d.reqLvl;
     return `
       <div style="background:rgba(20,16,12,0.85);border:1.5px solid ${locked ? '#3d2f1d' : SERIES_COL[d.series]};border-radius:6px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;opacity:${locked ? '0.6' : '1'};">

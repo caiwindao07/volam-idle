@@ -947,6 +947,6 @@ if (typeof window !== "undefined") {
   window.upgradeHT = upgradeHT;
   window.upgradeOre = upgradeOre;
   window.epBox = epBox;
-  window.autoHut = autoHut;
-  window.AH = AH;
+  if (typeof autoHut !== "undefined") window.autoHut = autoHut;
+  if (typeof AH !== "undefined") window.AH = AH;
 }
