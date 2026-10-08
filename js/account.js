@@ -49,10 +49,18 @@ function saveLocalUserState(username, state) {
   } catch (e) {}
 }
 
-// Địa chỉ máy chủ API Online (nếu chạy frontend và backend khác domain)
+// Địa chỉ máy chủ API Online
 function getApiUrl(path) {
-  const base = (window.JX_SERVER_URL || '').replace(/\/+$/, '');
-  return base + path;
+  if (typeof window !== 'undefined' && window.location) {
+    if (window.JX_SERVER_URL) {
+      return window.JX_SERVER_URL.replace(/\/+$/, '') + path;
+    }
+    if (window.location.hostname === 'volamcuttay.onrender.com' || window.location.hostname.includes('localhost')) {
+      return path;
+    }
+    return 'https://volamcuttay.onrender.com' + path;
+  }
+  return path;
 }
 
 // Khởi tạo và kiểm tra trạng thái đăng nhập trực tuyến

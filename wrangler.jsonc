@@ -10,6 +10,6 @@
     "directory": "."
   },
   "vars": {
-    "BACKEND_URL": "https://volam-idle.onrender.com"
+    "BACKEND_URL": "https://volamcuttay.onrender.com"
   }
 }

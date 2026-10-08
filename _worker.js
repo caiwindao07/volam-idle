@@ -1,7 +1,7 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const backend = (env.BACKEND_URL || 'https://volam-idle.onrender.com').replace(/\/+$/, '');
+    const backend = (env.BACKEND_URL || 'https://volamcuttay.onrender.com').replace(/\/+$/, '');
 
     // 1. Chuyển tiếp toàn bộ API và kết nối WebSocket về máy chủ backend Node.js (MongoDB Atlas + WebSocket Server)
     if (url.pathname.startsWith('/api/') || request.headers.get('Upgrade') === 'websocket') {
@@ -21,7 +21,7 @@ export default {
       } catch (err) {
         return new Response(JSON.stringify({
           ok: false,
-          error: `Máy chủ Online hiện đang bảo trì hoặc chưa khởi động (${err.message || 'Backend Offline'}). Vui lòng thử lại sau!`
+          error: `Máy chủ Online đang khởi động (${err.message || 'Backend Offline'}). Vui lòng thử lại sau giây lát!`
         }), {
           status: 502,
           headers: {

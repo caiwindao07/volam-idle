@@ -54,6 +54,9 @@ function getWsUrl() {
     } catch (e) {}
   }
   const loc = window.location;
+  if (loc && loc.hostname && !loc.hostname.includes('localhost') && loc.hostname !== 'volamcuttay.onrender.com') {
+    return 'wss://volamcuttay.onrender.com';
+  }
   const isHttps = loc.protocol === 'https:';
   const proto = isHttps ? 'wss://' : 'ws://';
   const host = loc.hostname || 'localhost';
