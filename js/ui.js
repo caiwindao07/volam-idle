@@ -1,7 +1,7 @@
 /* ======================= GIAO DIEN (5 the) ======================= */
 'use strict';
 let curTab = 'log', invDirty = true;
-function log(h) { if (R.quiet) return; R.logs.unshift(h); if (R.logs.length > 40) R.logs.pop(); R.logDirty = true; if (typeof appendChatLine === 'function') appendChatLine('sys', '', h); }
+function log(h) { if (typeof R === 'undefined' || !R || R.quiet) return; if (!Array.isArray(R.logs)) R.logs = []; R.logs.unshift(h); if (R.logs.length > 40) R.logs.pop(); R.logDirty = true; if (typeof appendChatLine === 'function') appendChatLine('sys', '', h); }
 let toastT; function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 1800); }
 function modal(html, bind, locked) { $('#mBody').innerHTML = html; $('#modal').classList.remove('hidden'); $('#modal').dataset.locked = locked ? '1' : ''; if (bind) bind(); try { $('#modal .mbox').focus({ preventScroll: true }); } catch (e) { /* bo qua */ } }
 function closeModal(force) { if (typeof ACC !== 'undefined' && !ACC.isLoggedIn) return; if ($('#modal').dataset.locked && !force) return; $('#modal').classList.add('hidden'); }
@@ -215,54 +215,67 @@ function itemModal(it, slot) {
 /* ---------- the: chien truong ---------- */
 function renderLog() {
   try {
-    const curStage = Math.min(S.stage || 1, STAGES);
-    const z = zoneOf(curStage);
+    const maxStages = typeof STAGES !== 'undefined' ? STAGES : 160;
+    const curStage = Math.min(Math.max(1, (S && S.stage) || 1), maxStages);
+    const z = (typeof zoneOf === 'function' ? zoneOf(curStage) : null) || (typeof ZONES !== 'undefined' && ZONES[0]) || { n: 'Dược Vương Cốc', lo: 1, hi: 10 };
     const targets = [$('#t-log-f'), $('#t-log')].filter(Boolean);
     if (!targets.length) return;
 
-    const curI = zoneIdx(curStage);
-    const mySeries = (typeof heroSeries === 'function') ? heroSeries() : (FAC[S.fac] ? FAC[S.fac].series : 0);
-    const counterText = (FAC[S.fac] && typeof KHAC !== 'undefined') ? ` · bạn hệ <span style="color:${SERIES_COL[mySeries]}">${SERIES[mySeries]}</span>: khắc <span style="color:${SERIES_COL[KHAC[mySeries]]}">${SERIES[KHAC[mySeries]]}</span> (+10%), bị <span style="color:${SERIES_COL[+Object.keys(KHAC).find(k => KHAC[k] === mySeries)]}">${SERIES[+Object.keys(KHAC).find(k => KHAC[k] === mySeries)]}</span> khắc (−10%)` : '';
+    const curI = typeof zoneIdx === 'function' ? zoneIdx(curStage) : 0;
+    const mySeries = (typeof heroSeries === 'function') ? heroSeries() : ((typeof FAC !== 'undefined' && S && S.fac && FAC[S.fac]) ? FAC[S.fac].series : 0);
+    const counterText = (typeof FAC !== 'undefined' && S && S.fac && FAC[S.fac] && typeof KHAC !== 'undefined' && typeof SERIES !== 'undefined' && typeof SERIES_COL !== 'undefined') ? ` · bạn hệ <span style="color:${SERIES_COL[mySeries] || '#ffd700'}">${SERIES[mySeries] || ''}</span>: khắc <span style="color:${SERIES_COL[KHAC[mySeries]] || '#ffd700'}">${SERIES[KHAC[mySeries]] || ''}</span> (+10%), bị <span style="color:${SERIES_COL[+Object.keys(KHAC).find(k => KHAC[k] === mySeries)] || '#ffd700'}">${SERIES[+Object.keys(KHAC).find(k => KHAC[k] === mySeries)] || ''}</span> khắc (−10%)` : '';
 
-    const zl = ZONES.map((s, a) => {
-      const c = zoneOpen(a);
+    const zonesList = (typeof ZONES !== 'undefined' && Array.isArray(ZONES)) ? ZONES : [];
+    const zl = zonesList.map((s, a) => {
+      if (!s) return '';
+      const c = (typeof zoneOpen === 'function') ? zoneOpen(a) : true;
       const o = curI === a;
       const h = (typeof ZALT !== 'undefined' ? ZALT[a] : null);
-      const u = (S.zalt || {})[a] || 0;
+      const u = (S && S.zalt ? S.zalt[a] : 0) || 0;
       const f = (h && u && h[u - 1]) || s;
-      const r = (h && c) ? `<div class="zalt">${[s].concat(h).map((p, m) => `<button class="chip2${m === u ? ' on' : ''}" data-za="${a}:${m}">${esc(p.n)}</button>`).join('')}</div>` : '';
-      return `<button class="zrow${o ? ' cur' : ''}${c ? '' : ' lock'}" data-z="${a}" ${c ? '' : 'disabled'}><b>${esc(f.n)}</b><span>${(typeof seriesDots === 'function' ? seriesDots(f) : '')} Cấp ${s.lo}–${s.hi}${h ? ` · ${h.length + 1} bản đồ` : ''}</span></button>${r}`;
+      const name = (f && f.n) || (s && s.n) || `Khu vực ${a + 1}`;
+      const r = (h && c) ? `<div class="zalt">${[s].concat(h).map((p, m) => `<button class="chip2${m === u ? ' on' : ''}" data-za="${a}:${m}">${esc((p && p.n) || '')}</button>`).join('')}</div>` : '';
+      return `<button class="zrow${o ? ' cur' : ''}${c ? '' : ' lock'}" data-z="${a}" ${c ? '' : 'disabled'}><b>${esc(name)}</b><span>${(typeof seriesDots === 'function' && f ? seriesDots(f) : '')} Cấp ${s.lo || 1}–${s.hi || 100}${h ? ` · ${h.length + 1} bản đồ` : ''}</span></button>${r}`;
     }).join('');
+
+    const inZoneNum = typeof inZone === 'function' ? inZone(S ? S.stage : 1) : 1;
+    const zoneStagesNum = typeof ZONE_STAGES !== 'undefined' ? ZONE_STAGES : 10;
+    const isBoss = typeof isBossStage === 'function' && isBossStage(S ? S.stage : 1);
+    const stgLv = typeof stageLevel === 'function' ? stageLevel(S ? S.stage : 1) : 1;
+    const logList = (typeof R !== 'undefined' && R && Array.isArray(R.logs)) ? R.logs : [];
 
     const html = `
       ${(typeof todoHTML === 'function') ? todoHTML() : ''}
       <div class="jx-box" style="margin-bottom:6px;">
         <div class="jx-box-header">
-          <span id="curStageTitle">⚔️ Ải Hiện Tại: <b style="color:#ffd700;">${esc(z.n)}</b> (Ải ${inZone(S.stage)}/${ZONE_STAGES})${isBossStage(S.stage) ? ' <span style="color:#ef4444;font-weight:bold;">(Trùm)</span>' : ''}</span>
-          <span id="curStageLv" style="font-size:10px;color:#a39276;">Quái cấp ${stageLevel(S.stage)}</span>
+          <span id="curStageTitle">⚔️ Ải Hiện Tại: <b style="color:#ffd700;">${esc(z.n || '')}</b> (Ải ${inZoneNum}/${zoneStagesNum})${isBoss ? ' <span style="color:#ef4444;font-weight:bold;">(Trùm)</span>' : ''}</span>
+          <span id="curStageLv" style="font-size:10px;color:#a39276;">Quái cấp ${stgLv}</span>
         </div>
         <div class="row" style="justify-content:space-between;margin-bottom:6px;">
           <div style="display:flex;gap:4px;">
             <button class="jx-action-btn" id="bPrev" style="padding:2px 8px;">◀</button>
-            <button class="jx-action-btn ${S.push ? 'gold' : ''}" id="bPush" style="padding:2px 10px;">${S.push ? '⚔ Vượt ải' : '🛡 Luyện công'}</button>
-            <button class="jx-action-btn" id="bNext" style="padding:2px 8px;" ${S.stage < S.maxStage ? '' : 'disabled'}>▶</button>
+            <button class="jx-action-btn ${(S && S.push) ? 'gold' : ''}" id="bPush" style="padding:2px 10px;">${(S && S.push) ? '⚔ Vượt ải' : '🛡 Luyện công'}</button>
+            <button class="jx-action-btn" id="bNext" style="padding:2px 8px;" ${(S && S.stage < S.maxStage) ? '' : 'disabled'}>▶</button>
           </div>
-          <small class="dim" style="font-size:10px;">Quái hệ: ${(typeof seriesMix === 'function' ? seriesMix(z) : '')}${counterText}</small>
+          <small class="dim" style="font-size:10px;">Quái hệ: ${(typeof seriesMix === 'function' && z ? seriesMix(z) : '')}${counterText}</small>
         </div>
         <div style="font-size:11px;color:#cbd5e1;">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cAutoMap" ${S.autoMap !== false ? 'checked' : ''} class="accent-amber-500"> Tự động đổi bản đồ phù hợp cấp độ</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cAutoMap" ${(S && S.autoMap !== false) ? 'checked' : ''} class="accent-amber-500"> Tự động đổi bản đồ phù hợp cấp độ</label>
         </div>
       </div>
       <div class="jx-box" style="margin-bottom:6px;padding:4px 6px;">
         <div class="jx-box-header" style="margin-bottom:4px;padding-bottom:2px;">
           <span>📜 Nhật Ký Giang Hồ</span>
         </div>
-        <div class="log" id="logBox" style="max-height:100px;overflow-y:auto;font-size:11px;padding:2px 4px;">${R.logs.map(l => `<div>${l}</div>`).join('')}</div>
+        <div class="log" id="logBox" style="max-height:100px;overflow-y:auto;font-size:11px;padding:2px 4px;">${logList.map(l => `<div>${l}</div>`).join('')}</div>
       </div>
       <div class="jx-box">
-        <div class="jx-box-header">
-          <span>🗺 Bản Đồ Luyện Công</span>
-          <small style="font-size:10px;color:#a39276;">(Chọn bản đồ & bãi luyện)</small>
+        <div class="jx-box-header" style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <span>🗺 Bản Đồ Luyện Công</span>
+            <small style="font-size:10px;color:#a39276;">(Chọn bản đồ & bãi luyện)</small>
+          </div>
+          <button class="jx-action-btn gold sm" id="bOpenXaPhuInLog" style="padding:2px 8px;font-size:11px;cursor:pointer;" title="Mở Xa Phu dịch chuyển thành thị, thôn trấn">🗺️ Xa Phu</button>
         </div>
         <div class="zlist" style="max-height:220px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;">${zl}</div>
       </div>`;
@@ -277,6 +290,8 @@ function renderLog() {
       const bps = q('#bPush'); if (bps) bps.onclick = () => { if (typeof togglePushMode === 'function') togglePushMode(); else { S.push = !S.push; renderLog(); } };
       const cam = q('#cAutoMap');
       if (cam) cam.onchange = e => { S.autoMap = e.target.checked; if (S.autoMap) { S.chosenZone = null; checkAutoMap(); } save(); };
+      const bxp = q('#bOpenXaPhuInLog');
+      if (bxp) bxp.onclick = () => { if (typeof openMapTravelModal === 'function') openMapTravelModal(); };
 
       const pickZone = (a) => {
         const s = ZONES[a];
@@ -284,14 +299,14 @@ function renderLog() {
           toast(`🔒 Chưa đủ cấp! Cần đạt cấp ${s.lo} trở lên để đến ${s.n}.`);
           return;
         }
-        if (R.town) {
+        if (typeof R !== 'undefined' && R && R.town) {
           R.town = false;
           const tb = $('#townBar');
           if (tb) tb.classList.add('hidden');
         }
         S.autoMap = false;
         const u = (S.zalt || {})[a] || 0;
-        const curZ = (ZALT[a] && u && ZALT[a][u - 1]) || s;
+        const curZ = (typeof ZALT !== 'undefined' && ZALT[a] && u && ZALT[a][u - 1]) || s;
         if (curZ) {
           S.chosenZone = curZ.id;
           S.chosenStage = a * ZONE_STAGES + 1;
@@ -310,13 +325,13 @@ function renderLog() {
         if (!S.zalt) S.zalt = {};
         S.zalt[a] = c;
         S.autoMap = false;
-        if (R.town) {
+        if (typeof R !== 'undefined' && R && R.town) {
           R.town = false;
           const tb = $('#townBar');
           if (tb) tb.classList.add('hidden');
         }
         const targetStage = a * ZONE_STAGES + 1;
-        const picked = c === 0 ? ZONES[a] : (ZALT[a] && ZALT[a][c - 1]) || ZONES[a];
+        const picked = c === 0 ? ZONES[a] : (typeof ZALT !== 'undefined' && ZALT[a] && ZALT[a][c - 1]) || ZONES[a];
         if (picked) {
           S.chosenZone = picked.id;
           S.chosenStage = targetStage;
@@ -325,14 +340,16 @@ function renderLog() {
         if (zoneIdx(Math.min(S.stage, STAGES)) === a) {
           S.stage = targetStage;
           S.wave = 1;
-          R.waveKills = 0;
-          R.enemies = [];
-          R.spawnT = 0.3;
+          if (typeof R !== 'undefined' && R) {
+            R.waveKills = 0;
+            R.enemies = [];
+            R.spawnT = 0.3;
+            R.banner = { t: 2.5, text: picked.n, sub: `Bản đồ luyện công (Cấp ${picked.lo} - ${picked.hi})` };
+          }
           if (typeof obsLoad === 'function' && picked) obsLoad(picked.id);
           [H.x, H.y] = inWorld(WORLD.w / 2, WORLD.h / 2);
           snapCamera();
           if (typeof onZoneChange === 'function' && picked) onZoneChange(picked);
-          R.banner = { t: 2.5, text: picked.n, sub: `Bản đồ luyện công (Cấp ${picked.lo} - ${picked.hi})` };
         } else {
           gotoStage(targetStage);
         }
@@ -347,9 +364,10 @@ function renderLog() {
 
 function renderLogOnly() {
   const targets = [$('#t-log-f'), $('#t-log')].filter(Boolean);
+  const logList = (typeof R !== 'undefined' && R && Array.isArray(R.logs)) ? R.logs : [];
   targets.forEach(el => {
     const b = el.querySelector('#logBox');
-    if (b) b.innerHTML = R.logs.map(l => `<div>${l}</div>`).join('');
+    if (b) b.innerHTML = logList.map(l => `<div>${l}</div>`).join('');
   });
 }
 

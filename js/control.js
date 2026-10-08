@@ -357,7 +357,7 @@ function bindControls() {
     if (k === 'b' || k === 'F4') { ev.preventDefault(); if (typeof toggleWin === 'function') toggleWin('inv'); }
     if (k === 'k' || k === 'F5') { ev.preventDefault(); if (typeof toggleWin === 'function') toggleWin('skill'); }
     if (k === 'p') { ev.preventDefault(); if (typeof toggleWin === 'function') toggleWin('party'); }
-    if (k === 'm') { ev.preventDefault(); if (typeof openMapTravelModal === 'function') openMapTravelModal(); else if (typeof toggleWin === 'function') toggleWin('log'); }
+    if (k === 'm') { ev.preventDefault(); if (typeof toggleWin === 'function') toggleWin('log'); else if (typeof openMapTravelModal === 'function') openMapTravelModal(); }
     if (k === 'z' || k === 'F6') { ev.preventDefault(); if (typeof toggleWin === 'function') toggleWin('auto'); }
     if (k === 'f9' || ev.code === 'F9' || ev.key === 'F9') { ev.preventDefault(); cyclePkMode(); return; }
     if (k === 'Escape') { if (typeof closeAllWindows === 'function') closeAllWindows(); closeModal(); }
