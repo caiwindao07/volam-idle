@@ -880,14 +880,13 @@ function drawFx(f) {
   }
   return !!f.s2;
 }
-/* Giao dien di dong thu nho 20% (UI_SCALE_MOBILE): #app co width / height lon 1/0.8 lan roi transform: scale(0.8) (style.css, body.mob).
-   Toa do trong game theo px bo cuc (offsetWidth / Height, khong bi transform); DPR hieu dung nhan them he so thu nho de net. */
-const UI_SCALE_MOBILE = 0.8;
+/* Giao dien di dong ti le 1:1 chuan responsive, toa do cam ung va canvas sac net tuyet doi */
+const UI_SCALE_MOBILE = 1;
 const isMobileUI = () => !(typeof isDesktopLandscape === 'function' && isDesktopLandscape()) && !!(window.matchMedia && (window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 700));
-const uiScale = () => document.body.classList.contains('mob') ? UI_SCALE_MOBILE : 1;
+const uiScale = () => 1;
 function resizeArena() {
   const b = $('#battle'), box = { width: b.offsetWidth, height: b.offsetHeight };
-  DPR = Math.min(2, window.devicePixelRatio || 1) * uiScale();
+  DPR = Math.min(2, window.devicePixelRatio || 1);
   CV.width = Math.round(box.width * DPR); CV.height = Math.round(box.height * DPR);
   AR.w = box.width; AR.h = box.height; AR.top = 58; AR.bot = box.height - 12;   // khung nhin (man hinh)
   snapCamera();

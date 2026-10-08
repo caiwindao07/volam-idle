@@ -400,6 +400,7 @@ function bindControls() {
   const tapBtn = (el, fn) => el && el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); fn(); });
   tapBtn($('#bHp'), () => drinkNow('life')); tapBtn($('#bMp'), () => drinkNow('mana'));
   tapBtn($('#bTp'), () => R.town ? backFromTown() : goTown());
+  tapBtn($('#bMount'), () => { if (typeof toggleMountRide === 'function') toggleMountRide(); });
   const bCtrl = $('#ctrlBtn'); if (bCtrl) bCtrl.onclick = () => setCtrl(manual() ? 'auto' : 'manual');
   const pkBtn = $('#btnPkMode'); if (pkBtn) pkBtn.onclick = () => cyclePkMode();
   const pkChip = $('#pkChipBtn'); if (pkChip) pkChip.onclick = () => cyclePkMode();

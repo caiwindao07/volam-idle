@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.json">
 <title>Võ Lâm Idle</title>
 <link rel="stylesheet" href="fonts/ibm-plex-mono.css">
-<link rel="stylesheet" href="style.css?v=3.7">
+<link rel="stylesheet" href="style.css?v=4.0">
 </head>
 <body>
 <div id="app">
@@ -222,16 +222,23 @@
       <div class="jx-float-win hidden" id="fw-cloak-meridian" style="width: 520px;"></div>
     </div>
 
-    <!-- Cụm chiêu thức võ công 1-4 & Chiêu chính nổi bên trên action bar (không che thanh bar dưới) -->
+    <!-- Cụm chiêu thức võ công 1-4 & Cụm thuốc hỗ trợ nổi trên màn hình chiến đấu -->
     <div class="jx-skill-belt" id="pad">
-      <button class="pbtn sk" data-i="0" title="Chiêu 1 [Phím 1]"><span class="key-tag">1</span><i></i><b>1</b></button>
-      <button class="pbtn sk" data-i="1" title="Chiêu 2 [Phím 2]"><span class="key-tag">2</span><i></i><b>2</b></button>
-      <button class="pbtn sk" data-i="2" title="Chiêu 3 [Phím 3]"><span class="key-tag">3</span><i></i><b>3</b></button>
-      <button class="pbtn sk" data-i="3" title="Chiêu 4 [Phím 4]"><span class="key-tag">4</span><i></i><b>4</b></button>
-      <!-- Giữ lại các nút pot ẩn trong pad để tương thích ngược logic cũ -->
-      <button class="pbtn pot hp hidden" id="bHp"><div class="cd"></div><span>HP</span></button>
-      <button class="pbtn pot mp hidden" id="bMp"><div class="cd"></div><span>MP</span></button>
-      <button class="pbtn pot tp hidden" id="bTp"><div class="cd"></div><span>Về<br>thành</span></button>
+      <!-- Cụm thuốc & phụ trợ nổi trên mobile (HP, MP, Về thành, Cưỡi ngựa) -->
+      <div class="pad-pots-group" id="padPots">
+        <button class="pbtn pot hp" id="bHp" title="Bơm Sinh Lực (HP)"><div class="cd"></div><span>HP</span></button>
+        <button class="pbtn pot mp" id="bMp" title="Bơm Nội Lực (MP)"><div class="cd"></div><span>MP</span></button>
+        <button class="pbtn pot tp" id="bTp" title="Thổ Địa Phù"><div class="cd"></div><span>Về</span></button>
+        <button class="pbtn pot mount" id="bMount" title="Chiến Mã [Phím 4]"><div class="cd"></div><span>Mã</span></button>
+      </div>
+
+      <!-- Cụm chiêu thức võ công 1-4 -->
+      <div class="pad-skills-group" id="padSkills">
+        <button class="pbtn sk" data-i="0" title="Chiêu 1 [Phím 1]"><span class="key-tag">1</span><i></i><b>1</b></button>
+        <button class="pbtn sk" data-i="1" title="Chiêu 2 [Phím 2]"><span class="key-tag">2</span><i></i><b>2</b></button>
+        <button class="pbtn sk" data-i="2" title="Chiêu 3 [Phím 3]"><span class="key-tag">3</span><i></i><b>3</b></button>
+        <button class="pbtn sk" data-i="3" title="Chiêu 4 [Phím 4]"><span class="key-tag">4</span><i></i><b>4</b></button>
+      </div>
     </div>
 
     <!-- Classical Bottom Action & Skill Hotbar (Chuẩn hình 1 JX) -->
@@ -313,7 +320,7 @@ if (window.caches) {
 <script src="js/vocong.js?v=3.8"></script>
 <script src="js/skillsys.js?v=3.8"></script>
 <script src="js/look.js?v=3.8"></script>
-<script src="js/ride.js?v=3.8"></script>
+<script src="js/ride.js?v=4.0"></script>
 <script src="js/horse.js?v=3.8"></script>
 <script src="js/field.js?v=3.8"></script>
 <script src="js/thuyen.js?v=3.8"></script>
@@ -328,15 +335,15 @@ if (window.caches) {
 <script src="js/combat.js?v=3.7"></script>
 <script src="js/save.js?v=3.7"></script>
 <script src="js/town_npc.js?v=3.7"></script>
-<script src="js/render.js?v=3.8"></script>
+<script src="js/render.js?v=4.0"></script>
 <script src="js/doll-data.js?v=3.8"></script>
 <script src="js/doll.js?v=3.8"></script>
 <script src="js/equip_res.js?v=3.8"></script>
 <script src="js/audio.js?v=3.8"></script>
-<script src="js/ui.js?v=3.8"></script>
+<script src="js/ui.js?v=4.0"></script>
 <script src="js/builds.js?v=3.8"></script>
 <script src="js/depth.js?v=3.9"></script>
-<script src="js/control.js?v=3.8"></script>
+<script src="js/control.js?v=4.0"></script>
 <script src="js/quick.js?v=3.8"></script>
 <script src="js/shop.js?v=3.8"></script>
 <script src="js/rewards.js?v=3.8"></script>

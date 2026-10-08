@@ -404,8 +404,8 @@ function renderCharAttrib(targetEl) {
   const attrs = Object.entries(ATTR_VI).map(([k, vi]) => `<div class="row" style="font-size:11px;justify-content:space-between;padding:2px 0;"><span>${vi}</span><div style="display:flex;align-items:center;gap:4px;"><b style="color:#fde047;min-width:28px;text-align:right;">${S.attr[k]}</b><span class="pm"><button class="plus" data-a="${k}" ${S.attrPts ? '' : 'disabled'}>+</button><button class="minus" data-a="${k}" title="Rút lại 1 điểm" ${S.attr[k] > 0 ? '' : 'disabled'}>−</button></span></div></div>`).join('');
 
   el.innerHTML = `
-    <!-- Layout Ngang 2 Cột: Cột Trái Trang Bị & Cột Phải Thuộc Tính (Chuẩn Ảnh Minh Họa PC) -->
-    <div style="display:grid;grid-template-columns:330px 1fr;gap:8px;align-items:start;">
+    <!-- Layout Trang Bị & Thuộc Tính (PC 2 Cột, Mobile 1 Cột) -->
+    <div class="jx-char-attrib-grid">
       <!-- CỘT TRÁI: PROFILE & PAPERDOLL TRANG BỊ -->
       <div style="display:flex;flex-direction:column;gap:5px;">
         <!-- 1. Header Avatar & Chi so nhan vat -->

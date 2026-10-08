@@ -401,15 +401,21 @@ select,textarea{background:#0b100e;color:var(--text);border:1px solid var(--line
 #ktcBtn{position:absolute;right:8px;top:252px;z-index:4}
 #marketBtn{position:absolute;right:8px;top:278px;z-index:4}
 body.sv #campBtn,body.sv #mountBtn,body.sv #bossBtn,body.sv #ktcBtn,body.sv #marketBtn{display:none!important}
-#pad{position:absolute;right:14px;left:auto;bottom:60px;width:auto;height:auto;z-index:30;display:flex;flex-direction:row;align-items:center;gap:8px;pointer-events:none;background:rgba(12,9,6,0.75);padding:4px 8px;border-radius:26px;border:1px solid #8e6c38;box-shadow:0 4px 12px rgba(0,0,0,0.7)}
-.pbtn{position:relative;width:44px;height:44px;border-radius:50%;border:2px solid var(--gold2);background:#0c120f center/cover no-repeat;overflow:hidden;pointer-events:auto;touch-action:none;box-shadow:0 2px 6px #000b}
+#pad{position:absolute;right:10px;left:auto;bottom:60px;width:auto;height:auto;z-index:30;display:flex;flex-direction:row;align-items:center;gap:8px;pointer-events:none}
+.pad-pots-group,.pad-skills-group{display:flex;flex-direction:row;align-items:center;gap:6px;pointer-events:auto;background:rgba(12,9,6,0.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:4px 8px;border-radius:26px;border:1.5px solid #8e6c38;box-shadow:0 4px 14px rgba(0,0,0,0.85)}
+.pbtn{position:relative;width:44px;height:44px;border-radius:50%;border:2px solid var(--gold2);background:#0c120f center/cover no-repeat;overflow:hidden;pointer-events:auto;touch-action:manipulation;user-select:none;box-shadow:0 2px 6px #000b;display:grid;place-items:center;transition:transform 0.1s}
 .pbtn i{position:absolute;inset:0;background:center/cover no-repeat}
 .pbtn b{position:absolute;right:3px;bottom:0;font-size:9px;color:#fff;text-shadow:0 0 2px #000}
 .pbtn.empty{border-style:dashed;opacity:.5} .pbtn.cur{border-color:#ffe07a;box-shadow:0 0 10px #ffd24a}
-.pbtn:active{transform:scale(.92)}
-.pbtn.pot{width:38px;height:38px;margin-top:6px} .pbtn.pot span{position:absolute;inset:0;display:grid;place-items:center;font:400 10px/1.05 var(--font);color:#fff;text-shadow:0 0 3px #000;text-align:center}
-.pbtn.hp{background:radial-gradient(#b3342a,#3a0c08)} .pbtn.mp{background:radial-gradient(#3a6ad0,#0c1a40)} .pbtn.tp{background:radial-gradient(#c9a23a,#3a2a08)}
-.pbtn .cd{position:absolute;inset:0;background:conic-gradient(#000b var(--p,0%),transparent 0);z-index:1}
+.pbtn:active{transform:scale(.92);filter:brightness(1.2)}
+.pbtn.pot{width:40px;height:40px}
+.pbtn.pot span{position:absolute;inset:0;display:grid;place-items:center;font:700 11px/1 var(--font);color:#fff;text-shadow:0 1px 2px #000;text-align:center;z-index:2}
+.pbtn.hp{background:radial-gradient(#b3342a,#3a0c08);border-color:#ef4444}
+.pbtn.mp{background:radial-gradient(#2563eb,#0c1a40);border-color:#3b82f6}
+.pbtn.tp{background:radial-gradient(#d97706,#3a2a08);border-color:#f59e0b}
+.pbtn.mount{background:radial-gradient(#6b522a,#20170a);border-color:#a8864a}
+.pbtn.mount.on{border-color:#ffd700;box-shadow:0 0 10px #ffd700;background:radial-gradient(#92611a,#352109)}
+.pbtn .cd{position:absolute;inset:0;background:conic-gradient(#000b var(--p,0%),transparent 0);z-index:1;pointer-events:none}
 #townBar{position:absolute;left:8px;right:8px;top:64px;z-index:5;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:#000c;border:1px solid var(--gold2);border-radius:6px}
 #townBar b{flex:1;color:var(--gold);font-family:var(--font)}
 .skl .slots{display:flex;gap:3px;grid-column:2/5} .skl .slots button{font-size:10px;padding:1px 6px;border:1px solid var(--line2);border-radius:4px}
@@ -478,13 +484,23 @@ body.sv #inBtn{top:44px}
 #svBtn{left:8px!important;right:auto!important;top:auto!important;bottom:160px}   /* cum nut trai: xoay chieu / luyen cong / chuot-joystick xep doc tren joystick, khong de len cum chieu thuc ben phai */
 body.sv #rotBtn{display:none!important}
 
-/* giao dien di dong nho di 20%: ung dung rong / cao 1,25 lan roi thu nho 0,8 (uiScale trong render.js) */
-body.mob #app{transform:scale(.8);transform-origin:0 0;width:125vw!important;height:calc(var(--app-h,100dvh)*1.25)!important;margin:0!important;max-width:none}
+/* Giao diện di động: Chuẩn 100vw x 100dvh mượt mà, cảm ứng 1:1 chính xác tuyệt đối */
+body.mob #app,
+#app {
+  transform: none !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  height: var(--app-h, 100dvh) !important;
+  margin: 0 !important;
+}
 
-/* cong / rut diem / thong tin */
-.pm{display:inline-flex;gap:4px} .pm button{width:28px}
-.minus{width:28px;height:26px;border-radius:5px;border:1px solid #a55;color:#f88;background:#2e2222;font-weight:700}
-.minus:disabled{opacity:.35}
+/* cộng / rút điểm tiềm năng / thông tin */
+.pm { display: inline-flex; gap: 6px; align-items: center; }
+.pm button { width: 30px; height: 28px; border-radius: 5px; font-size: 14px; font-weight: 700; cursor: pointer; touch-action: manipulation; }
+.plus { border: 1px solid #22c55e; color: #86efac; background: linear-gradient(180deg, #166534, #14532d); }
+.plus:disabled { opacity: .35; cursor: default; }
+.minus { width: 30px; height: 28px; border-radius: 5px; border: 1px solid #a55; color: #f88; background: #2e2222; font-weight: 700; }
+.minus:disabled { opacity: .35; cursor: default; }
 .skinfo{width:28px;height:26px;border-radius:5px;border:1px solid var(--line2);color:var(--dim);background:#1b2420;font-style:italic}
 .skl .slots{grid-column:2/5}
 
@@ -909,12 +925,256 @@ body.deskland #jx-float-overlay {
 .jx-float-body::-webkit-scrollbar-track { background: #0a0806; }
 .jx-float-body::-webkit-scrollbar-thumb { background: #5a4425; border-radius: 3px; }
 
-/* Portrait: cửa sổ nổi ẩn, nội dung hiện trong #panel bình thường */
-@media (orientation:portrait) and (max-width: 899px){
-  #jx-float-overlay { display:none!important; }
-  #panel { display:block; }
-  #jx-chatbox { display:none!important; }
-  #jx-action-bar { display:none!important; }
+/* =========================================================================
+   MOBILE PORTRAIT & SMALL SCREEN RESPONSIVE LAYOUT (Chuẩn công thái học)
+   ========================================================================= */
+@media (max-width: 899px), (orientation: portrait) {
+  #jx-float-overlay { display: none !important; }
+  #panel { display: block; flex: 1; min-height: 0; overflow-y: auto; }
+  #jx-chatbox { display: none !important; }
+  #jx-action-bar { display: none !important; }
+
+  /* Pad trên mobile: cụm thuốc và cụm chiêu ở góc phải dưới sân đấu */
+  #pad {
+    position: absolute !important;
+    right: 8px !important;
+    bottom: 8px !important;
+    left: auto !important;
+    top: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 6px !important;
+    pointer-events: none !important;
+    z-index: 25 !important;
+  }
+  .pad-pots-group {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 3px 6px !important;
+    border-radius: 20px !important;
+    background: rgba(14, 10, 6, 0.88) !important;
+    border: 1px solid #8e6c38 !important;
+  }
+  .pad-pots-group .pbtn.pot {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .pad-skills-group {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 4px 6px !important;
+    border-radius: 24px !important;
+    background: rgba(14, 10, 6, 0.92) !important;
+    border: 1.5px solid #d4af37 !important;
+  }
+  .pad-skills-group .pbtn.sk {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  /* Cột Ải & Sân đấu tỷ lệ cân đối trên di động */
+  #battle {
+    flex: 0 0 46% !important;
+    min-height: 220px !important;
+  }
+
+  /* Top HUD tối ưu cho màn hình cảm ứng di động */
+  #top {
+    flex-wrap: wrap !important;
+    padding: calc(4px + var(--safe-t)) 6px 4px !important;
+    gap: 4px 6px !important;
+    height: auto !important;
+    min-height: 44px !important;
+  }
+  .hud-clock,
+  .hud-online-badge,
+  #compactBtn,
+  #hudRankTag {
+    display: none !important;
+  }
+  .hud-left-cluster {
+    gap: 5px !important;
+  }
+  .lvbox {
+    width: 36px !important;
+    height: 36px !important;
+    border-width: 1.5px !important;
+  }
+  .lvbox #lv {
+    min-width: 18px !important;
+    height: 16px !important;
+    font-size: 10px !important;
+    padding: 0 2px !important;
+    right: -4px !important;
+    bottom: -4px !important;
+  }
+  .lvbox .lvplus {
+    width: 14px !important;
+    height: 14px !important;
+    font-size: 9px !important;
+  }
+  .hud-bars-col {
+    width: 130px !important;
+    gap: 2px !important;
+  }
+  .hud-bars-row .bar {
+    height: 11px !important;
+  }
+  .hud-bars-row .bar span {
+    font-size: 8px !important;
+    line-height: 11px !important;
+  }
+  .hud-bars-row:nth-child(2) {
+    display: none !important;
+  }
+  .topmid {
+    padding: 0 2px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 1 1 auto !important;
+  }
+  .topmid .row {
+    gap: 4px !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  #heroName {
+    display: none !important;
+  }
+  #stageLbl {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+  }
+  .push-mode-btn,
+  .pk-mode-btn {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+  }
+  .hud-map-banner {
+    padding: 2px 6px !important;
+    font-size: 10px !important;
+  }
+  .hud-right-cluster {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-top: 3px !important;
+    border-top: 1px solid rgba(142, 108, 56, 0.25) !important;
+  }
+  .hud-right-cluster::-webkit-scrollbar {
+    display: none !important;
+  }
+  .vip-top-btn,
+  .act-top-btn,
+  .forge-top-btn,
+  .casino-top-btn,
+  #giftBtn {
+    font-size: 10px !important;
+    padding: 2px 7px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    height: 26px !important;
+    border-radius: 4px !important;
+  }
+
+  /* Thanh tabs điều hướng dưới đáy màn hình */
+  #tabs {
+    height: calc(50px + var(--safe-b, 0px)) !important;
+    padding-bottom: var(--safe-b, 0px) !important;
+    background: linear-gradient(180deg, #241b12 0%, #0d0a06 100%) !important;
+    border-top: 2px solid #8e6c38 !important;
+  }
+  #tabs button {
+    padding: 4px 2px calc(4px + var(--safe-b, 0px)) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    touch-action: manipulation !important;
+  }
+
+  /* Layout Trang Bị & Thuộc Tính trên di động: cuộn dọc mượt mà */
+  .jx-char-attrib-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Layout Hành trang trên di động: 5 cột x 56px, nút tiện ích phía dưới */
+  .jx-inv-layout-split {
+    flex-direction: column !important;
+    gap: 8px !important;
+    height: auto !important;
+  }
+  .jx-inv-grid-col {
+    width: 100% !important;
+    flex: none !important;
+  }
+  .jx-inv-grid-10 {
+    grid-template-columns: repeat(5, 1fr) !important;
+    grid-auto-rows: min(58px, 17vw) !important;
+    gap: 4px !important;
+    padding: 6px !important;
+    min-height: 260px !important;
+    max-height: 48vh !important;
+  }
+  .jx-inv-grid-10 .it {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: 1 !important;
+  }
+  .jx-inv-grid-10 .it img {
+    max-width: 90% !important;
+    max-height: 90% !important;
+    object-fit: contain !important;
+  }
+  .jx-inv-ctrl-col {
+    width: 100% !important;
+    flex: none !important;
+    max-height: none !important;
+    box-sizing: border-box !important;
+  }
+  .jx-inv-ctrl-col .jx-ctrl-group {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 4px !important;
+  }
+
+  /* Hộp thoại Modal & Thông báo trên di động */
+  #modal {
+    padding: 6px !important;
+  }
+  .mbox {
+    width: 100% !important;
+    max-width: calc(100vw - 12px) !important;
+    max-height: 88vh !important;
+    padding: 12px 8px !important;
+  }
+  .mx {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 15px !important;
+    line-height: 30px !important;
+    top: 6px !important;
+    right: 6px !important;
+  }
+}
+
+@media (min-width: 900px) and (orientation: landscape) {
+  .pad-pots-group {
+    display: none !important;
+  }
+  #pad {
+    bottom: 60px !important;
+    right: 14px !important;
+  }
 }
 
 /* =========================================================================
