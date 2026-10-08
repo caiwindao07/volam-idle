@@ -5,8 +5,12 @@ const AR = { w: 400, h: 520, top: 70, bot: 470 };
 const H = { x: 768, y: 768, face: 1 };
 
 /* ---------- vung / ai ---------- */
-const zoneIdx = st => Math.min(ZONES.length - 1, Math.floor((st - 1) / ZONE_STAGES));
-const zoneOf = st => ZONES[zoneIdx(st)];
+const zoneIdx = st => Math.min(ZONES.length - 1, Math.floor((Math.max(1, st) - 1) / ZONE_STAGES));
+const zoneOf = st => {
+  const n = zoneIdx(st), e = typeof S !== 'undefined' && S && S.zalt && S.zalt[n];
+  const za = typeof ZALT !== 'undefined' ? ZALT : (typeof W !== 'undefined' && W.zalt ? W.zalt : {});
+  return (e && za && za[n] && za[n][e - 1]) || ZONES[n] || ZONES[0];
+};
 const inZone = st => ((st - 1) % ZONE_STAGES) + 1;
 function stageLevel(st) {
   if (st > STAGES) return Math.min(MAX_LEVEL, 160 + Math.floor((st - STAGES) / 2));   // ai sau vung cuoi kep o cap toi da: nhip len cap 99 (tests: pacing) da hieu chinh voi kep nay; bo kep thi cap 99 mat > 60 gio

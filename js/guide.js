@@ -48,13 +48,17 @@ function todoList() {
   const out = [];
   if (!S || !S.fac) return out;
   if (S.attrPts > 0) out.push({ k: 'attr', t: `${S.attrPts} điểm tiềm năng`, go: () => showTab('char') });
-  if (S.skPts > 0 && FAC[S.fac].skills.some(id => canLearn(SK[id]))) out.push({ k: 'skill', t: `${S.skPts} điểm kỹ năng`, go: () => showTab('skill') });
-  const better = S.inv.filter(it => betterThanEquipped(it)).length;
-  if (better) out.push({ k: 'gear', t: `${better} món mạnh hơn đồ đang mặc`, go: () => showTab('inv') });
-  if (giftPending()) out.push({ k: 'gift', t: 'Có quà chờ nhận', go: () => giftModal() });
-  const fr = forgeReadyCounts(), fn = fr.shard + fr.up + fr.ench + fr.fuse;
-  if (fn && !S.autoForge) out.push({ k: 'forge', t: `Rèn đồ: ${[fr.shard && 'ghép mảnh', fr.ench && 'khảm', fr.fuse && 'hợp Huyền Tinh', fr.up && 'thăng cấp'].filter(Boolean).join(', ')}`, go: () => htModal() });
-  if (S.inv.length >= INV_MAX - 3) out.push({ k: 'full', t: 'Hành trang gần đầy', go: () => showTab('inv') });
+  if (S.skPts > 0 && FAC[S.fac] && FAC[S.fac].skills && FAC[S.fac].skills.some(id => typeof canLearn === 'function' && canLearn(SK[id]))) out.push({ k: 'skill', t: `${S.skPts} điểm kỹ năng`, go: () => showTab('skill') });
+  if (typeof betterThanEquipped === 'function') {
+    const better = S.inv.filter(it => betterThanEquipped(it)).length;
+    if (better) out.push({ k: 'gear', t: `${better} món mạnh hơn đồ đang mặc`, go: () => showTab('inv') });
+  }
+  if (typeof giftPending === 'function' && giftPending()) out.push({ k: 'gift', t: 'Có quà chờ nhận', go: () => { if (typeof giftModal === 'function') giftModal(); } });
+  if (typeof forgeReadyCounts === 'function') {
+    const fr = forgeReadyCounts(), fn = (fr.shard || 0) + (fr.up || 0) + (fr.ench || 0) + (fr.fuse || 0);
+    if (fn && !S.autoForge) out.push({ k: 'forge', t: `Rèn đồ: ${[fr.shard && 'ghép mảnh', fr.ench && 'khảm', fr.fuse && 'hợp Huyền Tinh', fr.up && 'thăng cấp'].filter(Boolean).join(', ')}`, go: () => { if (typeof htModal === 'function') htModal(); } });
+  }
+  if (S.inv && S.inv.length >= (typeof INV_MAX !== 'undefined' ? INV_MAX : 200) - 3) out.push({ k: 'full', t: 'Hành trang gần đầy', go: () => showTab('inv') });
   if (S.lvl >= 5 && Date.now() - (S.bakAt || 0) > 7 * 86400000) out.push({ k: 'bak', t: 'Nên tải file sao lưu', go: () => showTab('more') });
   return out;
 }

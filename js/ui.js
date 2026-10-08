@@ -214,100 +214,152 @@ function itemModal(it, slot) {
 
 /* ---------- the: chien truong ---------- */
 function renderLog() {
-  const z = zoneOf(Math.min(S.stage, STAGES));
-  const el = tabEl('log'); if (!el) return;
+  try {
+    const curStage = Math.min(S.stage || 1, STAGES);
+    const z = zoneOf(curStage);
+    const targets = [$('#t-log-f'), $('#t-log')].filter(Boolean);
+    if (!targets.length) return;
 
-  const existingZlist = el.querySelector('.zlist');
-  if (existingZlist) {
-    // Bản đồ đã được dựng sẵn -> Cập nhật nhanh trạng thái thay vì xóa innerHTML (tránh bị giật cuộn lên đầu)
-    const headerTitle = el.querySelector('#curStageTitle');
-    if (headerTitle) {
-      headerTitle.innerHTML = `⚔️ Ải Hiện Tại: <b style="color:#ffd700;">${esc(z.n)}</b> (Ải ${inZone(S.stage)}/${ZONE_STAGES})${isBossStage(S.stage) ? ' <span style="color:#ef4444;font-weight:bold;">(Trùm)</span>' : ''}`;
-    }
-    const headerLv = el.querySelector('#curStageLv');
-    if (headerLv) headerLv.textContent = `Quái cấp ${stageLevel(S.stage)}`;
-    const bPush = el.querySelector('#bPush');
-    if (bPush) {
-      bPush.className = `jx-action-btn ${S.push ? 'gold' : ''}`;
-      bPush.textContent = S.push ? '⚔ Vượt ải' : '🛡 Luyện công';
-    }
-    const bNext = el.querySelector('#bNext');
-    if (bNext) bNext.disabled = S.stage >= S.maxStage;
+    const curI = zoneIdx(curStage);
+    const mySeries = (typeof heroSeries === 'function') ? heroSeries() : (FAC[S.fac] ? FAC[S.fac].series : 0);
+    const counterText = (FAC[S.fac] && typeof KHAC !== 'undefined') ? ` · bạn hệ <span style="color:${SERIES_COL[mySeries]}">${SERIES[mySeries]}</span>: khắc <span style="color:${SERIES_COL[KHAC[mySeries]]}">${SERIES[KHAC[mySeries]]}</span> (+10%), bị <span style="color:${SERIES_COL[+Object.keys(KHAC).find(k => KHAC[k] === mySeries)]}">${SERIES[+Object.keys(KHAC).find(k => KHAC[k] === mySeries)]}</span> khắc (−10%)` : '';
 
-    const curI = zoneIdx(Math.min(S.stage, STAGES));
-    const rows = existingZlist.querySelectorAll('.zrow');
-    rows.forEach((b, i) => {
-      const first = i * ZONE_STAGES + 1, open = S.maxStage >= first, cur = curI === i;
-      b.className = `zrow${cur ? ' cur' : ''}${open ? '' : ' lock'}`;
-      b.disabled = !open;
-    });
+    const zl = ZONES.map((s, a) => {
+      const c = zoneOpen(a);
+      const o = curI === a;
+      const h = (typeof ZALT !== 'undefined' ? ZALT[a] : null);
+      const u = (S.zalt || {})[a] || 0;
+      const f = (h && u && h[u - 1]) || s;
+      const r = (h && c) ? `<div class="zalt">${[s].concat(h).map((p, m) => `<button class="chip2${m === u ? ' on' : ''}" data-za="${a}:${m}">${esc(p.n)}</button>`).join('')}</div>` : '';
+      return `<button class="zrow${o ? ' cur' : ''}${c ? '' : ' lock'}" data-z="${a}" ${c ? '' : 'disabled'}><b>${esc(f.n)}</b><span>${(typeof seriesDots === 'function' ? seriesDots(f) : '')} Cấp ${s.lo}–${s.hi}${h ? ` · ${h.length + 1} bản đồ` : ''}</span></button>${r}`;
+    }).join('');
 
-    const lb = el.querySelector('#logBox');
-    if (lb) lb.innerHTML = R.logs.map(l => `<div>${l}</div>`).join('');
-    return;
-  }
-
-  const zl = ZONES.map((q, i) => {
-    const first = i * ZONE_STAGES + 1, open = S.maxStage >= first, cur = zoneIdx(Math.min(S.stage, STAGES)) === i;
-    return `<button class="zrow${cur ? ' cur' : ''}${open ? '' : ' lock'}" data-z="${i}" ${open ? '' : 'disabled'}><b>${esc(q.n)}</b><span>Cấp ${q.lo}–${q.hi}</span></button>`;
-  }).join('');
-
-  el.innerHTML = `
-    ${todoHTML()}
-    <div class="jx-box" style="margin-bottom:6px;">
-      <div class="jx-box-header">
-        <span id="curStageTitle">⚔️ Ải Hiện Tại: <b style="color:#ffd700;">${esc(z.n)}</b> (Ải ${inZone(S.stage)}/${ZONE_STAGES})${isBossStage(S.stage) ? ' <span style="color:#ef4444;font-weight:bold;">(Trùm)</span>' : ''}</span>
-        <span id="curStageLv" style="font-size:10px;color:#a39276;">Quái cấp ${stageLevel(S.stage)}</span>
-      </div>
-      <div class="row" style="justify-content:space-between;margin-bottom:6px;">
-        <div style="display:flex;gap:4px;">
-          <button class="jx-action-btn" id="bPrev" style="padding:2px 8px;">◀</button>
-          <button class="jx-action-btn ${S.push ? 'gold' : ''}" id="bPush" style="padding:2px 10px;">${S.push ? '⚔ Vượt ải' : '🛡 Luyện công'}</button>
-          <button class="jx-action-btn" id="bNext" style="padding:2px 8px;" ${S.stage < S.maxStage ? '' : 'disabled'}>▶</button>
+    const html = `
+      ${(typeof todoHTML === 'function') ? todoHTML() : ''}
+      <div class="jx-box" style="margin-bottom:6px;">
+        <div class="jx-box-header">
+          <span id="curStageTitle">⚔️ Ải Hiện Tại: <b style="color:#ffd700;">${esc(z.n)}</b> (Ải ${inZone(S.stage)}/${ZONE_STAGES})${isBossStage(S.stage) ? ' <span style="color:#ef4444;font-weight:bold;">(Trùm)</span>' : ''}</span>
+          <span id="curStageLv" style="font-size:10px;color:#a39276;">Quái cấp ${stageLevel(S.stage)}</span>
         </div>
-        <small class="dim" style="font-size:10px;">Hệ: ${z.sw.map((w, i) => w ? `<span style="color:${SERIES_COL[i]}">${SERIES[i]}</span>` : '').filter(Boolean).join(' ')}</small>
+        <div class="row" style="justify-content:space-between;margin-bottom:6px;">
+          <div style="display:flex;gap:4px;">
+            <button class="jx-action-btn" id="bPrev" style="padding:2px 8px;">◀</button>
+            <button class="jx-action-btn ${S.push ? 'gold' : ''}" id="bPush" style="padding:2px 10px;">${S.push ? '⚔ Vượt ải' : '🛡 Luyện công'}</button>
+            <button class="jx-action-btn" id="bNext" style="padding:2px 8px;" ${S.stage < S.maxStage ? '' : 'disabled'}>▶</button>
+          </div>
+          <small class="dim" style="font-size:10px;">Quái hệ: ${(typeof seriesMix === 'function' ? seriesMix(z) : '')}${counterText}</small>
+        </div>
+        <div style="font-size:11px;color:#cbd5e1;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cAutoMap" ${S.autoMap !== false ? 'checked' : ''} class="accent-amber-500"> Tự động đổi bản đồ phù hợp cấp độ</label>
+        </div>
       </div>
-      <div style="font-size:11px;color:#cbd5e1;">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cAutoMap" ${S.autoMap !== false ? 'checked' : ''} class="accent-amber-500"> Tự động đổi bản đồ phù hợp cấp độ</label>
+      <div class="jx-box" style="margin-bottom:6px;padding:4px 6px;">
+        <div class="jx-box-header" style="margin-bottom:4px;padding-bottom:2px;">
+          <span>📜 Nhật Ký Giang Hồ</span>
+        </div>
+        <div class="log" id="logBox" style="max-height:100px;overflow-y:auto;font-size:11px;padding:2px 4px;">${R.logs.map(l => `<div>${l}</div>`).join('')}</div>
       </div>
-    </div>
-    <div class="jx-box" style="margin-bottom:6px;padding:4px 6px;">
-      <div class="jx-box-header" style="margin-bottom:4px;padding-bottom:2px;">
-        <span>📜 Nhật Ký Giang Hồ</span>
-      </div>
-      <div class="log" id="logBox" style="max-height:100px;overflow-y:auto;font-size:11px;padding:2px 4px;">${R.logs.map(l => `<div>${l}</div>`).join('')}</div>
-    </div>
-    <div class="jx-box">
-      <div class="jx-box-header">
-        <span>🗺 Bản Đồ Luyện Công</span>
-      </div>
-      <div class="zlist" style="max-height:180px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;">${zl}</div>
-    </div>`;
-  const q = s => el.querySelector(s), qa = s => el.querySelectorAll(s);
-  bindTodo();
-  const bp = q('#bPrev'); if (bp) bp.onclick = () => gotoStage(S.stage - 1);
-  const bn = q('#bNext'); if (bn) bn.onclick = () => gotoStage(S.stage + 1);
-  const bps = q('#bPush'); if (bps) bps.onclick = () => { if (typeof togglePushMode === 'function') togglePushMode(); else { S.push = !S.push; renderLog(); } };
-  const cam = q('#cAutoMap');
-  if (cam) cam.onchange = e => { S.autoMap = e.target.checked; if (S.autoMap) { S.chosenZone = null; checkAutoMap(); } save(); };
-  qa('.zrow').forEach(b => b.onclick = () => {
-    const zi = +b.dataset.z;
-    const zObj = ZONES[zi];
-    if (zObj && S.lvl < zObj.lo) {
-      toast(`🔒 Chưa đủ cấp! Cần đạt cấp ${zObj.lo} trở lên để đến ${zObj.n}.`);
-      return;
-    }
-    if (zObj) {
-      S.chosenZone = zObj.id;
-      S.chosenStage = zi * ZONE_STAGES + 1;
-      toast(`🚩 Đã chọn luyện công tại ${zObj.n}!`);
-    }
-    gotoStage(zi * ZONE_STAGES + 1);
+      <div class="jx-box">
+        <div class="jx-box-header">
+          <span>🗺 Bản Đồ Luyện Công</span>
+          <small style="font-size:10px;color:#a39276;">(Chọn bản đồ & bãi luyện)</small>
+        </div>
+        <div class="zlist" style="max-height:220px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;">${zl}</div>
+      </div>`;
+
+    targets.forEach(el => {
+      el.innerHTML = html;
+
+      const q = s => el.querySelector(s), qa = s => el.querySelectorAll(s);
+      if (typeof bindTodo === 'function') bindTodo();
+      const bp = q('#bPrev'); if (bp) bp.onclick = () => gotoStage(S.stage - 1);
+      const bn = q('#bNext'); if (bn) bn.onclick = () => gotoStage(S.stage + 1);
+      const bps = q('#bPush'); if (bps) bps.onclick = () => { if (typeof togglePushMode === 'function') togglePushMode(); else { S.push = !S.push; renderLog(); } };
+      const cam = q('#cAutoMap');
+      if (cam) cam.onchange = e => { S.autoMap = e.target.checked; if (S.autoMap) { S.chosenZone = null; checkAutoMap(); } save(); };
+
+      const pickZone = (a) => {
+        const s = ZONES[a];
+        if (s && S.lvl < s.lo) {
+          toast(`🔒 Chưa đủ cấp! Cần đạt cấp ${s.lo} trở lên để đến ${s.n}.`);
+          return;
+        }
+        if (R.town) {
+          R.town = false;
+          const tb = $('#townBar');
+          if (tb) tb.classList.add('hidden');
+        }
+        S.autoMap = false;
+        const u = (S.zalt || {})[a] || 0;
+        const curZ = (ZALT[a] && u && ZALT[a][u - 1]) || s;
+        if (curZ) {
+          S.chosenZone = curZ.id;
+          S.chosenStage = a * ZONE_STAGES + 1;
+          toast(`🚩 Đã chọn luyện công tại ${curZ.n}!`);
+        }
+        gotoStage(a * ZONE_STAGES + 1);
+        save();
+        renderLog();
+      };
+
+      qa('.zrow').forEach(b => b.onclick = () => pickZone(+b.dataset.z));
+
+      qa('[data-za]').forEach(b => b.onclick = (e) => {
+        e.stopPropagation();
+        const [a, c] = b.dataset.za.split(':').map(Number);
+        if (!S.zalt) S.zalt = {};
+        S.zalt[a] = c;
+        S.autoMap = false;
+        if (R.town) {
+          R.town = false;
+          const tb = $('#townBar');
+          if (tb) tb.classList.add('hidden');
+        }
+        const targetStage = a * ZONE_STAGES + 1;
+        const picked = c === 0 ? ZONES[a] : (ZALT[a] && ZALT[a][c - 1]) || ZONES[a];
+        if (picked) {
+          S.chosenZone = picked.id;
+          S.chosenStage = targetStage;
+          toast(`🗺️ Đã đổi sang bãi luyện công: ${picked.n}!`);
+        }
+        if (zoneIdx(Math.min(S.stage, STAGES)) === a) {
+          S.stage = targetStage;
+          S.wave = 1;
+          R.waveKills = 0;
+          R.enemies = [];
+          R.spawnT = 0.3;
+          if (typeof obsLoad === 'function' && picked) obsLoad(picked.id);
+          [H.x, H.y] = inWorld(WORLD.w / 2, WORLD.h / 2);
+          snapCamera();
+          if (typeof onZoneChange === 'function' && picked) onZoneChange(picked);
+          R.banner = { t: 2.5, text: picked.n, sub: `Bản đồ luyện công (Cấp ${picked.lo} - ${picked.hi})` };
+        } else {
+          gotoStage(targetStage);
+        }
+        save();
+        renderLog();
+      });
+    });
+  } catch (err) {
+    console.error('renderLog error:', err);
+  }
+}
+
+function renderLogOnly() {
+  const targets = [$('#t-log-f'), $('#t-log')].filter(Boolean);
+  targets.forEach(el => {
+    const b = el.querySelector('#logBox');
+    if (b) b.innerHTML = R.logs.map(l => `<div>${l}</div>`).join('');
   });
 }
-function renderLogOnly() { const el = tabEl('log'); const b = el ? el.querySelector('#logBox') : $('#logBox'); if (b) b.innerHTML = R.logs.map(l => `<div>${l}</div>`).join(''); }
+
 function gotoStage(st, keepPush) {
   st = clamp(st, 1, S.maxStage);
+  if (R.town) {
+    R.town = false;
+    const tb = $('#townBar');
+    if (tb) tb.classList.add('hidden');
+  }
   if (st === S.stage) return;
   const oldZ = zoneOf(S.stage);
   S.stage = st; S.wave = 1; R.waveKills = 0;
@@ -319,10 +371,10 @@ function gotoStage(st, keepPush) {
     S.chosenStage = st;
   }
   if (oldZ && newZ && oldZ.id !== newZ.id) {
-    obsLoad(newZ.id);
+    if (typeof obsLoad === 'function') obsLoad(newZ.id);
     [H.x, H.y] = inWorld(WORLD.w / 2, WORLD.h / 2);
     snapCamera();
-    onZoneChange(newZ);
+    if (typeof onZoneChange === 'function') onZoneChange(newZ);
     R.banner = { t: 2.5, text: newZ.n, sub: `Bản đồ luyện công (Cấp ${newZ.lo} - ${newZ.hi})` };
   }
   refresh();
@@ -1562,15 +1614,25 @@ function openMapTravelModal() {
   const zonesHtml = ZONES.map((z, idx) => {
     const ok = S.lvl >= z.lo;
     const stageStart = idx * ZONE_STAGES + 1;
+    const alts = (typeof ZALT !== 'undefined' ? ZALT[idx] : null);
+    const curAlt = (S.zalt || {})[idx] || 0;
+    const curZ = (alts && curAlt && alts[curAlt - 1]) || z;
+    const altChips = (alts && ok) ? `
+      <div class="zalt" style="margin:4px 0 2px 0;">
+        ${[z].concat(alts).map((p, m) => `<button class="chip2${m === curAlt ? ' on' : ''}" onclick="event.stopPropagation();if(!S.zalt)S.zalt={};S.zalt[${idx}]=${m};travelToZone(${idx});">${esc(p.n)}</button>`).join('')}
+      </div>
+    ` : '';
     return `
       <div class="map-card ${ok ? '' : 'locked'}">
         <div class="map-card-info">
           <div style="display:flex;align-items:center;gap:6px;">
-            <span class="map-card-name">${esc(z.n)}</span>
+            <span class="map-card-name">${esc(curZ.n)}</span>
             <span class="map-card-badge ${ok ? '' : 'lock'}">Cấp ${z.lo} – ${z.hi}</span>
+            ${alts ? `<span style="font-size:10px;color:#38bdf8;">(${alts.length + 1} bản đồ)</span>` : ''}
           </div>
           <span class="map-card-sub">Ải ${stageStart} · Quái cấp ${z.lo}+ · Boss ${MON[z.boss] ? MON[z.boss].n : 'Thủ Lĩnh'}</span>
           <small style="font-size:10px;color:${ok ? '#4ade80' : '#f87171'};">${ok ? '✓ Đủ điều kiện luyện công' : `🔒 Cần đạt cấp ${z.lo} mới được vào`}</small>
+          ${altChips}
         </div>
         <div>
           ${ok 
@@ -1592,7 +1654,7 @@ function openMapTravelModal() {
       <div class="dtabs" style="margin:6px 12px 4px 12px;">
         <button id="bTravelTabCity" class="${travelTab === 'city' ? 'on' : ''}">🏯 Thất Đại Thành Thị (7)</button>
         <button id="bTravelTabVillage" class="${travelTab === 'village' ? 'on' : ''}">🏡 Thập Đại Thôn Trấn (10)</button>
-        <button id="bTravelTabZone" class="${travelTab === 'zone' ? 'on' : ''}">⚔️ Bản Đồ Luyện Công (16)</button>
+        <button id="bTravelTabZone" class="${travelTab === 'zone' ? 'on' : ''}">⚔️ Bản Đồ Luyện Công (${ZONES.length})</button>
       </div>
       <div style="padding:10px 12px;">
         <div class="map-travel-grid">
@@ -1650,10 +1712,14 @@ function travelToZone(target) {
   if (typeof target === 'number') {
     if (target >= 0 && target < ZONES.length) {
       idx = target;
-      z = ZONES[idx];
+      const u = (S.zalt || {})[idx] || 0;
+      z = (typeof ZALT !== 'undefined' && ZALT[idx] && u && ZALT[idx][u - 1]) || ZONES[idx];
     } else {
       idx = ZONES.findIndex(item => item.id === target);
-      if (idx !== -1) z = ZONES[idx];
+      if (idx !== -1) {
+        const u = (S.zalt || {})[idx] || 0;
+        z = (typeof ZALT !== 'undefined' && ZALT[idx] && u && ZALT[idx][u - 1]) || ZONES[idx];
+      }
     }
   } else if (target && typeof target === 'object' && target.id) {
     idx = ZONES.findIndex(item => item.id === target.id);

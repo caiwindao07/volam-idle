@@ -61,8 +61,32 @@ const skVal = (s, attr, L) => { const a = s.attr[attr]; if (!a) return null; con
 const DMG_ATTRS = ['physicsenhance_p', 'physicsdamage_v', 'poisondamage_v', 'colddamage_v', 'firedamage_v', 'lightingdamage_v'];
 const isAttack = s => !!(s && s.enemy && DMG_ATTRS.some(a => s.attr[a]));
 const ZONES = W.zones, MON = W.mon;
+const ZALT = W.zalt || {};
+const zoneOpen = t => !!ZONES[t] && (ZONES[t].lo <= (typeof S !== 'undefined' && S ? (S.lvl || 1) + 3 : 1) || (typeof S !== 'undefined' && S ? (S.maxStage || 1) >= (t * (typeof ZONE_STAGES !== 'undefined' ? ZONE_STAGES : 10) + 1) : true));
 const ZONE_STAGES = 10, WAVES = 4;
 const STAGES = ZONES.length * ZONE_STAGES;
+
+const MON_ELEM2SER = [3, 0, 4, 2, 1];
+function monSeries(n) {
+  const t = MON[n];
+  if (!t) return 0;
+  if (t.s !== undefined) return t.s;
+  if (t._s !== undefined) return t._s;
+  const e = t.rmax || [], s = Math.max(...e), o = e.map((a, c) => a === s ? c : -1).filter(a => a >= 0);
+  return t._s = o.length === 1 ? MON_ELEM2SER[o[0]] : Math.abs(+n || 0) % 5;
+}
+function zoneSeries(n) {
+  const t = [0, 0, 0, 0, 0];
+  if (!n || !n.m) return t;
+  for (const e of n.m) t[monSeries(e)]++;
+  return t;
+}
+function seriesDots(n) {
+  return zoneSeries(n).map((t, s) => (`<i class="sdot" style="background:${SERIES_COL[s]}"></i>`).repeat(t)).join('');
+}
+function seriesMix(n) {
+  return zoneSeries(n).map((t, s) => t ? `<span style="color:${SERIES_COL[s]};font-weight:600;">${SERIES[s]} ${t}</span>` : '').filter(Boolean).join(' · ');
+}
 
 /* ---------- trang bi ---------- */
 const SLOTS = [['weapon', 'Vũ khí'], ['armor', 'Áo'], ['helm', 'Mũ'], ['belt', 'Đai lưng'], ['boot', 'Giày'], ['cuff', 'Hộ uyển'],
