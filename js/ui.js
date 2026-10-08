@@ -726,6 +726,7 @@ function renderSkill() {
         <span style="font-size:10px;color:#a39276;">💡 Rê chuột xem thuộc tính · Chuột phải rút điểm</span>
         <div style="display:flex;align-items:center;gap:6px;">
           <button class="jx-action-btn gold" id="bAutoSpendSk" style="padding:2px 8px;font-size:10.5px;" title="Tự động cộng điểm vào các kỹ năng tốt nhất">⚡ Tự cộng điểm</button>
+          <button class="jx-action-btn" id="bBuildsModal" style="padding:2px 8px;font-size:10.5px;color:#38bdf8;border-color:#0284c7;" title="Quản lý 3 bộ võ học (Lưu / Đổi nhanh / Tẩy điểm)">📁 3 Bộ Võ Học</button>
           <button class="jx-action-btn" id="bResetSk" style="padding:2px 8px;font-size:10.5px;color:#f87171;" title="Hoàn trả lại toàn bộ điểm kỹ năng">🔄 Tẩy điểm</button>
           <div class="sk-pts-wrap" style="display:flex;align-items:center;gap:4px;">
             <span class="sk-pts-lbl">Điểm kỹ năng:</span>
@@ -820,6 +821,17 @@ function renderSkill() {
       renderSkill();
       save();
       toast(`Đã tẩy điểm kỹ năng! Hoàn lại ${refund} điểm.`);
+    };
+  }
+
+  const bBuildsModal = skillEl.querySelector('#bBuildsModal');
+  if (bBuildsModal) {
+    bBuildsModal.onclick = () => {
+      if (typeof buildsHTML === 'function') {
+        modal(buildsHTML(), () => {
+          if (typeof bindBuilds === 'function') bindBuilds(() => { renderSkill(); recalc(); });
+        });
+      }
     };
   }
 

@@ -165,9 +165,11 @@ function heroHit(a, e) {
   }
   // ngu hanh tang cuong / khang (five_elements_enhance_v) cong tru truc tiep
   if (counters(a.series, e.series)) tot += R.P.series5;
+  if (R.P && R.P.bossDmg && (e.cls === 'boss' || e.cls === 'elite')) tot *= R.P.bossDmg;
   tot = Math.max(1, tot);
   e.hp -= tot; e.hitT = 0.12;
   R.stall = 0;
+  if (typeof stateOnHit === 'function') stateOnHit(a, e);
   if (e.isPlayer) {
     if (typeof sendPvpHit === 'function') {
       sendPvpHit(e.id, tot, a.id);

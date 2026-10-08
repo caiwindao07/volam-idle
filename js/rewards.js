@@ -264,6 +264,7 @@ function doReborn() {
   S.gold -= rebornCost;
 
   r.stat.reborn++;
+  r.tpPend = (r.tpPend || 0) + 1;
   window._legitLevelTransition = true;
   window._legitExpGain = true;
   try {
@@ -281,11 +282,12 @@ function doReborn() {
   log(`<b class="up" style="color:#f59e0b;font-size:13px;">🎉 CHUYỂN SINH LẦN ${r.stat.reborn} THÀNH CÔNG!</b>`);
   log(`<span style="color:#ffd700;">🎁 Thưởng Chuyển Sinh lần ${r.stat.reborn}: ${rewList.join(', ')}.</span>`);
   log(`<span style="color:#4ade80;">Vĩnh viễn tăng +${r.stat.reborn * 25}% kinh nghiệm và +${r.stat.reborn * 15}% sát thương.</span>`);
-  if (typeof toast === 'function') toast(`🎉 Chuyển sinh lần ${r.stat.reborn} thành công!`);
+  if (typeof toast === 'function') toast(`🎉 Chuyển sinh lần ${r.stat.reborn} thành công! Nhận 1 điểm Tâm Pháp.`);
   if (typeof uiSfx === 'function') uiSfx('levelup');
 
   if (S.autoPts === true) autoSpendAttrs();
   achCheck(); closeModal(true); refresh(); save();
+  if (typeof tamPhapModal === 'function') setTimeout(tamPhapModal, 400);
 }
 
 /* ---------- 8. dong hanh (thu nuoi danh cung, len cap theo quai ha) ---------- */
@@ -525,6 +527,8 @@ function giftBody(r) {
           🎁 <b>Quà Chuyển Sinh lần ${nextN}:</b> +${nextN * 100} Điểm Tiềm Năng, ${fmt(nextN * 100000)} Lượng, +${nextN * 100} Phúc Duyên, 3x Huyền Tinh Cấp ${Math.min(10, 5 + nextN)}, ${nextN * 50} Cỏ Linh Chi, Trang bị ${nextN >= 3 ? 'Bạch Kim' : 'Hoàng Kim'}, Phi Phong Bậc ${nextN}.
         </div>
       ` : ''}
+      ${typeof tpPending === 'function' && tpPending() ? `<div class="btnrow" style="margin-bottom:8px;"><button class="btn gold" id="gTamPhap" style="width:100%;font-size:12px;font-weight:bold;">⚡ Chọn Tâm Pháp (${tpPending()} lượt)</button></div>` : ''}
+      ${typeof TAM_PHAP !== 'undefined' && typeof tpStacks === 'function' ? `<div style="font-size:11px;color:#cbd5e1;background:#15100a;padding:6px 8px;border-radius:4px;margin-bottom:8px;">Tâm pháp: <b>${TAM_PHAP.map(t => `${t.n} ×${tpStacks()[t.k] || 0}`).join(' · ')}</b></div>` : ''}
     </div>
     <div class="btnrow" style="text-align:center;">
       <button class="btn red" id="gReborn" ${S.lvl >= REBORN_LV && !full && (S.gold||0) >= nextN*5000000 ? '' : 'disabled'} style="font-size:13px;padding:8px 24px;">
@@ -541,6 +545,7 @@ function giftModal() {
     const on = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
     on('#gLogin', () => { claimLogin(); refreshGift(); }); on('#gChest', openChest); on('#gTower', towerStart);
     on('#gTowerOut', () => { towerExit(false); refreshGift(); }); on('#gReborn', doReborn);
+    on('#gTamPhap', () => { if (typeof tamPhapModal === 'function') tamPhapModal(); });
     document.querySelectorAll('#mBody [data-lv]').forEach(x => x.onclick = () => claimLvMs(+x.dataset.lv));
     document.querySelectorAll('#mBody [data-q]').forEach(x => x.onclick = () => { claimQuest(+x.dataset.q); refreshGift(); });
     document.querySelectorAll('#mBody [data-t]').forEach(x => x.onclick = () => { r.title = r.title === x.dataset.t ? '' : x.dataset.t; R.dirty = true; save(); refreshGift(); });

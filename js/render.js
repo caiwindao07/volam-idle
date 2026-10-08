@@ -32,12 +32,135 @@ function fxLine(a, b, atk) {
    chieu can chien: phat hoat anh tai muc tieu; thieu hinh thi ve tia nhu cu */
 const JFX = window.JFX || { m: {}, s: {}, c: {}, f: {} }, FX_SCALE = 1.65, FX_MAX = 90;
 const dir16 = (vx, vy) => (((Math.round(Math.atan2(-vx, vy) / (Math.PI / 8)) % 16) + 16) % 16);
+const animDur = s => s ? Math.min(3.2, (s.n || 1) * (s.ms || 60) / 1000) : 0.5;
+function skillFxColor(atk) {
+  let el = 'phys', v = 0;
+  for (const e in atk && atk.parts || {}) {
+    if (atk.parts[e] > v) { v = atk.parts[e]; el = e; }
+  }
+  return ELEM_COL[el] || ELEM_COL.phys;
+}
+let lastCastT = 0;
 /* hieu ung tai cho nguoi ra chieu (PreCastSpr cua skills.txt) */
 function castFx(atk, caster) {
+  const now = Date.now();
+  if (now - lastCastT < 40) return;
+  lastCastT = now;
   const cst = caster || (typeof H !== 'undefined' ? H : { x: 0, y: 0 });
   const f = atk && atk.id && JFX.f && JFX.f[atk.id], c = f && f.pre && JFX.c && JFX.c[f.pre];
   if (!c || R.quiet || R.fx.length > FX_MAX) return;
-  R.fx.push({ k: 'boom', s: c, x: cst.x, y: cst.y - 6, t: 0, life: animDur(c), dir: 0, scale: 1.6 });
+  R.fx.push({ k: 'boom', s: c, x: cst.x, y: cst.y - 6, t: 0, life: animDur(c), dir: 0, scale: 1.6, color: skillFxColor(atk) });
+}
+function crackFx(b, atk) {
+  const sk = atk && atk.id && SK[atk.id];
+  if (!sk || !sk.attr || !sk.attr.skill_vanishedevent || R.quiet || R.fx.length > FX_MAX) return;
+  let el = 'phys', v = 0;
+  for (const e in atk.parts) if (atk.parts[e] > v) { v = atk.parts[e]; el = e; }
+  const rays = [], n = (typeof S !== 'undefined' && S && S.lowFx) ? 6 : 9;
+  for (let i = 0; i < n; i++) {
+    const ang = i / n * Math.PI * 2 + rnd(-0.25, 0.25), pts = [];
+    let g = ang;
+    for (let k = 1; k <= 4; k++) {
+      g += rnd(-0.35, 0.35);
+      pts.push([Math.cos(g) * k / 4 * rnd(0.85, 1.1), Math.sin(g) * k / 4 * rnd(0.85, 1.1)]);
+    }
+    rays.push(pts);
+  }
+  R.fx.push({ k: 'crack', x: b.x, y: b.y + 4, t: -0.3, life: 1.3, rays, r: clamp((atk.rad || 100) * 0.22, 56, 110), color: ELEM_COL[el] || '#fbbf24' });
+}
+function drawCrack(f) {
+  const c = CX, k = clamp(f.t / f.life, 0, 1), grow = Math.min(1, f.t / 0.18), fade = k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4, r = f.r * (1 - Math.pow(1 - grow, 3));
+  c.save();
+  c.translate(f.x, f.y);
+  c.scale(1, 0.42);
+  c.globalAlpha = 0.5 * fade;
+  c.fillStyle = '#120a06';
+  c.beginPath();
+  c.arc(0, 0, r * 0.85, 0, 7);
+  c.fill();
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+  for (const pass of [0, 1]) {
+    c.globalAlpha = (pass ? 0.95 * (1 - k * 0.6) : 0.85) * fade;
+    c.strokeStyle = pass ? f.color : '#0b0604';
+    c.lineWidth = pass ? 1.6 : 4.2;
+    for (const ray of f.rays) {
+      c.beginPath();
+      c.moveTo(0, 0);
+      for (const [px, py] of ray) c.lineTo(px * r, py * r);
+      c.stroke();
+    }
+  }
+  if (grow < 1) {
+    c.globalAlpha = (1 - grow) * 0.7;
+    c.strokeStyle = '#fff';
+    c.lineWidth = 3;
+    c.beginPath();
+    c.arc(0, 0, r * 0.95, 0, 7);
+    c.stroke();
+  }
+  c.restore();
+}
+function chainFx(a, b, atk, f, tFly) {
+  if (!f || !f.ev || R.quiet) return;
+  const dx = b.x - a.x, dy = b.y - 14 - (a.y - 20), dr = dir16(dx, dy);
+  for (const e of f.ev) {
+    const em = JFX.m && JFX.m[e.m], s = em && (em.hit || em.fly);
+    if (!s || R.fx.length > FX_MAX) continue;
+    const cnt = clamp(e.n || 1, 1, 3);
+    const at = e.on === 'start' ? [a.x, a.y - 12] : e.on === 'fly' ? [(a.x + b.x) / 2, (a.y + b.y) / 2 - 17] : [b.x, b.y - 14];
+    const delay = e.on === 'fly' ? tFly * 0.5 : e.on === 'end' ? tFly + 0.08 : e.on === 'hit' ? tFly : 0;
+    for (let i = 0; i < cnt; i++) {
+      R.fx.push({
+        k: 'boom',
+        s,
+        x: at[0] + (cnt > 1 ? rnd(-30, 30) : 0),
+        y: at[1] + (cnt > 1 ? rnd(-20, 20) : 0),
+        t: -(delay + i * 0.06),
+        life: animDur(s),
+        dir: dr,
+        scale: FX_SCALE,
+        color: skillFxColor(atk)
+      });
+    }
+  }
+}
+function drawFxFallback(f) {
+  const c = CX, color = f.sparkCol || f.color || ELEM_COL.phys;
+  c.save();
+  c.strokeStyle = color;
+  c.fillStyle = color;
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+  if (f.k === 'mis') {
+    const k = clamp(f.t / Math.max(0.01, f.life), 0, 1), x = f.x1 + (f.x2 - f.x1) * k, y = f.y1 + (f.y2 - f.y1) * k;
+    c.globalAlpha = 0.75;
+    c.lineWidth = 2.5;
+    c.beginPath();
+    c.moveTo(f.x1, f.y1);
+    for (let i = 1; i <= 5; i++) {
+      const q = i / 5, wobble = q < k ? Math.sin(f.t * 34 + i * 1.7) * 5 : 0;
+      c.lineTo(f.x1 + (x - f.x1) * q, f.y1 + (y - f.y1) * q + wobble);
+    }
+    c.stroke();
+    c.globalAlpha = 1;
+    c.beginPath();
+    c.arc(x, y, 4.5, 0, 7);
+    c.fill();
+  } else {
+    const k = clamp(f.t / Math.max(0.01, f.life), 0, 1), r = 7 + k * 35;
+    c.globalAlpha = 0.9 * (1 - k * 0.55);
+    c.lineWidth = 3 - k;
+    c.beginPath();
+    c.ellipse(f.x, f.y, r, r * 0.55, 0, 0, 7);
+    c.stroke();
+    c.globalAlpha = 0.7 * (1 - k);
+    c.beginPath();
+    c.arc(f.x, f.y, 3 + (1 - k) * 3, 0, 7);
+    c.fill();
+  }
+  c.restore();
+  return true;
 }
 function getSkillEffectDef(atk) {
   if (!atk) return null;
@@ -79,6 +202,8 @@ function skillFx(a, b, atk) {
   const f = def ? def.f : {};
   const m = def ? def.m : null;
   castFx(atk, a);
+  crackFx(b, atk);
+  chainFx(a, b, atk, f, m && m.fly && m.spd ? Math.min(0.6, d / m.spd) : 0.15);
   if (!m || R.quiet) { fxLine(a, b, atk); if (typeof burst === 'function') burst(b.x, b.y, '#ffd700'); return; }
   if (R.fx.length > FX_MAX) return;
   const x1 = a.x, y1 = a.y - 20, x2 = b.x, y2 = b.y - 14, dx = x2 - x1, dy = y2 - y1, d = Math.hypot(dx, dy) || 1;
@@ -93,7 +218,7 @@ function skillFx(a, b, atk) {
 
   const boom = (s, x, y, delay = 0, scale = FX_SCALE, shake = 0, sparks = 0, sparkCol = sparkColor) => {
     if (!s) return;
-    R.fx.push({ k: 'boom', s, x, y, t: -delay, life: animDur(s), dir: dir16(dx, dy), scale, shake, sparks, sparkCol });
+    R.fx.push({ k: 'boom', s, s2: (m && s === m.hit ? m.end : null), x, y, t: -delay, life: Math.max(animDur(s), m && m.end && s === m.hit ? animDur(m.end) : 0), dir: dir16(dx, dy), scale, shake, sparks, sparkCol });
     if (shake && delay === 0) shakeCamera(shake, 0.16);
     if (sparks && delay === 0) addSparks(x, y, sparkCol, sparks, 150);
   };
@@ -107,6 +232,7 @@ function skillFx(a, b, atk) {
       k: 'mis',
       s,
       hit,
+      end: (m && m.end) || null,
       x1: sx,
       y1: sy,
       x2: tx,
@@ -648,7 +774,6 @@ function skillFx(a, b, atk) {
     mis(m.fly, m.hit, x2, y2, i * 0.08, m.spd || 350, { scale: 1.65, trail: true, shake: 2, sparks: 5, sparkCol: sparkColor });
   }
 }
-const animDur = s => Math.min(1.2, s.n * s.ms / 1000);
 function drawFxSprite(s, dir, t, x, y, loop, scale = FX_SCALE, alpha = 1) {
   const im = img(s.f); if (!im || !im.complete || !im.naturalWidth) return false;
   const fr = loop ? Math.floor(t * 1000 / s.ms) % s.n : Math.min(s.n - 1, Math.floor(t * 1000 / s.ms));
@@ -673,6 +798,7 @@ function drawFxSprite(s, dir, t, x, y, loop, scale = FX_SCALE, alpha = 1) {
 }
 function stepFx(f, dt) { // tra ve false khi het; dan toi dich thi doi sang no
   f.t += dt; if (f.t < 0) return true;     // dang cho (phat dan lien tiep)
+  if (f.k === 'crack') return f.t < f.life;
   if (f.k === 'mis') {
     // Luu lich su toa do cho tan anh (ghost trail)
     if (f.trail && f.curX !== undefined) {
@@ -685,10 +811,11 @@ function stepFx(f, dt) { // tra ve false khi het; dan toi dich thi doi sang no
         Object.assign(f, {
           k: 'boom',
           s: f.hit,
+          s2: f.end || null,
           x: f.x2,
           y: f.y2,
           t: 0,
-          life: animDur(f.hit),
+          life: Math.max(animDur(f.hit), f.end ? animDur(f.end) : 0),
           scale: f.scale || FX_SCALE
         });
         if (f.shake) shakeCamera(f.shake, 0.16);
@@ -702,6 +829,7 @@ function stepFx(f, dt) { // tra ve false khi het; dan toi dich thi doi sang no
 }
 function drawFx(f) {
   if (f.t < 0) return false;
+  if (f.k === 'crack') { drawCrack(f); return true; }
   if (f.k === 'mis') {
     const k = clamp(f.t / f.life, 0, 1);
     let curX = f.x1 + (f.x2 - f.x1) * k;
@@ -740,9 +868,17 @@ function drawFx(f) {
       }
     }
 
-    return drawFxSprite(f.s, curDir, f.t, curX, curY, true, f.scale || FX_SCALE, 1);
+    const drawn = drawFxSprite(f.s, curDir, f.t, curX, curY, true, f.scale || FX_SCALE, 1);
+    if (!drawn) return drawFxFallback(f);
+    return true;
   }
-  return drawFxSprite(f.s, f.dir, f.t, f.x, f.y, false, f.scale || FX_SCALE, 1);
+  if (f.s2 && f.t < animDur(f.s2)) drawFxSprite(f.s2, f.dir, f.t, f.x, f.y, false, f.scale || FX_SCALE);
+  if (f.t < (f.s && f.s.n ? animDur(f.s) : Infinity)) {
+    const drawn = drawFxSprite(f.s, f.dir, f.t, f.x, f.y, false, f.scale || FX_SCALE, 1);
+    if (!drawn) return drawFxFallback(f);
+    return true;
+  }
+  return !!f.s2;
 }
 /* Giao dien di dong thu nho 20% (UI_SCALE_MOBILE): #app co width / height lon 1/0.8 lan roi transform: scale(0.8) (style.css, body.mob).
    Toa do trong game theo px bo cuc (offsetWidth / Height, khong bi transform); DPR hieu dung nhan them he so thu nho de net. */
@@ -1178,6 +1314,7 @@ function draw(dt) {
 
       if (typeof drawMount === 'function') drawMount(c, dt);
       if (typeof drawAura === 'function') drawAura(c);
+      if (typeof drawHeroStates === 'function') drawHeroStates(c, 'under', 0);
 
       let drawn = false;
       let dollH = 0;
@@ -1221,6 +1358,7 @@ function draw(dt) {
         drawHorseForeground(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, S.mount);
       }
       if (typeof drawLookFx === 'function') drawLookFx(c, dt);
+      if (typeof drawHeroStates === 'function') drawHeroStates(c, 'over', drawn || 50);
 
       if (R.hurtT > 0) { c.fillStyle = '#f004'; c.beginPath(); c.arc(H.x, heroY - 24, 20, 0, 7); c.fill(); }
 
@@ -1268,6 +1406,8 @@ function draw(dt) {
     e.animKey = MON[e.tid].anim; stepAct(e, dt, e.moving ? 'run' : 'st');
     const ah = e.animKey && drawAnim(e.animKey, e.act || 'st', e.dir || 0, e.actT || 0, e.x, e.y, sc * MON_SCALE, e.hitT > 0 ? 0.75 : 1);
     if (!ah && !drawSprite(e.img, e.sz, e.x, e.y, sc, e.face < 0, e.hitT > 0 ? 0.6 : 1)) { c.fillStyle = SERIES_COL[e.series]; c.beginPath(); c.arc(e.x, e.y - e.r, e.r, 0, 7); c.fill(); }
+    if (typeof drawEnemyCurses === 'function') drawEnemyCurses(c, e, sc);
+    if (typeof drawEnemyState === 'function') drawEnemyState(c, e, ah, sc, dt);
     if (e.hitT > 0) e.hitT -= dt;
     const top = e.y - (ah ? Math.min(ah, 90) * 0.85 : e.img && e.img.naturalHeight ? e.img.naturalHeight * sc : e.r * 2) - 8;
     label(e.x, top, enemyName(e), e.goldBoss ? NAME_COL.gold : NAME_COL[e.cls] || NAME_COL.normal, e.cls === 'boss' ? 12 : 11, e.hp / e.max, e.cls === 'boss' ? '#ff5030' : '#e03a2a');
@@ -1288,13 +1428,13 @@ function draw(dt) {
       c.fill();
       return f.life > 0;
     }
-    if (f.k !== 'mis' && f.k !== 'boom') return true;
+    if (f.k !== 'mis' && f.k !== 'boom' && f.k !== 'crack') return true;
     const ok = stepFx(f, dt);
     if (ok) drawFx(f);
     return ok;
   });
   for (const f of R.fx) {
-    if (f.k === 'mis' || f.k === 'boom' || f.k === 'spark') continue;
+    if (f.k === 'mis' || f.k === 'boom' || f.k === 'spark' || f.k === 'crack') continue;
     f.life -= dt; const a = clamp(f.life / f.max, 0, 1);
     c.globalAlpha = a; c.strokeStyle = f.color;
     if (f.k === 'line') { c.lineWidth = 3; c.beginPath(); c.moveTo(f.x1, f.y1); c.lineTo(f.x2, f.y2); c.stroke(); }

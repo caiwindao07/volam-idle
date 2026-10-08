@@ -98,7 +98,11 @@ function calc(eq) {
   // sinh luc / noi luc: goc + cap * X/cap + diem * X/diem (KPlayer::SetBaseLifeMax)
   P.life = (st.life + (lv - 1) * (add.LifePerLevel + IDLE_LIFE_PER_LEVEL) + (P.vit - st.vit) * add.LifePerVitality + av(A, 'lifemax_v')) * (1 + av(A, 'lifemax_p') / 100);
   P.mana = (st.mana + (lv - 1) * add.ManaPerLevel + (P.eng - st.eng) * add.ManaPerEnergy + av(A, 'manamax_v')) * (1 + av(A, 'manamax_p') / 100);
-  P.life = Math.max(50, P.life); P.mana = Math.max(20, P.mana);
+  const tp = (typeof tpStacks === 'function') ? tpStacks() : { ho: 0, bao: 0, tru: 0 };
+  P.life = Math.max(50, P.life) * (1 + (tp.ho || 0) * 0.06);
+  P.mana = Math.max(20, P.mana);
+  P.bossDmg = 1 + (tp.tru || 0) * 0.06;
+  P.dropMul = 1 + (tp.bao || 0) * 0.05;
   P.regen = 1 + lv * 0.08 + av(A, 'lifereplenish_v') + P.life * av(A, 'lifereplenish_p') / 10000;
   P.manaRegen = 1 + lv * 0.05 + av(A, 'manareplenish_v') + P.eng * 0.02;
   // chinh xac / ne tranh (KPlayer::SetNpcAttackRating / SetNpcDefence)
@@ -131,7 +135,7 @@ function calc(eq) {
   P.retMelee = av(A, 'meleedamagereturn_v'); P.retMeleeP = av(A, 'meleedamagereturn_p');
   P.series5 = av(A, 'five_elements_enhance_v'); P.res5 = av(A, 'five_elements_resist_v');
   P.seriesSkill = av(A, ['metalskill_v', 'woodskill_v', 'waterskill_v', 'fireskill_v', 'earthskill_v'][ser]);
-  P.lucky = av(A, 'lucky_v');
+  P.lucky = av(A, 'lucky_v') + (tp.bao || 0) * 3;
   P.speed = (1 + av(A, 'fastwalkrun_p') / 100) * (typeof S !== 'undefined' && S && S.mounted ? 1.35 : 1);
   P.ranged = ranged;
   // ky nang chu dong + cong don addskilldamageN (tham so 1 = id ky nang duoc tang, tham so 3 = %)
