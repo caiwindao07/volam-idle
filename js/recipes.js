@@ -164,3 +164,4 @@ function platDrop(e) {
   return out.length ? out.join(', ') : null;
 }
 const allDrops = e => [oreDrop(e), shardDrop(e), platDrop(e)].filter(Boolean);
+if (typeof window !== 'undefined') window.allDrops = allDrops;

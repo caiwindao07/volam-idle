@@ -419,9 +419,9 @@ function heroAttack() {
   R.moveTo = null;
   R.mana -= a.cost;
   const c = a.around ? H : t, splash = a.around ? a.rad + 40 : 110; // form 7: quanh nguoi danh
-  const targets = list.filter(e => e !== t && Math.hypot(e.x - c.x, e.y - c.y) < (a.targets > 1 ? splash : 0)).slice(0, a.targets - 1);
   targets.unshift(t);
-  for (const e of targets) { heroHit(a, e); skillFx(H, e, a); }
+  for (const e of targets) { heroHit(a, e); }
+  skillFx(H, t, a);
   H.face = t.x >= H.x ? 1 : -1; H.dir = dirOf(t.x - H.x, t.y - H.y); H.act = 'at'; H.actT = 0;
   if (a.id) skillSfx(a.id); else npcSfx(W.hero[S.fac] && W.hero[S.fac].anim, 'at', 0.4);
   if (typeof sendMultiplayerSkill === 'function') sendMultiplayerSkill(a, t);
@@ -651,7 +651,8 @@ function onKill(e) {
   const g = Math.round(moneyDrop(e) * diffOf().rew); S.gold += g;
   burst(e.x, e.y, SERIES_COL[e.series]);
   for (const it of rollDrops(e)) dropToGround(it, e);
-  for (const m of allDrops(e)) log(`Nhặt được <b style="color:${RAR_COL[3]}">${esc(m)}</b>`);
+  const matDrops = typeof allDrops === 'function' ? allDrops(e) : [];
+  for (const m of matDrops) log(`Nhặt được <b style="color:${RAR_COL[3]}">${esc(m)}</b>`);
   const gold = rollSetDrop(e); if (gold) { dropToGround(gold, e); log(`<b style="color:${RAR_COL[gold.r]}">${esc(gold.n)}</b> rơi ra!`); }
   // Boss xanh (elite/leader) có xác xuất 10% rơi lửa trại tại vị trí đánh, tối đa 3 lửa trại
   const isBlueBoss = (e.cls === 'elite' || e.isElite || e.cls === 'leader');
