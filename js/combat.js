@@ -98,6 +98,10 @@ function spawnWave() {
     if (typeof onZoneChange === 'function') onZoneChange(z);
   }
   if (!z) return;
+  if (S && S.jailUntil && S.jailUntil > Date.now()) {
+    R.enemies = [];
+    return;
+  }
 
   if (!S.push && R.serverMobsActive && typeof MP !== 'undefined' && MP.connected) {
     if (typeof requestZoneMobs === 'function') requestZoneMobs();
@@ -381,6 +385,10 @@ function pickAttack(P, hard) {
   return (P.main && R.mana >= P.main.cost) ? P.main : (P.basic || basicAttack(P));
 }
 function heroAttack() {
+  if (S && S.jailUntil && S.jailUntil > Date.now()) {
+    R.moveTo = null;
+    return 0.5;
+  }
   const P = R.P, list = alive();
   if (!list.length) {
     R.moveTo = null;
@@ -545,12 +553,50 @@ function autoPatrol(dt) {
   H.face = _patrolTarget.x >= H.x ? 1 : -1;
 }
 
+function pkDecayTick(dt) {
+  if (!S) return;
+  const now = Date.now();
+  const TWO_HOURS = 2 * 60 * 60 * 1000;
+  if (!S.lastPkReduceT) S.lastPkReduceT = now;
+  if (S.pkValue > 0 && now - S.lastPkReduceT >= TWO_HOURS) {
+    const dec = Math.floor((now - S.lastPkReduceT) / TWO_HOURS);
+    S.pkValue = Math.max(0, S.pkValue - dec);
+    S.lastPkReduceT = now;
+    if (typeof log === 'function') log(`<span style="color:#4ade80;">[Tu Tâm] Đã qua 2 giờ tu dưỡng, điểm PK giảm còn: ${S.pkValue}.</span>`);
+    if (typeof updatePkModeBtn === 'function') updatePkModeBtn();
+    if (typeof save === 'function') save();
+  }
+  if (S.jailUntil && now >= S.jailUntil) {
+    S.jailUntil = 0;
+    if (typeof toast === 'function') toast('🎉 Bạn đã mãn hạn tù 1 ngày và được Quan Phủ phóng thích!');
+    if (typeof log === 'function') log('<b style="color:#4ade80;font-size:13px;">[Thiên Lao] Bạn đã mãn hạn tù 1 ngày! Đã được Quan Phủ ân xá phóng thích.</b>');
+    if (typeof updatePkModeBtn === 'function') updatePkModeBtn();
+    if (typeof save === 'function') save();
+  }
+}
+
 function tick(dt) {
   obsFrame();
   if ((R.sweepT = (R.sweepT || 0) + dt) > 30) { R.sweepT = 0; autoEquipAll(); sweepJunk(); autoBuyWeapon(); autoForge(); checkHints(); }
   if (R.dirty) recalc();
   const P = R.P;
-  if (R.deadT > 0) { R.deadT -= dt; if (R.deadT <= 0) { R.life = P.life; R.mana = P.mana; S.wave = 1; spawnWave(); } return; }
+  if (R.deadT > 0) {
+    R.deadT -= dt;
+    if (R.deadT <= 0) {
+      R.life = P.life;
+      R.mana = P.mana;
+      S.wave = 1;
+      if (S.jailUntil && S.jailUntil > Date.now()) {
+        if (typeof getCurZoneId === 'function' && getCurZoneId() !== 37 && typeof travelToZone === 'function') {
+          travelToZone(37);
+        }
+      } else {
+        spawnWave();
+      }
+    }
+    return;
+  }
+  pkDecayTick(dt);
   R.life = Math.min(P.life, R.life + P.regen * dt); R.mana = Math.min(P.mana, R.mana + P.manaRegen * dt);
   autoPotion(dt);
   if (R.hurtT > 0) R.hurtT -= dt;
@@ -836,10 +882,32 @@ function waveCleared() {
   if (typeof refresh === 'function') refresh();
 }
 
-function heroDeath() {
+function heroDeath(pvpPenalty = false) {
   if (R.enemies.some(e => e.goldBoss && !e.dead)) RW().gbT = GB_RETRY;
   R.deadT = 3; R.life = 0; R.enemies = [];
   log('<span class="bad">Bạn đã trọng thương.</span>');
+
+  // "PK = 10 khi bị đánh chết thì văng hết tiền và đồ đang mặc"
+  if (pvpPenalty || (S && S.pkValue >= 10)) {
+    let droppedItemsCount = 0;
+    if (S.eq) {
+      for (const slot of Object.keys(S.eq)) {
+        const it = S.eq[slot];
+        if (it) {
+          if (typeof dropToGround === 'function') dropToGround(it, H);
+          delete S.eq[slot];
+          droppedItemsCount++;
+        }
+      }
+    }
+    const droppedGold = S.gold || 0;
+    S.gold = 0;
+    log(`<b style="color:#ef4444;font-size:13px;">💥 [Ác Giả Ác Báo] Điểm PK = ${S.pkValue}! Bạn đã bị đánh bại, toàn bộ ${droppedItemsCount} món trang bị trên người và ${fmt(droppedGold)} Lượng ngân lượng đều bị văng rơi sạch!</b>`);
+    if (typeof toast === 'function') toast(`💥 PK 10 bị đánh chết: Văng toàn bộ đồ và tiền!`);
+    R.dirty = true;
+    if (typeof invDirty !== 'undefined') invDirty = true;
+  }
+
   if (typeof boatOn === 'function' && boatOn()) { boatExit(); return; }
   if (R.dungeon) { dungeonFinish(false); return; }
   if (R.tower) { towerExit(true); return; }

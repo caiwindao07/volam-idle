@@ -574,7 +574,21 @@ function draw(dt) {
       let heroBarCol = '#4fd04f';
       let heroTagPrefix = '';
       let heroTagCol = NAME_COL.hero;
-      if (S.pkMode === 'slaughter') {
+      if (S.jailUntil && S.jailUntil > Date.now()) {
+        heroBarCol = '#ef4444';
+        heroTagPrefix = '[Thiên Lao] ';
+        heroTagCol = '#ef4444';
+      } else if (S.pkValue > 0) {
+        if (S.pkMode === 'slaughter') {
+          heroBarCol = '#ec4899';
+          heroTagPrefix = `[Đồ sát · PK:${S.pkValue}] `;
+          heroTagCol = '#f472b6';
+        } else {
+          heroBarCol = '#f59e0b';
+          heroTagPrefix = `[PK:${S.pkValue}] `;
+          heroTagCol = '#fbbf24';
+        }
+      } else if (S.pkMode === 'slaughter') {
         heroBarCol = '#ec4899'; // Hồng cánh sen Đồ Sát
         heroTagPrefix = '[Đồ sát] ';
         heroTagCol = '#f472b6';

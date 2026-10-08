@@ -194,6 +194,8 @@ function handleServerMessage(msg) {
       if (msg.mount) p.mount = msg.mount;
       if (msg.cloakTier != null) p.cloakTier = msg.cloakTier;
       if (msg.pkMode) p.pkMode = msg.pkMode;
+      if (msg.pkValue != null) p.pkValue = msg.pkValue;
+      if (msg.jailUntil != null) p.jailUntil = msg.jailUntil;
       if (msg.hp != null) p.hp = msg.hp;
       if (msg.maxHp != null) p.maxHp = msg.maxHp;
       if (msg.act) {
@@ -210,6 +212,7 @@ function handleServerMessage(msg) {
     if (p) {
       const oldMode = p.pkMode;
       p.pkMode = msg.pkMode;
+      if (msg.pkValue != null) p.pkValue = msg.pkValue;
       if (p.zoneId === getCurZoneId()) {
         if (msg.pkMode === 'slaughter') {
           if (typeof log === 'function') log(`<span style="color:#ec4899;font-weight:bold;">[Đồ Sát] Hiệp khách <b>${esc(p.name)}</b> vừa bật chế độ [ĐỒ SÁT]! Máu chuyển sang màu hồng!</span>`);
@@ -218,6 +221,32 @@ function handleServerMessage(msg) {
           if (typeof log === 'function') log(`<span style="color:#f59e0b;">[PK] Hiệp khách <b>${esc(p.name)}</b> đã chuyển sang chế độ [PK].</span>`);
         }
       }
+    }
+  } else if (msg.type === 'pk_update') {
+    if (typeof S !== 'undefined' && S) {
+      if (msg.pkValue !== undefined) S.pkValue = msg.pkValue;
+      if (msg.jailUntil !== undefined) S.jailUntil = msg.jailUntil;
+      if (msg.lastPkReduceT !== undefined) S.lastPkReduceT = msg.lastPkReduceT;
+      if (msg.msg) {
+        if (typeof toast === 'function') toast(msg.msg, 6000);
+        if (typeof log === 'function') log(`<span style="color:#ef4444;font-weight:bold;">${msg.msg}</span>`);
+      }
+      if (S.jailUntil && S.jailUntil > Date.now()) {
+        if (typeof travelToZone === 'function' && typeof getCurZoneId === 'function' && getCurZoneId() !== 37) {
+          travelToZone(37);
+        }
+      }
+      if (typeof updatePkModeBtn === 'function') updatePkModeBtn();
+      if (typeof save === 'function') save();
+      if (typeof refresh === 'function') refresh();
+    }
+  } else if (msg.type === 'pvp_death') {
+    if (typeof heroDeath === 'function') {
+      heroDeath(!!msg.penaltyDrop);
+    }
+    if (msg.penaltyDrop) {
+      if (typeof toast === 'function') toast(`💀 Bạn có PK = ${msg.victimPk || 10}! Bị đánh chết văng sạch trang bị và tiền bạc!`, 8000);
+      if (typeof log === 'function') log(`<b style="color:#ef4444;font-size:14px;">[TRỪ GIAN DIỆT ÁC] Điểm PK của bạn là ${msg.victimPk || 10}! Khi chết đã bị rơi sạch toàn bộ ngân lượng và trang bị đang mặc trên người!</b>`);
     }
   } else if (msg.type === 'pvp_damaged') {
     if (typeof R !== 'undefined' && R && typeof H !== 'undefined') {
@@ -340,6 +369,9 @@ function handleServerMessage(msg) {
       if (msg.mount !== undefined) S.mount = msg.mount;
       if (msg.attr && typeof S.attr === 'object') Object.assign(S.attr, msg.attr);
       if (msg.sk && typeof S.sk === 'object') Object.assign(S.sk, msg.sk);
+      if (msg.pkValue !== undefined) S.pkValue = msg.pkValue;
+      if (msg.jailUntil !== undefined) S.jailUntil = msg.jailUntil;
+      if (msg.lastPkReduceT !== undefined) S.lastPkReduceT = msg.lastPkReduceT;
       if (typeof _updateLastAuthoritativeState === 'function') {
         _updateLastAuthoritativeState(S);
       }
@@ -701,6 +733,8 @@ function sendMove(dt) {
     mount: (S && S.mount ? S.mount : null),
     cloakTier: curCloakTier,
     pkMode: curPkMode,
+    pkValue: (S && S.pkValue) || 0,
+    jailUntil: (S && S.jailUntil) || 0,
     eq: (S && S.eq) ? {
       weapon: S.eq.weapon ? { n: S.eq.weapon.n, d: S.eq.weapon.d, k: S.eq.weapon.k, lvl: S.eq.weapon.lvl, r: S.eq.weapon.r, enh: S.eq.weapon.enh, s: S.eq.weapon.s, ic: S.eq.weapon.ic } : null,
       armor: S.eq.armor ? { n: S.eq.armor.n, lvl: S.eq.armor.lvl, r: S.eq.armor.r, enh: S.eq.armor.enh, s: S.eq.armor.s } : null,
@@ -893,7 +927,21 @@ function drawSingleOtherPlayer(c, dt, p) {
   let otherBarCol = '#4fd04f';
   let otherNamePrefix = '';
   let otherNameCol = '#93c5fd';
-  if (p.pkMode === 'slaughter') {
+  if (p.jailUntil && p.jailUntil > Date.now()) {
+    otherBarCol = '#ef4444';
+    otherNamePrefix = '[Thiên Lao] ';
+    otherNameCol = '#ef4444';
+  } else if (p.pkValue > 0) {
+    if (p.pkMode === 'slaughter') {
+      otherBarCol = '#ec4899';
+      otherNamePrefix = `[Đồ sát · PK:${p.pkValue}] `;
+      otherNameCol = '#f472b6';
+    } else {
+      otherBarCol = '#f59e0b';
+      otherNamePrefix = `[PK:${p.pkValue}] `;
+      otherNameCol = '#fbbf24';
+    }
+  } else if (p.pkMode === 'slaughter') {
     otherBarCol = '#ec4899'; // Máu hồng Đồ Sát
     otherNamePrefix = '[Đồ sát] ';
     otherNameCol = '#f472b6';
@@ -1127,6 +1175,10 @@ setInterval(() => {
 }, 200);
 
 function sendPvpHit(targetId, dmg, skillId) {
+  if (typeof S !== 'undefined' && S && S.jailUntil && S.jailUntil > Date.now()) {
+    if (typeof toast === 'function') toast('⚖️ Đang thụ án trong Thiên Lao! Không thể tấn công!');
+    return;
+  }
   if (!MP.ws || MP.ws.readyState !== 1) return;
   MP.ws.send(JSON.stringify({
     type: 'pvp_hit',

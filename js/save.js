@@ -56,6 +56,9 @@ function newSave() {
     kps: 0.2, totalKills: 0, autoEquip: false, autoPts: false, autoMap: true, diff: 1, autoForge: false, autoBuy: true, tut: 0, hints: {}, bakAt: 0, potOff: false, potUsed: 0, potStock: { life: {}, mana: {} }, ctrl: 'auto', joy: 'fixed', slots: [0, 0, 0, 0], snd: { on: true, vol: 0.7, music: true, mvol: 0.4 }, lootF: { minRar: 0, minLvl: 1, groups: [], series: [], auto: true }, ground: [], mats: { ht: {}, ore: {}, shard: {}, misc: {} }, auto: defaultAutoSettings(),
     cloak: { tier: 0 },
     pkMode: 'peace',
+    pkValue: 0,
+    jailUntil: 0,
+    lastPkReduceT: Date.now(),
     meridian: { qi: 0, levels: { nham: 0, doc: 0, xung: 0, doi: 0, amduy: 0, duongduy: 0, amkieu: 0, duongkieu: 0 } },
     companion: {
       activeId: null,
@@ -154,6 +157,9 @@ function migrate(o) {
   s.auto.autoEquip = s.autoEquip;
   s.cloak = o.cloak && typeof o.cloak === 'object' && o.cloak.tier !== undefined ? o.cloak : { tier: 0 };
   s.pkMode = ['peace', 'pk', 'slaughter'].includes(o.pkMode) ? o.pkMode : 'peace';
+  s.pkValue = Math.max(0, Number(o.pkValue) || 0);
+  s.jailUntil = Math.max(0, Number(o.jailUntil) || 0);
+  s.lastPkReduceT = Number(o.lastPkReduceT) || Date.now();
   s.meridian = o.meridian && typeof o.meridian === 'object' ? o.meridian : {
     qi: 0,
     levels: { nham: 0, doc: 0, xung: 0, doi: 0, amduy: 0, duongduy: 0, amkieu: 0, duongkieu: 0 }

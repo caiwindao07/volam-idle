@@ -490,6 +490,10 @@ function renderCharAttrib(targetEl) {
               <span>Danh vọng: <b style="color:#a78bfa;">${S.fame || (S.lvl * 25 + 100)}</b></span>
               <span>Lực chiến: <b style="color:#ef4444;">${fmt(R.power)}</b></span>
             </div>
+            <div style="font-size:10px;color:#a39276;display:flex;justify-content:space-between;">
+              <span>Điểm PK: <b style="color:${(S.pkValue || 0) >= 10 ? '#ef4444' : (S.pkValue || 0) > 0 ? '#f59e0b' : '#4ade80'};">${S.pkValue || 0} điểm${(S.jailUntil && S.jailUntil > Date.now()) ? ' [THIÊN LAO]' : ''}</b></span>
+              <span>Trạng thái: <b style="color:${(S.jailUntil && S.jailUntil > Date.now()) ? '#ef4444' : '#ffd700'};">${(S.jailUntil && S.jailUntil > Date.now()) ? 'Giam Cầm' : 'Tự Do'}</b></span>
+            </div>
             <div style="font-size:10px;color:#cbd5e1;display:flex;justify-content:space-between;margin-top:2px;background:rgba(255,215,0,0.06);padding:2px 5px;border-radius:3px;border:1px solid rgba(255,215,0,0.18);">
               <span>Phi phong: <b style="color:${curCloak.color};cursor:pointer;text-decoration:underline;" onclick="if(window.CLOAK_MERIDIAN)CLOAK_MERIDIAN.toggleWindow();" title="Bấm để mở Bảng Nâng Cấp Phi Phong & Kinh Mạch">${curCloak.name} (Bậc ${curTier}/6)</b></span>
               <span style="color:#ffd700;font-weight:bold;">+${curCloak.res}% Kháng</span>
@@ -1435,31 +1439,46 @@ function updateDots() {
 
 function updatePkModeBtn() {
   const pkMode = (typeof S !== 'undefined' && S && S.pkMode) || 'peace';
+  const pkVal = (typeof S !== 'undefined' && S && S.pkValue) || 0;
+  const isJailed = (typeof S !== 'undefined' && S && S.jailUntil && S.jailUntil > Date.now());
   const btnPk = $('#btnPkMode');
   if (btnPk) {
     btnPk.className = `pk-mode-btn ${pkMode}`;
-    if (pkMode === 'peace') {
-      btnPk.innerHTML = '🛡️ Luyện công';
-      btnPk.title = '[Phím F9] Chế độ Luyện Công: Chỉ đánh quái, không đánh người';
-    } else if (pkMode === 'pk') {
-      btnPk.innerHTML = '⚔️ PK (F9)';
-      btnPk.title = '[Phím F9] Chế độ PK: Tuyên chiến, đánh người cùng bật PK';
-    } else if (pkMode === 'slaughter') {
-      btnPk.innerHTML = '🩸 Đồ sát';
-      btnPk.title = '[Phím F9] Chế độ Đồ Sát: Máu hồng, có thể tấn công bất kỳ ai!';
+    if (isJailed) {
+      const remM = Math.ceil((S.jailUntil - Date.now()) / 60000);
+      const remH = Math.floor(remM / 60);
+      const remMMod = remM % 60;
+      btnPk.innerHTML = `⛓️ Thiên Lao (${remH}h${remMMod}m)`;
+      btnPk.style.color = '#ef4444';
+      btnPk.title = `[Thiên Lao] Bạn đang bị giam vì PK = 10! Còn ${remH} giờ ${remMMod} phút!`;
+    } else {
+      btnPk.style.color = '';
+      if (pkMode === 'peace') {
+        btnPk.innerHTML = `🛡️ Luyện công (PK: ${pkVal})`;
+        btnPk.title = `[Phím F9] Chế độ Luyện Công: Chỉ đánh quái, không đánh người (Điểm PK: ${pkVal})`;
+      } else if (pkMode === 'pk') {
+        btnPk.innerHTML = `⚔️ PK (PK: ${pkVal})`;
+        btnPk.title = `[Phím F9] Chế độ PK: Tuyên chiến, đánh người cùng bật PK (Điểm PK: ${pkVal})`;
+      } else if (pkMode === 'slaughter') {
+        btnPk.innerHTML = `🩸 Đồ sát (PK: ${pkVal})`;
+        btnPk.title = `[Phím F9] Chế độ Đồ Sát: Máu hồng, có thể tấn công bất kỳ ai! (Điểm PK: ${pkVal})`;
+      }
     }
   }
   const pkChip = $('#pkChipBtn');
   if (pkChip) {
-    if (pkMode === 'peace') {
+    if (isJailed) {
+      pkChip.style.color = '#ef4444';
+      pkChip.innerHTML = `⛓️ Thiên Lao (PK: ${pkVal})`;
+    } else if (pkMode === 'peace') {
       pkChip.style.color = '#4ade80';
-      pkChip.innerHTML = '🛡️ Luyện công';
+      pkChip.innerHTML = `🛡️ Luyện công (PK: ${pkVal})`;
     } else if (pkMode === 'pk') {
       pkChip.style.color = '#fbbf24';
-      pkChip.innerHTML = '⚔️ PK (F9)';
+      pkChip.innerHTML = `⚔️ PK (PK: ${pkVal})`;
     } else if (pkMode === 'slaughter') {
       pkChip.style.color = '#f472b6';
-      pkChip.innerHTML = '🩸 Đồ sát';
+      pkChip.innerHTML = `🩸 Đồ sát (PK: ${pkVal})`;
     }
   }
   const hpB = $('#hpBar');
@@ -1658,6 +1677,26 @@ const JX_TOWNS = (typeof TOWN_NPC !== 'undefined' && TOWN_NPC.TOWNS_CONFIG) ? TO
 let travelTab = 'city'; // 'city' | 'village' | 'zone'
 
 function openMapTravelModal() {
+  if (S && S.jailUntil && S.jailUntil > Date.now()) {
+    const remM = Math.ceil((S.jailUntil - Date.now()) / 60000);
+    const remH = Math.floor(remM / 60);
+    const remMMod = remM % 60;
+    modal(`
+      <div class="jx-client-window" style="margin:-14px;border:none;box-shadow:none;text-align:center;padding:24px 16px;">
+        <h3 style="color:#ef4444;margin-bottom:12px;font-size:16px;">⚖️ THIÊN LAO ĐẠI GIỚI (NHÀ GIAM)</h3>
+        <p style="color:#f5ede0;font-size:12.5px;line-height:1.6;">
+          Do điểm PK tích lũy đạt <b>${S.pkValue || 10} điểm</b>, bạn đã bị Quan Phủ tống giam vào Thiên Lao!
+        </p>
+        <div style="background:rgba(239,68,68,0.12);border:1px solid #ef4444;border-radius:6px;padding:14px;margin:16px auto;max-width:320px;">
+          <div style="color:#fbbf24;font-size:13px;font-weight:bold;">Thời gian thụ án còn lại:</div>
+          <div style="color:#ef4444;font-size:22px;font-weight:bold;margin-top:6px;letter-spacing:1px;">${remH} Giờ ${remMMod} Phút</div>
+          <div style="color:#94a3b8;font-size:11px;margin-top:6px;">(Không thể di chuyển bản đồ hoặc rời khỏi nhà giam)</div>
+        </div>
+        <button class="jx-action-btn gold" onclick="closeModal();">Chấp Nhận Chịu Án</button>
+      </div>
+    `);
+    return;
+  }
   const cities = JX_TOWNS.filter(x => x.type === 'city');
   const villages = JX_TOWNS.filter(x => x.type === 'village');
 
@@ -1754,6 +1793,13 @@ function travelToTown(target) {
     t = target;
   }
   if (!t) t = JX_TOWNS[0];
+  if (S && S.jailUntil && S.jailUntil > Date.now()) {
+    const remM = Math.ceil((S.jailUntil - Date.now()) / 60000);
+    const remH = Math.floor(remM / 60);
+    const remMMod = remM % 60;
+    toast(`⚖️ Bạn đang bị giam cầm trong Thiên Lao vì PK = 10! Còn ${remH}h${remMMod}m, không thể rời khỏi!`);
+    return;
+  }
   closeModal();
   if (!R.town) {
     R.town = true;
@@ -1799,6 +1845,13 @@ function travelToZone(target) {
     z = ZONES[idx] || target;
   }
   if (!z || idx === -1) return;
+  if (S && S.jailUntil && S.jailUntil > Date.now() && z.id !== 37) {
+    const remM = Math.ceil((S.jailUntil - Date.now()) / 60000);
+    const remH = Math.floor(remM / 60);
+    const remMMod = remM % 60;
+    toast(`⚖️ Bạn đang bị giam cầm trong Thiên Lao vì PK = 10! Còn ${remH}h${remMMod}m, không thể rời khỏi!`);
+    return;
+  }
   if (S.lvl < z.lo && z.id !== 386) {
     toast(`Chưa đủ đẳng cấp! Cần đạt cấp ${z.lo} trở lên để đến ${z.n}.`);
     return;

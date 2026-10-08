@@ -85,6 +85,13 @@ function setCtrl(mode, quiet) {
 /* ---------- Che do PK (Luyen Cong / PK / Do Sat) ---------- */
 function cyclePkMode(targetMode) {
   if (!S) return;
+  if (S.jailUntil && S.jailUntil > Date.now()) {
+    const remM = Math.ceil((S.jailUntil - Date.now()) / 60000);
+    const remH = Math.floor(remM / 60);
+    const remMMod = remM % 60;
+    if (typeof toast === 'function') toast(`⚖️ Bạn đang bị giam trong Thiên Lao vì PK = 10! Còn ${remH}h${remMMod}m, không thể đổi chế độ PK!`);
+    return;
+  }
   const modes = ['peace', 'pk', 'slaughter'];
   let next = targetMode;
   if (!next) {
@@ -137,6 +144,10 @@ function fillSlots() {
 function assignSlot(i, id) { fillSlots(); const j = S.slots.indexOf(id); if (j >= 0) S.slots[j] = S.slots[i]; S.slots[i] = id; renderPad(); save(); }
 function pressSlot(i) {
   fillSlots(); const id = S.slots[i]; if (!id) { toast('Ô trống: gán chiêu ở thẻ Võ công'); return; }
+  if (S.jailUntil && S.jailUntil > Date.now()) {
+    toast('⚖️ Đang thụ án trong Thiên Lao! Không thể xuất chiêu tấn công!');
+    return;
+  }
   S.main = id; S.mainLock = true;
   if (typeof R !== 'undefined' && R) {
     R.manualAttack = true;
@@ -167,6 +178,10 @@ function goTown() {
 }
 function backFromTown() {
   if (!R.town) return;
+  if (S.jailUntil && S.jailUntil > Date.now()) {
+    toast('⚖️ Bạn đang bị giam cầm trong Thiên Lao! Không thể ra bãi luyện công!');
+    return;
+  }
   R.town = false;
   const z = zoneOf(Math.min(S.stage, STAGES));
   obsLoad(z.id);

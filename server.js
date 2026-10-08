@@ -432,6 +432,10 @@ function sanitizeAndValidateState(serverState, incomingState, username) {
   if (incomingState.slots) serverState.slots = incomingState.slots;
   if (incomingState.push !== undefined) serverState.push = !!incomingState.push;
   if (incomingState.rw) serverState.rw = incomingState.rw;
+  if (incomingState.pkMode) serverState.pkMode = String(incomingState.pkMode);
+  if (incomingState.pkValue !== undefined) serverState.pkValue = Math.max(0, Number(incomingState.pkValue) || 0);
+  if (incomingState.jailUntil !== undefined) serverState.jailUntil = Math.max(0, Number(incomingState.jailUntil) || 0);
+  if (incomingState.lastPkReduceT !== undefined) serverState.lastPkReduceT = Number(incomingState.lastPkReduceT) || Date.now();
   serverState.lastSyncT = Date.now();
   serverState.lastSave = Date.now();
 
@@ -1231,6 +1235,50 @@ setInterval(() => {
   }
 }, 4000);
 
+// "mỗi 2 tiếng trừ 1 điểm PK" (7200000ms = 2 giờ)
+setInterval(() => {
+  const now = Date.now();
+  const TWO_HOURS = 2 * 60 * 60 * 1000;
+  for (const [ws, p] of players.entries()) {
+    if (p.pkValue > 0) {
+      p.lastPkReduceT = p.lastPkReduceT || now;
+      if (now - p.lastPkReduceT >= TWO_HOURS) {
+        const reductions = Math.floor((now - p.lastPkReduceT) / TWO_HOURS);
+        p.pkValue = Math.max(0, p.pkValue - reductions);
+        p.lastPkReduceT = now;
+        if (p.uKey && db.users[p.uKey] && db.users[p.uKey].state) {
+          db.users[p.uKey].state.pkValue = p.pkValue;
+          db.users[p.uKey].state.lastPkReduceT = p.lastPkReduceT;
+        }
+        try {
+          ws.send(JSON.stringify({
+            type: 'pk_update',
+            pkValue: p.pkValue,
+            jailUntil: p.jailUntil || 0,
+            lastPkReduceT: p.lastPkReduceT,
+            msg: `🕊️ Đã qua 2 giờ tu tâm dưỡng tính, điểm PK của bạn giảm 1 còn: ${p.pkValue}.`
+          }));
+        } catch (e) {}
+      }
+    }
+    if (p.jailUntil > 0 && now >= p.jailUntil) {
+      p.jailUntil = 0;
+      if (p.uKey && db.users[p.uKey] && db.users[p.uKey].state) {
+        db.users[p.uKey].state.jailUntil = 0;
+      }
+      try {
+        ws.send(JSON.stringify({
+          type: 'pk_update',
+          pkValue: p.pkValue,
+          jailUntil: 0,
+          lastPkReduceT: p.lastPkReduceT,
+          msg: '🎉 Bạn đã mãn hạn tù 1 ngày và được Quan Phủ phóng thích khỏi Thiên Lao!'
+        }));
+      } catch (e) {}
+    }
+  }
+}, 60000); // Kiểm tra mỗi phút một lần
+
 // ==========================================
 // HỆ THỐNG GIAO DỊCH (PLAYER TRADE)
 // ==========================================
@@ -1668,6 +1716,9 @@ wss.on('connection', (ws) => {
     chat: '',
     chatT: 0,
     pkMode: 'peace',
+    pkValue: 0,
+    jailUntil: 0,
+    lastPkReduceT: Date.now(),
     initialized: false,
     lastUpdate: Date.now()
   };
@@ -1796,8 +1847,14 @@ wss.on('connection', (ws) => {
             attrPts: uState.attrPts,
             skPts: uState.skPts,
             attr: uState.attr,
-            sk: uState.sk
+            sk: uState.sk,
+            pkValue: uState.pkValue || 0,
+            jailUntil: uState.jailUntil || 0,
+            lastPkReduceT: uState.lastPkReduceT || Date.now()
           }));
+          p.pkValue = Math.max(0, Number(uState.pkValue) || 0);
+          p.jailUntil = Math.max(0, Number(uState.jailUntil) || 0);
+          p.lastPkReduceT = Number(uState.lastPkReduceT) || Date.now();
         }
 
         // Nếu client gửi tọa độ ban đầu, đồng bộ ngay
@@ -1811,6 +1868,8 @@ wss.on('connection', (ws) => {
         if (data.cloakTier != null) p.cloakTier = Number(data.cloakTier) || 0;
         if (data.cloak) p.cloak = data.cloak;
         if (data.pkMode) p.pkMode = String(data.pkMode);
+        if (data.pkValue != null && !p.uKey) p.pkValue = Math.max(0, Number(data.pkValue) || 0);
+        if (data.jailUntil != null && !p.uKey) p.jailUntil = Math.max(0, Number(data.jailUntil) || 0);
         p.initialized = true;
 
         if (!wasInit) {
@@ -1904,7 +1963,9 @@ wss.on('connection', (ws) => {
             if (p.maxMp != null) mem.maxMp = p.maxMp;
           }
         }
-        if (data.zoneId != null) {
+        if (p.jailUntil && p.jailUntil > Date.now()) {
+          p.zoneId = 37; // Bị giam trong Thiên Lao / Biện Kinh, không được đổi zone
+        } else if (data.zoneId != null) {
           const oldZone = p.zoneId;
           p.zoneId = Number(data.zoneId);
           if (oldZone !== p.zoneId) {
@@ -1953,18 +2014,27 @@ wss.on('connection', (ws) => {
           mount: p.mount,
           cloakTier: p.cloakTier,
           pkMode: p.pkMode,
+          pkValue: p.pkValue || 0,
+          jailUntil: p.jailUntil || 0,
           eq: p.eq,
           hp: p.hp,
           maxHp: p.maxHp
         }, ws);
       } else if (data.type === 'pk_mode_change') {
-        p.pkMode = String(data.pkMode || 'peace');
+        if (p.jailUntil && p.jailUntil > Date.now()) {
+          // Trong tù không cho đổi chế độ PK
+          p.pkMode = 'peace';
+        } else {
+          p.pkMode = String(data.pkMode || 'peace');
+        }
         broadcastToZone(p.zoneId, {
           type: 'player_pk_mode',
           id: p.id,
-          pkMode: p.pkMode
+          pkMode: p.pkMode,
+          pkValue: p.pkValue || 0
         });
       } else if (data.type === 'pvp_hit') {
+        if (p.jailUntil && p.jailUntil > Date.now()) return; // Đang ở tù, không thể tấn công
         const targetId = Number(data.targetId);
         let targetWs = null, targetP = null;
         for (const [otherWs, otherP] of players.entries()) {
@@ -2003,7 +2073,10 @@ wss.on('connection', (ws) => {
             attackerId: p.id
           }, targetWs);
 
-          if (targetP.hp <= 0) {
+          if (targetP.hp <= 0 && !targetP._isDeadHandled) {
+            targetP._isDeadHandled = true;
+            setTimeout(() => { if (targetP) targetP._isDeadHandled = false; }, 3000);
+
             const zoneName = (JX && JX.zones && JX.zones.find(z => z.id === p.zoneId)) ? JX.zones.find(z => z.id === p.zoneId).n : 'Giang Hồ';
             const killMsg = p.pkMode === 'slaughter'
               ? `🩸 [Đồ Sát] ${p.name} đã hạ sát ${targetP.name} tại ${zoneName}!`
@@ -2016,6 +2089,73 @@ wss.on('connection', (ws) => {
               text: killMsg,
               global: true
             });
+
+            // 1. TĂNG ĐIỂM PK CHO KẺ ĐỒ SÁT:
+            // "khi PK hay đồ sát thì người PK ĐỒ sát sẽ lên điểm PK, ĐỒ SÁT chết 1 người lên 1 điểm PK"
+            if (p.pkMode === 'slaughter') {
+              p.pkValue = (p.pkValue || 0) + 1;
+              p.lastPkReduceT = Date.now();
+              if (p.uKey && db.users[p.uKey] && db.users[p.uKey].state) {
+                db.users[p.uKey].state.pkValue = p.pkValue;
+                db.users[p.uKey].state.lastPkReduceT = p.lastPkReduceT;
+              }
+
+              let jailNotice = '';
+              // "PK = 10 điểm sẽ bị tống vào nhà giam và không thể chơi trong 1 ngày"
+              if (p.pkValue >= 10) {
+                p.jailUntil = Date.now() + 24 * 60 * 60 * 1000; // 1 ngày giam cầm
+                p.zoneId = 37; // Đưa về Biện Kinh (Khu an toàn / Nhà giam)
+                p.x = 2150; p.y = 1130;
+                if (p.uKey && db.users[p.uKey] && db.users[p.uKey].state) {
+                  db.users[p.uKey].state.jailUntil = p.jailUntil;
+                  db.users[p.uKey].state.zoneId = 37;
+                }
+                jailNotice = ` ⚖️ Điểm PK đạt ${p.pkValue}! ${p.name} đã bị Quan Phủ tống vào Thiên Lao thụ án 1 ngày!`;
+                broadcast({
+                  type: 'player_chat',
+                  fromId: 0,
+                  fromName: '⚖️ [Quan Phủ]',
+                  chan: 'world',
+                  text: `Ác nhân ${p.name} sát hại bừa bãi (PK: ${p.pkValue}), đã bị bắt vào Nhà Giam thụ án 1 ngày!`,
+                  global: true
+                });
+              }
+
+              // Thông báo và đồng bộ điểm PK tới kẻ đồ sát
+              ws.send(JSON.stringify({
+                type: 'pk_update',
+                pkValue: p.pkValue,
+                jailUntil: p.jailUntil || 0,
+                lastPkReduceT: p.lastPkReduceT,
+                msg: `🩸 Bạn đã đồ sát ${targetP.name}! Điểm PK tăng lên: ${p.pkValue}.${jailNotice}`
+              }));
+              if (p.uKey) saveDb();
+            }
+
+            // 2. NẠN NHÂN BỊ HẠ SÁT: KIỂM TRA NẾU NẠN NHÂN CÓ PK = 10 ĐIỂM
+            // "PK = 10 khi bị đánh chết thì văng hết tiền và đồ đang mặc"
+            const victimPk = targetP.pkValue || (targetP.uKey && db.users[targetP.uKey] && db.users[targetP.uKey].state && db.users[targetP.uKey].state.pkValue) || 0;
+            const penaltyDrop = victimPk >= 10;
+            try {
+              targetWs.send(JSON.stringify({
+                type: 'pvp_death',
+                killerName: p.name,
+                killerId: p.id,
+                penaltyDrop: penaltyDrop,
+                victimPk: victimPk
+              }));
+            } catch (e) {}
+
+            if (penaltyDrop) {
+              broadcast({
+                type: 'player_chat',
+                fromId: 0,
+                fromName: '📢 [Trừ Gian]',
+                chan: 'world',
+                text: `💥 Đại ác nhân ${targetP.name} (PK 10) đã bị ${p.name} tiêu diệt! Toàn bộ trang bị và ngân lượng đã bị rơi sạch!`,
+                global: true
+              });
+            }
           }
         }
       } else if (data.type === 'skill') {
