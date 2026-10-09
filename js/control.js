@@ -272,6 +272,13 @@ function renderPad() {
     b.title = s ? `${s.n} (Nhấp trái: Chọn chiêu chính · Chuột phải / Giữ: Đổi chiêu)` : `Ô ${+b.dataset.i + 1} trống (Chuột phải / Giữ để gán chiêu)`;
   });
   const b = $('#ctrlBtn'); if (b) { b.textContent = manual() ? '🕹 Tự điều khiển' : '⚙ Tự động'; b.classList.toggle('on', manual()); }
+  const bMain = $('#bMain');
+  if (bMain) {
+    const m = R.P && R.P.main;
+    const mi = bMain.querySelector('i') || $('#mainSkIcon');
+    if (mi) mi.style.backgroundImage = m && m.ic ? `url('${m.ic}')` : '';
+    bMain.title = m ? `Chiêu chính: ${m.n}` : 'Chiêu chính';
+  }
 }
 function updatePadCd() {
   const pc = R.potCd || {}, set = (el, v, max) => el && el.querySelector('.cd').style.setProperty('--p', `${clamp(v / max, 0, 1) * 100}%`);

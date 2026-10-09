@@ -1797,12 +1797,26 @@ function updatePkModeBtn() {
       pkChip.innerHTML = `🩸 Đồ sát (PK: ${pkVal})`;
     }
   }
-  const hpB = $('#hpBar');
-  if (hpB) {
-    if (pkMode === 'slaughter') {
-      hpB.style.background = 'linear-gradient(180deg, #f472b6 0%, #ec4899 50%, #be185d 100%)';
-    } else {
-      hpB.style.background = '';
+  const pkBadge = $('#pkModeBadge');
+  const pkBadgeTxt = $('#pkBadgeTxt');
+  if (pkBadge && pkBadgeTxt) {
+    pkBadge.className = `pk-mode-badge ${pkMode}`;
+    if (isJailed) {
+      pkBadgeTxt.textContent = 'Lao';
+      pkBadge.style.borderColor = '#ef4444';
+      pkBadge.style.color = '#ef4444';
+    } else if (pkMode === 'peace') {
+      pkBadgeTxt.textContent = 'Hòa';
+      pkBadge.style.borderColor = '#4ade80';
+      pkBadge.style.color = '#4ade80';
+    } else if (pkMode === 'pk') {
+      pkBadgeTxt.textContent = 'Chiến';
+      pkBadge.style.borderColor = '#60a5fa';
+      pkBadge.style.color = '#60a5fa';
+    } else if (pkMode === 'slaughter') {
+      pkBadgeTxt.textContent = 'Đồ';
+      pkBadge.style.borderColor = '#f43f5e';
+      pkBadge.style.color = '#f43f5e';
     }
   }
 }
@@ -1908,6 +1922,26 @@ function updateTop() {
   if (typeof updateMountHudBtn === 'function') {
     updateMountHudBtn();
   }
+
+  // Update volam.top / JX1 classic HUD
+  const lvSEl = $('#lvS'); if (lvSEl) lvSEl.textContent = S.lvl;
+  const pwSEl = $('#pwS'); if (pwSEl) pwSEl.textContent = Math.round(R.power || 0);
+  const u2Zone = $('#u20ZoneName'); if (u2Zone) {
+    const curZ = R.town ? W.town : zoneOf(Math.min(S.stage, STAGES));
+    u2Zone.textContent = curZ ? curZ.n : 'Hoa Sơn';
+  }
+  const u2Coord = $('#u20Coords'); if (u2Coord) {
+    const cx = Math.round(typeof H !== 'undefined' ? H.x / 4 : 198);
+    const cy = Math.round(typeof H !== 'undefined' ? H.y / 4 : 121);
+    u2Coord.textContent = `(${cx}/${cy})`;
+  }
+  const csModeTxt = $('#csModeTxt'); if (csModeTxt) csModeTxt.textContent = S.push ? '⚔️ Vượt Ải' : '🛡️ Luyện Công';
+  const csRotTxt = $('#csRotTxt'); if (csRotTxt) csRotTxt.textContent = (S.rot !== false) ? '✓' : '✗';
+  const csAutoTxt = $('#csAutoTxt');
+  if (csAutoTxt) {
+    const isAutoOn = (window.AUTO_SYSTEM && AUTO_SYSTEM.enabled) || (typeof manual === 'function' && !manual());
+    csAutoTxt.textContent = isAutoOn ? '✓' : '✗';
+  }
 }
 /* Nap tu file .jxsave (hoac ma van ban): chon slot dich, canh bao ghi de, roi tai lai trang */
 function pickSaveFile(after) {
@@ -1995,7 +2029,13 @@ const JX_TOWNS = (typeof TOWN_NPC !== 'undefined' && TOWN_NPC.TOWNS_CONFIG) ? TO
   { id: 54, type: 'village', n: 'Nam Nhạc Trấn', sub: 'Hành Sơn chân núi thánh địa', desc: 'Cửa ngõ dẫn lên đỉnh Hành Sơn linh thiêng, hương khói nghi ngút.' }
 ];
 
-let travelTab = 'city'; // 'city' | 'village' | 'zone'
+function toggleMiniMap() {
+  if (!S) return;
+  S.miniMap = S.miniMap === false ? true : false;
+  save();
+  toast(S.miniMap !== false ? '🗺️ Đã bật bản đồ nhỏ' : '🗺️ Đã ẩn bản đồ nhỏ');
+}
+window.toggleMiniMap = toggleMiniMap;
 
 function openMapTravelModal() {
   if (S && S.jailUntil && S.jailUntil > Date.now()) {
