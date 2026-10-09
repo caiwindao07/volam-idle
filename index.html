@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=4.7">
+<link rel="stylesheet" href="style.css?v=4.8">
 </head>
 <body>
 <div id="app">
@@ -127,7 +127,7 @@
       <button id="gaTongKim" class="ga-btn" onclick="if(window.TONGKIM)TONGKIM.openRegisterModal();else if(typeof openWarModal==='function')openWarModal();" title="Chiến Trường Tống Kim">
         <span class="ga-ic">⚔️</span><small>Tống Kim</small>
       </button>
-      <button id="gaMenu" class="ga-btn" onclick="showTab('more');toggleWin('more');" title="Tất cả Tính Năng &amp; Hoạt Động Giang Hồ">
+      <button id="gaMenu" class="ga-btn" onclick="toggleWin('more');" title="Tất cả Tính Năng &amp; Hoạt Động Giang Hồ">
         <span class="ga-ic">⋯</span><small>Tính năng</small>
       </button>
     </div>
@@ -244,10 +244,10 @@
         <div class="jx-float-body" id="t-log-f"></div>
       </div>
 
-      <!-- Cửa sổ 5: Cài Đặt Hệ Thống -->
-      <div class="jx-float-win hidden" id="fw-more" style="width: 360px;">
+      <!-- Cửa sổ 5: Tính Năng Giang Hồ & Thiết Lập Hệ Thống -->
+      <div class="jx-float-win hidden" id="fw-more" style="width: 480px; max-width: calc(96vw - 20px);">
         <div class="jx-float-header">
-          <span class="jx-window-title">⚙️ THIẾT LẬP HỆ THỐNG</span>
+          <span class="jx-window-title">🏆 TÍNH NĂNG GIANG HỒ &amp; HỆ THỐNG</span>
           <button class="jx-close-btn" data-close="more">✕</button>
         </div>
         <div class="jx-float-body" id="t-more-f"></div>
@@ -378,7 +378,7 @@
           <button class="jx-dropup-item" onclick="if(window.ACTIVITY_SYSTEM)ACTIVITY_SYSTEM.toggleWindow();">⚔️ Hoạt Động &amp; Phó Bản</button>
           <button class="jx-dropup-item" onclick="openVipModal()">👑 Đặc Quyền VIP</button>
           <button class="jx-dropup-item" onclick="openCasinoModal()">🎲 Tửu Quán (Tài Xỉu, Bầu Cua)</button>
-          <button class="jx-dropup-item" onclick="showTab('more');toggleWin('more');">⚙️ Toàn Bộ Tính Năng &amp; Cài Đặt</button>
+          <button class="jx-dropup-item" onclick="toggleWin('more');">🏆 Toàn Bộ Tính Năng &amp; Cài Đặt</button>
         </div>
       </div>
     </div>
@@ -466,7 +466,7 @@ if (window.caches) {
 <script src="js/doll.js?v=3.8"></script>
 <script src="js/equip_res.js?v=3.8"></script>
 <script src="js/audio.js?v=3.8"></script>
-<script src="js/ui.js?v=4.7"></script>
+<script src="js/ui.js?v=4.8"></script>
 <script src="js/partyui.js?v=363"></script>
 <script src="js/builds.js?v=3.8"></script>
 <script src="js/control.js?v=4.3"></script>

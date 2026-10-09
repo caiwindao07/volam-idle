@@ -1914,15 +1914,17 @@ function updateTop() {
   const need = J.exp[S.lvl - 1] || 1;
   const xpPct = clamp((S.xp / need) * 100, 0, 100);
   const xpTxtStr = `${xpPct.toFixed(1)}%`;
-  document.querySelectorAll('.bar.xp i, #xpBar, #hudXpBar').forEach(el => { el.style.width = xpPct + '%'; });
+  document.querySelectorAll('.bar.xp i, #xpBar, #hudXpBar').forEach(el => {
+    el.style.setProperty('width', xpPct + '%', 'important');
+  });
   document.querySelectorAll('.bar.xp span, #xpTxt, #hudXpTxt').forEach(el => { el.textContent = xpTxtStr; });
 
   const hpPct = clamp((R.life / P.life) * 100, 0, 100);
   const hpTxtStr = `${Math.round(R.life)} / ${Math.round(P.life)}`;
   document.querySelectorAll('.bar.hp i, #hpBar, #hudHpBar').forEach(el => {
-    el.style.width = hpPct + '%';
+    el.style.setProperty('width', hpPct + '%', 'important');
     if (S && S.pkMode === 'slaughter') {
-      el.style.background = 'linear-gradient(180deg, #f472b6 0%, #ec4899 50%, #be185d 100%)';
+      el.style.setProperty('background', 'linear-gradient(180deg, #f472b6 0%, #ec4899 50%, #be185d 100%)', 'important');
     } else {
       el.style.background = '';
     }
@@ -1933,10 +1935,14 @@ function updateTop() {
 
   const mpPct = clamp((R.mana / P.mana) * 100, 0, 100);
   const mpTxtStr = `${Math.round(R.mana)} / ${Math.round(P.mana)}`;
-  document.querySelectorAll('.bar.mp i, #mpBar, #hudMpBar').forEach(el => { el.style.width = mpPct + '%'; });
+  document.querySelectorAll('.bar.mp i, #mpBar, #hudMpBar').forEach(el => {
+    el.style.setProperty('width', mpPct + '%', 'important');
+  });
   document.querySelectorAll('.bar.mp span, #mpTxt, #hudMpTxt').forEach(el => { el.textContent = mpTxtStr; });
 
-  document.querySelectorAll('.bar.sp i, #spBar').forEach(el => { el.style.width = '100%'; });
+  document.querySelectorAll('.bar.sp i, #spBar').forEach(el => {
+    el.style.setProperty('width', '100%', 'important');
+  });
   document.querySelectorAll('.bar.sp span, #spTxt').forEach(el => { el.textContent = '100 / 100'; });
 
   // Map banner coords
