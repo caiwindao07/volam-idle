@@ -16,60 +16,92 @@
 <body>
 <div id="app">
   <header id="top">
-    <div class="lvbox" id="lvBox" title="Nhân vật & Cấp độ">
-      <span class="lvplus" id="lvPlusBtn" title="Cộng điểm tiềm năng">[+]</span>
-      <b id="lv">1</b>
-    </div>
-    <div class="topmid">
-      <div class="row top-row-meta">
-        <b id="heroName">Cái Bang</b>
-        <span class="hud-fac-badge" id="hudFacName">Cái Bang phái</span>
-        <span class="hud-srv-badge" id="hudSrvBadge">S2 · Đồ Xanh</span>
-        <span class="hud-power-tag" id="hudPowerBox" onclick="if(typeof powerModal==='function')powerModal();" title="Lực Chiến Tổng (Nhấp xem chi tiết)">Lực Chiến <b id="hudPowerVal">0</b></span>
-        <span class="hud-stage-badge" id="btnPushMode" title="Chuyển chế độ Ải / Luyện công">Ải 1 (Luyện công)</span>
-        <span id="stageLbl" style="display:none;">Ải 1/10</span>
-        <div class="gold" title="Ngân lượng"><span class="coin"></span><span id="gold">0</span></div>
-        <button id="giftBtn" title="Phần thưởng" class="tbtn">🎁<em class="dot" id="dotGift"></em></button>
+    <!-- Top Left Cluster: Clock, Level, Avatar, Meta, Bars -->
+    <div class="hud-left-cluster">
+      <div class="hud-clock" id="topClock">10-06 11:35</div>
+      <div class="lvbox" id="lvBox" title="Cấp độ nhân vật">
+        <span class="lvplus" id="lvPlusBtn" title="Cộng điểm tiềm năng">[+]</span>
+        <span class="lvlbl">Cấp</span>
+        <b id="lv">1</b>
       </div>
-      <div class="bars">
-        <div class="bar hp" title="Sinh Lực"><i id="hpBar"></i><em>HP</em><span id="hpTxt">0 / 0</span></div>
-        <div class="bar mp" title="Nội Lực"><i id="mpBar"></i><em>MP</em><span id="mpTxt">0 / 0</span></div>
+      <div class="hud-hero-meta" id="hudHeroMeta">
+        <div class="hud-hero-meta-top">
+          <b id="heroName" class="hud-hero-name" title="Tên hiệp khách">Cái Bang</b>
+          <div class="hud-rank-tag" id="hudRankTag" onclick="openRankModal()" title="Nhấp xem Bảng Xếp Hạng Giang Hồ">Hạng #1</div>
+        </div>
+        <div class="hud-fac-name" id="hudFacName">Cái Bang phái</div>
       </div>
-      <div class="bar xp" title="Kinh Nghiệm"><i id="xpBar"></i><em>EXP</em><span id="xpTxt">0.0%</span></div>
+      <div class="hud-bars-col">
+        <div class="hud-bars-row">
+          <div class="bar hp" title="Sinh Lực"><i id="hpBar"></i><span id="hpTxt">0 / 0</span></div>
+          <div class="bar mp" title="Nội Lực"><i id="mpBar"></i><span id="mpTxt">0 / 0</span></div>
+        </div>
+        <div class="hud-bars-row xp-row">
+          <div class="bar sp" title="Thể Lực"><i id="spBar"></i><span id="spTxt">100 / 100</span></div>
+          <div class="bar xp" title="Kinh Nghiệm"><i id="xpBar"></i><span id="xpTxt">0.0%</span></div>
+        </div>
+      </div>
     </div>
-    <button id="compactBtn" title="Thu gọn / mở rộng sân đấu" class="hidden">⛶</button>
-  </header>
 
-  <!-- Hai thẻ trạng thái nổi chính giữa ngay dưới #top -->
-  <div id="topSubBadges">
-    <span id="mpStatus" class="hud-online-badge" onclick="if(typeof openOnlinePlayersModal==='function')openOnlinePlayersModal();" title="Nhấp xem danh sách trực tuyến (Người chơi & BOT, Kích/Chặn)"><i></i><b id="onlineCountTxt">850</b> người đang online</span>
-    <button id="btnPkMode" class="pk-mode-btn peace" title="[Phím F9] Chế độ PK: Luyện Công / PK / Đồ Sát">🛡️ Luyện công</button>
-  </div>
+    <!-- Center: Power Box, Stage & Map Coords & PK mode (Đúng 1 hàng, không rớt dòng) -->
+    <div class="topmid" id="topMidCluster">
+      <div class="hud-power-box" id="hudPowerBox" onclick="if(typeof powerModal==='function')powerModal();" title="Lực Chiến Tổng (Nhấp xem chi tiết)">
+        <span class="lbl">Lực Chiến</span>
+        <b id="hudPowerVal">0</b>
+      </div>
+      <div class="hud-map-banner" id="hudMapBanner" title="Bản đồ và tọa độ hiện tại">
+        <span class="hud-map-icon">📍</span>
+        <b id="hudZoneName">Hoa Sơn</b>
+        <span id="hudCoords" class="hud-coords-txt">(198/121)</span>
+      </div>
+      <button id="btnPushMode" class="push-mode-btn farm-on" title="Nhấp để chuyển đổi Vượt Ải / Luyện Công">
+        🛡 Ải 1 (Luyện công)
+      </button>
+      <span id="stageLbl" style="display:none;">Ải 1/10</span>
+      <button id="btnPkMode" class="pk-mode-btn peace desktop-only" title="[Phím F9] Chế độ PK: Luyện Công / PK / Đồ Sát">🛡️ Luyện công</button>
+    </div>
+
+    <!-- Top Right Cluster: Thanh nút tính năng tinh giản, đồng bộ, hiện đại -->
+    <div class="hud-right-cluster">
+      <span id="mpStatus" class="hud-online-badge" onclick="if(typeof openOnlinePlayersModal==='function')openOnlinePlayersModal();" title="Nhấp xem danh sách trực tuyến (Người chơi & BOT, Kích/Chặn)">🟢 Trực tuyến</span>
+      <button id="jxSpd" class="hud-top-btn spd-top-btn" title="Tốc độ game x1 / x1.5 / x2.5 (phím X)">⚡ x1</button>
+      <button id="jxAuto" class="hud-top-btn auto-top-btn" title="Cày thông minh: bật Vượt ải + Tự nhặt + Xoay chiêu (phím Z)">🤖 Auto</button>
+      
+      <div class="hud-btn-sep"></div>
+
+      <button id="jxToday" class="hud-top-btn today-top-btn" onclick="if(typeof openTodayDashboardModal==='function')openTodayDashboardModal();" title="Việc hôm nay: điểm danh, nhiệm vụ, hoạt động còn lượt">📅 Hôm nay</button>
+      <button id="warBtn" class="hud-top-btn war-top-btn" onclick="if(typeof openWarModal==='function')openWarModal();" title="Chiến Trường Tống Kim & Công Thành Xưng Bá">⚔️ Chiến Trường</button>
+      <button id="actBtn" class="hud-top-btn act-top-btn" title="Hoạt Động / Phó Bản / Tháp">⚔ Hoạt Động</button>
+      <button id="vipBtn" class="hud-top-btn vip-top-btn" title="Đặc Quyền VIP">👑 VIP</button>
+      
+      <div class="hud-btn-group">
+        <button id="forgeBtn" class="hud-top-btn forge-top-btn" title="Dã Luyện Thần Binh (+16, Chế Hoàng Kim, Bạch Kim)">🔨 Rèn</button>
+        <button id="epdoBtn" class="hud-top-btn epdo-top-btn" onclick="if(typeof epModal==='function')epModal();" title="Lò Ép Đồ (Huyền Tinh, Chế Phôi, Khảm Nạm Đồ Tím, Kho Rèn)">🔮 Ép</button>
+      </div>
+
+      <button id="arcadeBtn" class="hud-top-btn arcade-top-btn" onclick="if(typeof openArcadeModal==='function')openArcadeModal();" title="Khu Giải Trí Arcade (Rắn Săn Mồi & Xếp Gạch)">🎮 Giải Trí</button>
+
+      <div class="hud-dropdown" id="hudMoreDropdown">
+        <button class="hud-top-btn hud-more-btn" id="hudMoreBtn" onclick="toggleHudMoreMenu(event);" title="Menu tính năng mở rộng">⋯ Menu ▾</button>
+        <div class="hud-dropdown-menu" id="hudMoreMenu">
+          <button class="hud-menu-item" onclick="if(typeof openCasinoModal==='function')openCasinoModal();">🎲 Tửu Quán Tiêu Dao (Tài Xỉu, Bầu Cua)</button>
+          <button class="hud-menu-item" onclick="if(typeof openStashIoModal==='function')openStashIoModal();">🧰 Xuất / Nạp Kho File (.jxkho)</button>
+          <button class="hud-menu-item" onclick="if(window.TRADE)TRADE.openRequestModal();">🤝 Giao Dịch Vật Phẩm & Vàng</button>
+          <button class="hud-menu-item" onclick="if(typeof openMarketModal==='function')openMarketModal();">🏮 Sạp Hàng Chợ Đen</button>
+          <button class="hud-menu-item" onclick="if(typeof openRankModal==='function')openRankModal();">🏆 Bảng Xếp Hạng Giang Hồ</button>
+        </div>
+      </div>
+
+      <button id="giftBtn" title="Phần thưởng" class="hud-top-btn gift-top-btn">🎁<em class="dot" id="dotGift"></em></button>
+      <button id="compactBtn" title="Thu gọn / mở rộng sân đấu" class="hud-top-btn">⛶</button>
+    </div>
+  </header>
 
   <section id="battle">
     <div id="bg"></div>
     <canvas id="arena"></canvas>
     <div id="hud">
       <div id="mainSk"></div>
-    </div>
-
-    <!-- Cụm nổi góc phải trên (Top Right) chuẩn JX 1 -->
-    <div id="pcTop">
-      <div class="pcround">
-        <button id="pcBtnGift" data-pc="gift" title="Phần thưởng & Việc hôm nay"><i>🎁</i><span>Phần<br>thưởng</span></button>
-        <button id="pcBtnKtc" data-pc="ktc" title="Kỳ Trân Các"><i>💎</i><span>Kỳ Trân<br>Các</span></button>
-        <button id="pcBtnTower" data-pc="tower" title="Tháp thử thách & Phụ bản"><i>🏯</i><span>Tháp</span></button>
-        <button id="pcBtnRank" data-pc="rank" title="Bảng Xếp Hạng Giang Hồ"><i>🏆</i><span>Xếp<br>hạng</span></button>
-      </div>
-      <div class="pcmap">
-        <select id="pcZone" title="Bản đồ luyện công"></select>
-      </div>
-      <div class="pcstage">
-        <button id="pcPrev" title="Ải trước">◀</button>
-        <button id="pcPush" title="Nhấp chuyển Vượt Ải / Luyện Công">Ải 1/10 · Luyện công</button>
-        <button id="pcNext" title="Ải kế">▶</button>
-        <button id="pcJump" title="Nhảy thẳng tới ải bất kỳ">Đến ải…</button>
-      </div>
     </div>
 
     <!-- Mobile Viewport Overlay -->
@@ -246,41 +278,54 @@
       <div class="jx-float-win hidden" id="fw-cloak-meridian" style="width: 520px;"></div>
     </div>
 
-    <!-- Cụm chiêu thức & thanh công cụ chuẩn JX 1 (800x94) -->
-    <div id="pad">
-      <!-- 3 bình thuốc & phù bên trái -->
-      <button class="pbtn pot hp" id="bHp" data-key="1" title="[Phím 1] Bơm Sinh Lực (HP)"><div class="cd"></div><span>HP</span><small class="cnt" id="hpCnt"><b id="potHpCount">0</b></small></button>
-      <button class="pbtn pot mp" id="bMp" data-key="2" title="[Phím 2] Bơm Nội Lực (MP)"><div class="cd"></div><span>MP</span><small class="cnt" id="mpCnt"><b id="potMpCount">0</b></small></button>
-      <button class="pbtn pot tp" id="bTp" data-key="3" title="[Phím 3] Thổ Địa Phù (Về thành)"><div class="cd"></div><span>Về</span></button>
+    <!-- Cụm chiêu thức võ công 1-4 & Cụm thuốc hỗ trợ nổi trên màn hình chiến đấu -->
+    <div class="jx-skill-belt" id="pad">
+      <!-- Cụm chiêu thức võ công 1-4 -->
+      <div class="pad-skills-group" id="padSkills">
+        <button class="pbtn sk" data-i="0" title="Chiêu 1 [Phím 1]"><span class="key-tag">1</span><i></i><b>1</b></button>
+        <button class="pbtn sk" data-i="1" title="Chiêu 2 [Phím 2]"><span class="key-tag">2</span><i></i><b>2</b></button>
+        <button class="pbtn sk" data-i="2" title="Chiêu 3 [Phím 3]"><span class="key-tag">3</span><i></i><b>3</b></button>
+        <button class="pbtn sk" data-i="3" title="Chiêu 4 [Phím 4]"><span class="key-tag">4</span><i></i><b>4</b></button>
+      </div>
 
-      <!-- F1, F2, F3 ô chiêu -->
-      <button class="pbtn sk" data-i="0" data-key="F1" title="Chiêu 1 [Phím F1]"><i></i><b>1</b></button>
-      <button class="pbtn sk" data-i="2" data-key="F2" title="Chiêu 2 [Phím F2]"><i></i><b>2</b></button>
-      <button class="pbtn sk" data-i="3" data-key="F3" title="Chiêu 3 [Phím F3]"><i></i><b>3</b></button>
-
-      <!-- Auto, Cưỡi Ngựa, Xoay Chiêu -->
-      <button class="pbtn jxo" id="jxAuto" title="Tự động đánh (bật / tắt)"><span>Auto</span></button>
-      <button class="pbtn pot ride" id="bRide" data-key="M" title="Lên / xuống ngựa (Phím M / 4)"><div class="cd"></div><span>Mã</span></button>
-      <button class="pbtn jxo" id="jxRot" data-key="R" title="Xoay chiêu: luân phiên chiêu ở ô F1–F4 khi tự đánh"><i></i></button>
-
-      <!-- Chiêu Trái (#pcMain) & Chiêu Phải (sk[1]) -->
-      <button class="pbtn" id="pcMain" title="Chiêu chính (bấm để mở Võ công)"><i></i></button>
-      <button class="pbtn sk" data-i="1" data-key="F4" title="Chiêu phải"><i></i><b>4</b></button>
+      <!-- Cụm thuốc & phụ trợ nổi trên mobile (HP, MP, Về thành, Cưỡi ngựa) -->
+      <div class="pad-pots-group" id="padPots">
+        <button class="pbtn pot hp" id="bHp" title="Bơm Sinh Lực (HP)"><span class="pot-badge" id="potHpCount">85</span><div class="cd"></div><span>HP</span></button>
+        <button class="pbtn pot mp" id="bMp" title="Bơm Nội Lực (MP)"><span class="pot-badge" id="potMpCount">46</span><div class="cd"></div><span>MP</span></button>
+        <button class="pbtn pot mount" id="bMount" title="Chiến Mã [Phím 4]"><div class="cd"></div><span>Mã</span></button>
+        <button class="pbtn pot tp" id="bTp" title="Thổ Địa Phù"><div class="cd"></div><span>Về thành</span></button>
+      </div>
     </div>
 
-    <!-- 10 Nút Menu Hệ Thống Chuẩn JX 1 + Quả Cầu Vàng -->
-    <div id="pcMenu">
-      <button data-pm="char" title="[Phím C] Nhân vật & Trang bị"><i class="ic ic-char"></i></button>
-      <button data-pm="inv" title="[Phím B] Hành trang 5 rương"><i class="ic ic-item"></i></button>
-      <button data-pm="forge" title="Lò Rèn & Ép Đồ"><i class="ic ic-forge"></i></button>
-      <button data-pm="skill" title="[Phím K] Võ công"><i class="ic ic-skill"></i></button>
-      <button data-pm="quest" title="Nhiệm vụ Dã Tẩu"><i class="ic ic-task"></i></button>
-      <button data-jx="pet" title="Tổ đội & Đồng hành"><i class="ic ic-team"></i></button>
-      <button data-jx="guild" title="Bang hội & Chiến trường"><i class="ic ic-guild"></i></button>
-      <button data-jx="rank" title="Hảo hữu & Xếp hạng"><i class="ic ic-friend"></i></button>
-      <button data-pm="world" title="[Phím M] Giang hồ & Bản đồ"><i class="ic ic-chat"></i></button>
-      <button data-pm="sys" title="Cài đặt hệ thống"><i class="ic ic-sys"></i></button>
-      <button data-jx="event" id="pcMarketOrb" title="Kỳ Trân Các & Sân Chơi Mở Rộng"></button>
+    <!-- Classical Bottom Action & Skill Hotbar (Chuẩn hình 1 JX) -->
+    <div id="jx-action-bar" class="jx-action-bar">
+      <!-- Cụm phím tắt thuốc & vật phẩm -->
+      <div class="jx-quick-belt">
+        <button class="jx-q-slot pot-hp" id="qbHp" title="[Phím 1/Q] Bơm Sinh Lực (HP)"><span class="key-tag">1</span><span class="pot-lbl">HP</span><div class="cd"></div></button>
+        <button class="jx-q-slot pot-mp" id="qbMp" title="[Phím 2/E] Bơm Nội Lực (MP)"><span class="key-tag">2</span><span class="pot-lbl">MP</span><div class="cd"></div></button>
+        <button class="jx-q-slot pot-tp" id="qbTp" title="[Phím 3/T] Thổ Địa Phù"><span class="key-tag">3</span><span class="pot-lbl">Về</span><div class="cd"></div></button>
+        <button class="jx-q-slot pot-mount" id="qbMount" title="[Phím 4] Chiến Mã"><span class="key-tag">4</span><span class="pot-lbl">Mã</span></button>
+      </div>
+
+      <!-- Cụm phím chức năng mở cửa sổ -->
+      <div class="jx-nav-belt">
+        <button class="jx-nav-btn" data-open-win="char-attrib" title="[Phím C / F3] Mở Trang Bị & Thuộc Tính">🥋 Nhân vật (C)</button>
+        <button class="jx-nav-btn" data-open-win="inv" title="[Phím B / F4] Mở Hành Trang">🎒 Túi đồ (B)</button>
+        <button class="jx-nav-btn" data-open-win="skill" title="[Phím K / F5] Mở Võ Công">⚡ Võ công (K)</button>
+        <button class="jx-nav-btn" data-open-win="party" id="btnOpenParty" title="[Phím P] Quản Lý Tổ Đội">👥 Đội (P)</button>
+        <button class="jx-nav-btn" onclick="if(window.SIGNIN)SIGNIN.toggle();" id="btnOpenSignin" title="Điểm Danh Nhận Thưởng Hằng Ngày">🎁 Điểm danh</button>
+        <button class="jx-nav-btn" onclick="if(window.COMPANION_SYSTEM)COMPANION_SYSTEM.toggleWindow();" id="btnOpenPet" title="Mở Bảng Bạn Đồng Hành">🐾 Pet</button>
+        <button class="jx-nav-btn" id="mountBtn" onclick="if(typeof mountModal==='function')mountModal();" title="Mở Bảng Chiến Mã & Thần Mã">🐎 Chiến mã</button>
+        <button class="jx-nav-btn" onclick="if(window.BLACK_MARKET)BLACK_MARKET.toggleWindow();" id="btnOpenBlackMarket" title="Mở Chợ Đen Hắc Thị">🏪 Chợ đen</button>
+        <button class="jx-nav-btn" onclick="if(window.CLOAK_MERIDIAN)CLOAK_MERIDIAN.toggleWindow();" id="btnOpenCloak" title="Mở Phi Phong & Kinh Mạch">✨ Phi phong</button>
+        <button class="jx-nav-btn" onclick="if(window.STALL)STALL.toggle();" id="btnOpenStall" title="Mở Sạp Bày Bán Hàng Rong">🏪 Bày bán</button>
+        <button class="jx-nav-btn" onclick="if(window.DATAU)DATAU.toggle();" id="btnOpenDatau" title="Mở Nhiệm Vụ Dã Tẩu">📜 Dã Tẩu</button>
+        <button class="jx-nav-btn" onclick="if(window.TONGKIM)TONGKIM.openRegisterModal();" id="btnOpenTongkim" title="Mở Chiến Trường Tống Kim">⚔️ Tống Kim</button>
+        <button class="jx-nav-btn" data-open-win="log" title="[Phím M] Mở Bản Đồ & Ải">🗺 Bản đồ (M)</button>
+        <button class="jx-nav-btn" data-open-win="auto" id="btnOpenAuto" title="[Phím Z / F6] Cài Đặt Auto">🤖 Auto (Z)</button>
+        <button class="jx-nav-btn" id="btnAutoToggle" title="[Phím F] Bật / Tắt Tự Đánh">⚙ Tự đánh (F)</button>
+        <button class="jx-nav-btn" onclick="document.querySelector('[data-t=more]').click();" title="Cài Đặt Hệ Thống (Âm thanh, Đồ họa, Tài khoản...)">⚙️ Cài đặt</button>
+      </div>
     </div>
   </section>
 

@@ -148,147 +148,16 @@ function showOffline(o) {
     ${o.chests ? '<p class="desc">Quà các mốc đã vào túi — xem nhật ký Giang hồ.</p>' : ''}
     <div class="btnrow"><button class="btn" onclick="closeModal()">Nhận</button></div>`);
 }
-function isMobileUI() {
-  return window.innerWidth < 900 && window.innerHeight >= window.innerWidth;
-}
-function isLandscape() {
-  return window.innerWidth >= 900 || window.innerWidth > window.innerHeight;
-}
-/* Chieu cao that cua vung nhin va dieu chinh ty le man hinh PC/Mobile */
+/* Chieu cao that cua vung nhin (Safari / Chrome dien thoai: 100vh tinh ca phan bi thanh cong cu che -> thanh tab bi day xuong
+   duoi, khong cham duoc). Dat --app-h theo visualViewport moi khi doi kich thuoc. */
 function fitApp() {
-  const isPc = isLandscape();
   document.body.classList.toggle('mob', isMobileUI());
-  document.body.classList.toggle('pc', isPc);
-  document.body.classList.add('jxui');
-  const hk = Math.min(1.15, Math.max(0.65, Math.min((window.innerWidth - 16) / 800, window.innerHeight / 600)));
-  document.documentElement.style.setProperty('--hk', hk.toFixed(3));
   const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   if (h > 0) document.documentElement.style.setProperty('--app-h', Math.round(h) + 'px');
   if (CV) resizeArena();
 }
 /* Che do thu gon: an bang thong tin + thanh tab, san dau chiem ca man hinh; nho theo trinh duyet */
 function setCompact(on) { setUiPref({ compact: on }); if (!on && S && S.fac) refresh(); }
-
-function bindPcUi() {
-  // pcTop buttons
-  const bGift = document.getElementById('pcBtnGift');
-  if (bGift) bGift.onclick = () => { if (typeof openTodayDashboardModal === 'function') openTodayDashboardModal(); else if (typeof giftModal === 'function') giftModal(); };
-  const bKtc = document.getElementById('pcBtnKtc');
-  if (bKtc) bKtc.onclick = () => { if (typeof kytranModal === 'function') kytranModal(); };
-  const bTower = document.getElementById('pcBtnTower');
-  if (bTower) bTower.onclick = () => { if (window.VIP_DUNGEON) VIP_DUNGEON.openDungeonHub(); else if (typeof openDungeonModal === 'function') openDungeonModal(); };
-  const bRank = document.getElementById('pcBtnRank');
-  if (bRank) bRank.onclick = () => { if (typeof openRankModal === 'function') openRankModal(); };
-
-  // pcZone
-  const pcZone = document.getElementById('pcZone');
-  if (pcZone) {
-    pcZone.onchange = (e) => {
-      const idx = +e.target.value;
-      if (typeof gotoStage === 'function') gotoStage(idx * 10 + 1);
-    };
-  }
-  // pcStage buttons
-  const pcPrev = document.getElementById('pcPrev');
-  if (pcPrev) pcPrev.onclick = () => { if (typeof gotoStage === 'function' && typeof S !== 'undefined') gotoStage(S.stage - 1); };
-  const pcNext = document.getElementById('pcNext');
-  if (pcNext) pcNext.onclick = () => { if (typeof gotoStage === 'function' && typeof S !== 'undefined') gotoStage(S.stage + 1); };
-  const pcPush = document.getElementById('pcPush');
-  if (pcPush) pcPush.onclick = () => { if (typeof togglePushMode === 'function') togglePushMode(); };
-  const pcJump = document.getElementById('pcJump');
-  if (pcJump) pcJump.onclick = () => {
-    if (typeof S === 'undefined') return;
-    const ans = prompt(`Nhảy tới ải luyện công (1 - ${S.maxStage || 1}):`, S.stage);
-    if (ans && !isNaN(+ans)) gotoStage(+ans);
-  };
-
-  // 10 pcMenu buttons
-  const menuMap = {
-    char: () => { if (isLandscape() && typeof toggleFloatWin === 'function') toggleFloatWin('char-attrib'); else if (typeof showTab === 'function') showTab('char'); },
-    inv: () => { if (isLandscape() && typeof toggleFloatWin === 'function') toggleFloatWin('inv'); else if (typeof showTab === 'function') showTab('inv'); },
-    forge: () => { if (typeof epModal === 'function') epModal(); else if (typeof htModal === 'function') htModal(); },
-    skill: () => { if (isLandscape() && typeof toggleFloatWin === 'function') toggleFloatWin('skill'); else if (typeof showTab === 'function') showTab('skill'); },
-    quest: () => { if (window.DATAU) DATAU.toggle(); else if (typeof toast === 'function') toast('Nhiệm vụ Dã Tẩu'); },
-    pet: () => { if (window.COMPANION_SYSTEM) COMPANION_SYSTEM.toggleWindow(); else if (typeof openPartyWin === 'function') openPartyWin(); },
-    guild: () => { if (typeof openWarModal === 'function') openWarModal(); else if (window.TONGKIM) TONGKIM.openRegisterModal(); },
-    rank: () => { if (typeof openRankModal === 'function') openRankModal(); },
-    world: () => { if (isLandscape() && typeof toggleFloatWin === 'function') toggleFloatWin('log'); else if (typeof showTab === 'function') showTab('log'); },
-    sys: () => { if (isLandscape() && typeof toggleFloatWin === 'function') toggleFloatWin('more'); else if (typeof showTab === 'function') showTab('more'); }
-  };
-
-  document.querySelectorAll('#pcMenu [data-pm]').forEach(btn => {
-    btn.onclick = () => {
-      if (typeof uiSfx === 'function') uiSfx('click');
-      const action = menuMap[btn.dataset.pm];
-      if (action) action();
-    };
-  });
-
-  document.querySelectorAll('#pcMenu [data-jx]').forEach(btn => {
-    btn.onclick = () => {
-      if (typeof uiSfx === 'function') uiSfx('click');
-      const jx = btn.dataset.jx;
-      if (jx === 'event') {
-        openMarketHubModal();
-      } else if (menuMap[jx]) {
-        menuMap[jx]();
-      }
-    };
-  });
-
-  // pad controls
-  const pcMain = document.getElementById('pcMain');
-  if (pcMain) pcMain.onclick = () => {
-    if (isLandscape() && typeof toggleFloatWin === 'function') toggleFloatWin('skill');
-    else if (typeof showTab === 'function') showTab('skill');
-  };
-
-  const jxAuto = document.getElementById('jxAuto');
-  if (jxAuto) jxAuto.onclick = () => {
-    if (typeof toggleAuto === 'function') toggleAuto();
-    else if (window.AUTO_SYSTEM) AUTO_SYSTEM.toggle();
-    else if (typeof S !== 'undefined' && S.auto) { S.auto.on = !S.auto.on; }
-  };
-
-  const jxRot = document.getElementById('jxRot');
-  if (jxRot) jxRot.onclick = () => {
-    if (typeof S !== 'undefined') {
-      S.rot = !S.rot;
-      if (typeof toast === 'function') toast(S.rot ? 'Đã bật xoay chiêu' : 'Đã tắt xoay chiêu');
-      jxRot.classList.toggle('on', !!S.rot);
-    }
-  };
-
-  const bRide = document.getElementById('bRide');
-  if (bRide) bRide.onclick = () => {
-    if (typeof toggleMount === 'function') toggleMount();
-    else if (typeof mountModal === 'function') mountModal();
-  };
-}
-
-function openMarketHubModal() {
-  modal(`
-    <div class="jx-client-window" style="margin:-14px;border:none;">
-      <div class="jx-window-header">
-        <div class="jx-window-title"><span>🏮 KỲ TRÂN CÁC & TRUNG TÂM GIANG HỒ</span></div>
-      </div>
-      <div style="padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <button class="btn" onclick="closeModal();if(typeof kytranModal==='function')kytranModal();">💎 Kỳ Trân Các</button>
-        <button class="btn" onclick="closeModal();if(window.STALL)STALL.toggle();">🏪 Sạp Hàng Bày Bán</button>
-        <button class="btn" onclick="closeModal();if(window.BLACK_MARKET)BLACK_MARKET.toggleWindow();">🏮 Chợ Đen Hắc Thị</button>
-        <button class="btn" onclick="closeModal();if(window.TRADE)TRADE.openRequestModal();">🤝 Giao Dịch Vật Phẩm</button>
-        <button class="btn" onclick="closeModal();if(typeof openCasinoModal==='function')openCasinoModal();">🎲 Tửu Quán Tiêu Dao</button>
-        <button class="btn" onclick="closeModal();if(typeof openArcadeModal==='function')openArcadeModal();">🎮 Khu Giải Trí Arcade</button>
-        <button class="btn" onclick="closeModal();if(typeof openStashIoModal==='function')openStashIoModal();">🧰 Xuất / Nạp Kho (.jxkho)</button>
-        <button class="btn" onclick="closeModal();if(typeof openTodayDashboardModal==='function')openTodayDashboardModal();">📅 Việc Hôm Nay</button>
-      </div>
-      <div style="text-align:center;padding-bottom:12px;">
-        <button class="btn sm" onclick="closeModal();">Đóng</button>
-      </div>
-    </div>
-  `);
-}
-window.openMarketHubModal = openMarketHubModal;
 function init() {
   if (typeof purgeLegacyOfflineSaves === 'function') purgeLegacyOfflineSaves();
   CV = $('#arena'); CX = CV.getContext('2d');
@@ -313,7 +182,6 @@ function init() {
   applyUiPrefs();
   fitApp();
   bindControls();
-  bindPcUi();
   const unlock = () => {
     audInit();
     if (!S || !S.fac) return;
