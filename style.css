@@ -155,7 +155,7 @@ button[disabled]{opacity:.4;cursor:default}
   display: flex !important;
   flex-direction: column !important;
   gap: 2px !important;
-  width: 140px !important;
+  width: 110px !important;
   flex-shrink: 0 !important;
 }
 .hud-bars-row { display: flex !important; gap: 3px !important; }
@@ -749,11 +749,10 @@ select,textarea{background:#0b100e;color:var(--text);border:1px solid var(--line
 .chip{position:absolute;right:8px;top:174px;z-index:4;font-size:11px;padding:3px 9px;border-radius:12px;border:1px solid var(--gold2);background:#000a;color:var(--gold)}
 .chip.on{background:#3a2a10;box-shadow:0 0 8px #e6c67a66}
 #campBtn{display:none!important}
-#mountBtn{position:absolute;right:8px;top:200px;z-index:4}
 #bossBtn{position:absolute;right:8px;top:226px;z-index:4}
 #ktcBtn{position:absolute;right:8px;top:252px;z-index:4}
 #marketBtn{position:absolute;right:8px;top:278px;z-index:4}
-body.sv #campBtn,body.sv #mountBtn,body.sv #bossBtn,body.sv #ktcBtn,body.sv #marketBtn{display:none!important}
+body.sv #campBtn,body.sv #bossBtn,body.sv #ktcBtn,body.sv #marketBtn{display:none!important}
 #pad{position:absolute;right:10px;left:auto;bottom:60px;width:auto;height:auto;z-index:30;display:flex;flex-direction:row;align-items:center;gap:8px;pointer-events:none}
 .pad-pots-group,.pad-skills-group{display:flex;flex-direction:row;align-items:center;gap:6px;pointer-events:auto;background:rgba(12,9,6,0.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:4px 8px;border-radius:26px;border:1.5px solid #8e6c38;box-shadow:0 4px 14px rgba(0,0,0,0.85)}
 .pbtn{position:relative;width:44px;height:44px;border-radius:50%;border:2px solid var(--gold2);background:#0c120f center/cover no-repeat;overflow:hidden;pointer-events:auto;touch-action:manipulation;user-select:none;box-shadow:0 2px 6px #000b;display:grid;place-items:center;transition:transform 0.1s}
@@ -2085,8 +2084,44 @@ body.deskland #jx-float-overlay {
     display: none !important;
   }
   #pad {
-    bottom: 60px !important;
-    right: 14px !important;
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    bottom: 6px !important;
+    right: auto !important;
+    top: auto !important;
+    z-index: 26 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    pointer-events: auto !important;
+  }
+  .pad-skills-group {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: radial-gradient(circle, #251c13 0%, #0c0906 100%) !important;
+    border: 1.5px solid #8e6c38 !important;
+    border-radius: 6px !important;
+    padding: 3px 6px !important;
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.7) !important;
+  }
+  .pad-skills-group .pbtn.sk {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 4px !important;
+    border: 1.5px solid #7d6034 !important;
+    background: radial-gradient(circle, #2a2016 0%, #0c0906 100%) !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.7) !important;
+  }
+  .pad-skills-group .pbtn.sk:hover {
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.4) !important;
+  }
+  .pad-skills-group .pbtn.sk.cur {
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.7) !important;
   }
   .mob-battle-overlay,
   .mob-autocombat-notice {
@@ -2330,35 +2365,95 @@ body.deskland #jx-float-overlay {
 }
 
 .jx-nav-belt {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 3.5px !important;
+  margin-left: auto !important;
+  flex-shrink: 0 !important;
 }
 .jx-nav-btn {
-  background: linear-gradient(180deg, #3d2f1d 0%, #1f170e 100%);
-  border: 1px solid #7d6034;
-  border-radius: 4px;
-  color: #e5d8b8;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 6px 10px;
-  cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255, 215, 0, 0.15);
-  white-space: nowrap;
-  transition: all 0.15s;
+  background: linear-gradient(180deg, #3d2f1d 0%, #1f170e 100%) !important;
+  border: 1px solid #7d6034 !important;
+  border-radius: 4px !important;
+  color: #e5d8b8 !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  height: 28px !important;
+  padding: 0 7px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255, 215, 0, 0.15) !important;
+  white-space: nowrap !important;
+  transition: all 0.15s !important;
 }
 .jx-nav-btn:hover {
-  border-color: #ffd700;
-  color: #ffd700;
-  box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+  border-color: #ffd700 !important;
+  color: #ffd700 !important;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.3) !important;
 }
 .jx-nav-btn:active {
-  transform: translateY(1px);
+  transform: translateY(1px) !important;
 }
 .jx-nav-btn.on {
-  background: linear-gradient(180deg, #59462f 0%, #2f2113 100%);
-  border-color: #ffd700;
-  color: #ffd700;
+  background: linear-gradient(180deg, #59462f 0%, #2f2113 100%) !important;
+  border-color: #ffd700 !important;
+  color: #ffd700 !important;
+}
+
+/* Dropup menu for bottom nav belt */
+.jx-nav-dropup {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+.jx-dropup-btn {
+  background: linear-gradient(180deg, #332415 0%, #1c1309 100%) !important;
+  border: 1px solid #926d36 !important;
+  color: #fce7b0 !important;
+}
+.jx-dropup-btn:hover, .jx-nav-dropup.open .jx-dropup-btn {
+  border-color: #ffd700 !important;
+  color: #ffd700 !important;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.4) !important;
+}
+.jx-dropup-menu {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 5px);
+  right: 0;
+  background: #140e08;
+  border: 1.5px solid #8e6c38;
+  border-radius: 5px;
+  box-shadow: 0 -8px 24px rgba(0,0,0,0.95), 0 0 10px rgba(142,108,56,0.3);
+  min-width: 195px;
+  padding: 4px 0;
+  z-index: 99999;
+}
+.jx-nav-dropup.open .jx-dropup-menu {
+  display: flex !important;
+  flex-direction: column !important;
+}
+.jx-dropup-item {
+  padding: 6px 12px !important;
+  width: 100% !important;
+  height: auto !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  font-size: 11px !important;
+  color: #e2e8f0 !important;
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: background 0.15s, color 0.15s !important;
+}
+.jx-dropup-item:hover {
+  background: rgba(212,175,55,0.18) !important;
+  color: #ffd700 !important;
 }
 
 /* 8-Column Grid Hanh Trang (Chuẩn ảnh mẫu media_1791260809894.jpg) */
@@ -2564,8 +2659,8 @@ body.deskland #jx-float-overlay {
 /* Unified Compact Top Header Button Style */
 .hud-top-btn {
   height: 24px !important;
-  padding: 0 6px !important;
-  font-size: 11px !important;
+  padding: 0 5px !important;
+  font-size: 10.5px !important;
   font-weight: 700 !important;
   border-radius: 4px !important;
   display: inline-flex !important;
@@ -2681,6 +2776,23 @@ body.deskland #jx-float-overlay {
 .hud-menu-item:hover {
   background: rgba(212,175,55,0.15) !important;
   color: #ffd700 !important;
+}
+
+@media (max-width: 1400px) {
+  .hud-coords-txt { display: none !important; }
+  .hud-btn-sep { margin: 0 1px !important; }
+}
+
+@media (max-width: 1250px) {
+  .hud-fac-name { display: none !important; }
+  .push-mode-btn { max-width: 110px !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+  .hud-top-btn { padding: 0 4px !important; font-size: 10px !important; }
+  .jx-nav-btn { padding: 0 5px !important; font-size: 10px !important; }
+}
+
+@media (max-width: 1100px) {
+  #topClock { display: none !important; }
+  .desktop-only { display: none !important; }
 }
 
 @media (max-width: 1550px) {

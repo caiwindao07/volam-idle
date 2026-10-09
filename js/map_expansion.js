@@ -120,8 +120,7 @@
       btn.id = 'hudChannelBtn';
       btn.className = 'hud-channel-badge';
       btn.title = 'Nhấp để đổi Tuyến (Kênh 1 / Tuyến 2) tìm bãi trống';
-      btn.innerHTML = '⚡ Tuyến 1';
-      btn.style.cssText = 'background:#241a10;border:1px solid #7d5e2a;color:#ffd700;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:3px;cursor:pointer;margin-left:6px;';
+      btn.innerHTML = '⚡ K1';
       
       btn.onclick = (e) => {
         e.stopPropagation();
@@ -135,8 +134,7 @@
       campBtn.id = 'hudCampSelectBtn';
       campBtn.className = 'hud-camp-badge';
       campBtn.title = 'Nhấp để chọn Bãi Cắm Cọc (Bãi 1-5)';
-      campBtn.innerHTML = '🚩 Bãi Quái (5)';
-      campBtn.style.cssText = 'background:#1a221a;border:1px solid #3c6e3c;color:#a0ffa0;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:3px;cursor:pointer;margin-left:4px;';
+      campBtn.innerHTML = '🚩 Bãi (5)';
       
       campBtn.onclick = (e) => {
         e.stopPropagation();
@@ -150,7 +148,7 @@
     toggleChannel() {
       this.currentChannel = (this.currentChannel === 1) ? 2 : 1;
       const btn = document.getElementById('hudChannelBtn');
-      if (btn) btn.innerHTML = `⚡ Tuyến ${this.currentChannel}`;
+      if (btn) btn.innerHTML = `⚡ K${this.currentChannel}`;
       if (typeof toast === 'function') toast(`Chuyển sang Tuyến ${this.currentChannel} thành công!`);
 
       // Gửi tín hiệu đổi channel tới server WebSocket nếu có

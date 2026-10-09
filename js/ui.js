@@ -2614,12 +2614,25 @@ if (typeof window !== 'undefined') {
 }
 window.toggleHudMoreMenu = function(e) {
   if (e) e.stopPropagation();
+  const navDrop = document.getElementById('jxNavDropup');
+  if (navDrop) navDrop.classList.remove('open');
   const drop = document.getElementById('hudMoreDropdown');
   if (drop) drop.classList.toggle('open');
+};
+window.toggleNavDropup = function(e) {
+  if (e) e.stopPropagation();
+  const topDrop = document.getElementById('hudMoreDropdown');
+  if (topDrop) topDrop.classList.remove('open');
+  const navDrop = document.getElementById('jxNavDropup');
+  if (navDrop) navDrop.classList.toggle('open');
 };
 document.addEventListener('click', (e) => {
   const drop = document.getElementById('hudMoreDropdown');
   if (drop && drop.classList.contains('open') && !drop.contains(e.target)) {
     drop.classList.remove('open');
+  }
+  const navDrop = document.getElementById('jxNavDropup');
+  if (navDrop && navDrop.classList.contains('open') && !navDrop.contains(e.target)) {
+    navDrop.classList.remove('open');
   }
 });
