@@ -100,9 +100,9 @@
     <!-- Top Status HUD (Cấp | HP | MP | EXP | Lực | Cúp) -->
     <div id="hud" class="u2-top-hud">
       <div class="hud-stat-pill lv-pill" id="hudLvPill"><span>Cấp</span><b id="lvS">1</b></div>
-      <div class="bar hp" id="hudHpBarWrap" title="Sinh Lực"><i id="hpBar"></i><span id="hpTxt">0 / 0</span></div>
-      <div class="bar mp" id="hudMpBarWrap" title="Nội Lực"><i id="mpBar"></i><span id="mpTxt">0 / 0</span></div>
-      <div class="bar xp" id="hudXpBarWrap" title="Kinh Nghiệm"><i id="xpBar"></i><span id="xpTxt">0.0%</span></div>
+      <div class="bar hp" id="hudHpBarWrap" title="Sinh Lực"><i id="hudHpBar"></i><span id="hudHpTxt">0 / 0</span></div>
+      <div class="bar mp" id="hudMpBarWrap" title="Nội Lực"><i id="hudMpBar"></i><span id="hudMpTxt">0 / 0</span></div>
+      <div class="bar xp" id="hudXpBarWrap" title="Kinh Nghiệm"><i id="hudXpBar"></i><span id="hudXpTxt">0.0%</span></div>
       <div class="hud-stat-pill pw-pill" id="hudPowerPill" onclick="if(typeof powerModal==='function')powerModal();" title="Lực Chiến (Bấm xem chi tiết)"><span>Lực</span><b id="pwS">0</b></div>
       <button id="serverRankBtn" class="rank-btn-top" onclick="openRankModal()" title="Bảng Xếp Hạng Giang Hồ">🏆</button>
       <div id="mainSk" style="display:none;"></div>
@@ -113,7 +113,7 @@
       <span class="pk-badge-dot">🟢</span><span id="pkBadgeTxt">Hòa</span>
     </button>
 
-    <!-- Top Right 4 Quick Feature Buttons (Phần thưởng, Kỳ Trân Các, Chợ, Tống Kim) -->
+    <!-- Top Right 5 Quick Feature Buttons (Phần thưởng, Kỳ Trân Các, Chợ, Tống Kim, Tính Năng) -->
     <div id="gameActions" class="game-actions-strip">
       <button id="gaReward" class="ga-btn" onclick="if(typeof openTodayDashboardModal==='function')openTodayDashboardModal();else if(window.SIGNIN)SIGNIN.toggle();" title="Phần thưởng &amp; Điểm danh">
         <span class="ga-ic">🎁</span><small>Phần thưởng</small>
@@ -126,6 +126,9 @@
       </button>
       <button id="gaTongKim" class="ga-btn" onclick="if(window.TONGKIM)TONGKIM.openRegisterModal();else if(typeof openWarModal==='function')openWarModal();" title="Chiến Trường Tống Kim">
         <span class="ga-ic">⚔️</span><small>Tống Kim</small>
+      </button>
+      <button id="gaMenu" class="ga-btn" onclick="showTab('more');toggleWin('more');" title="Tất cả Tính Năng &amp; Hoạt Động Giang Hồ">
+        <span class="ga-ic">⋯</span><small>Tính năng</small>
       </button>
     </div>
 
@@ -347,15 +350,37 @@
       <button class="u20mi" data-w="skill" onclick="toggleWin('skill')" title="[Phím K / F5] Mở Võ Công">
         <span>📜</span><small>Võ công</small>
       </button>
+      <button class="u20mi" data-w="party" onclick="toggleWin('party')" title="[Phím P] Quản lý Tổ Đội">
+        <span>👥</span><small>Tổ đội</small>
+      </button>
       <button class="u20mi" data-w="forge" onclick="openForgeModal()" title="[Phím F] Dã Luyện &amp; Lò Rèn">
         <span>🔨</span><small>Lò rèn</small>
       </button>
-      <button class="u20mi" data-w="mount" onclick="mountModal()" title="[Phím 4] Bảng Quản Lý Chiến Mã">
-        <span>🐎</span><small>Chiến mã</small>
+      <button class="u20mi" data-w="reborn" onclick="rebornModal()" title="Chuyển Sinh (Cấp 200, tẩy tủy và nhận bảo vật)">
+        <span>🌟</span><small>Chuyển sinh</small>
       </button>
-      <button class="u20mi" data-w="more" onclick="showTab('more');toggleWin('more');" title="[Phím Esc] Cài Đặt Hệ Thống">
-        <span>⚙️</span><small>Hệ thống</small>
-      </button>
+      <div class="jx-nav-dropup" id="jxNavDropup">
+        <button class="u20mi jx-dropup-btn" onclick="toggleNavDropup(event)" title="Menu tính năng giang hồ &amp; hệ thống">
+          <span>⋯</span><small>Menu</small>
+        </button>
+        <div class="jx-dropup-menu" id="dockDropupMenu">
+          <button class="jx-dropup-item" onclick="rebornModal()">🌟 Chuyển Sinh (Cấp 200)</button>
+          <button class="jx-dropup-item" onclick="if(window.DATAU)DATAU.toggle();">📜 Dã Tẩu (Nhiệm Vụ 40 Mốc)</button>
+          <button class="jx-dropup-item" onclick="if(window.TONGKIM)TONGKIM.openRegisterModal();else if(typeof openWarModal==='function')openWarModal();">⚔️ Chiến Trường Tống Kim</button>
+          <button class="jx-dropup-item" onclick="if(window.COMPANION_SYSTEM)COMPANION_SYSTEM.toggleWindow();">🐾 Pet Đồng Hành</button>
+          <button class="jx-dropup-item" onclick="mountModal()">🐎 Quản Lý Chiến Mã</button>
+          <button class="jx-dropup-item" onclick="if(window.CLOAK_MERIDIAN)CLOAK_MERIDIAN.toggleWindow();">✨ Phi Phong &amp; Kinh Mạch</button>
+          <button class="jx-dropup-item" onclick="if(window.BLACK_MARKET)BLACK_MARKET.toggleWindow();">🏪 Chợ Đen / Hắc Thị</button>
+          <button class="jx-dropup-item" onclick="if(window.STALL)STALL.toggle();">🏮 Sạp Hàng Bày Bán</button>
+          <button class="jx-dropup-item" onclick="openMapTravelModal()">🗺️ Xa Phu &amp; Bản Đồ</button>
+          <button class="jx-dropup-item" onclick="toggleWin('auto')">🤖 Bảng Cài Đặt Auto</button>
+          <button class="jx-dropup-item" onclick="openRankModal()">🏆 Bảng Xếp Hạng Giang Hồ</button>
+          <button class="jx-dropup-item" onclick="if(window.ACTIVITY_SYSTEM)ACTIVITY_SYSTEM.toggleWindow();">⚔️ Hoạt Động &amp; Phó Bản</button>
+          <button class="jx-dropup-item" onclick="openVipModal()">👑 Đặc Quyền VIP</button>
+          <button class="jx-dropup-item" onclick="openCasinoModal()">🎲 Tửu Quán (Tài Xỉu, Bầu Cua)</button>
+          <button class="jx-dropup-item" onclick="showTab('more');toggleWin('more');">⚙️ Toàn Bộ Tính Năng &amp; Cài Đặt</button>
+        </div>
+      </div>
     </div>
   </section>
 

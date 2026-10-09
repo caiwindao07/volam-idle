@@ -134,7 +134,7 @@ function renderChar20() {
     document.querySelectorAll("#t-char .minus").forEach((e) => (e.onclick = () => unspendAttr(e.dataset.a))),
     ($("#bTitle").onclick = () => titleModal()),
     ($("#bName").onclick = () => nameModal()),
-    ($("#bReb").onclick = rebornModal));
+    ($("#bReb").onclick = () => { if (typeof rebornModal === 'function') rebornModal(); else if (typeof openRebornTab === 'function') openRebornTab(); }));
   const m = $("#bDoiPhai");
   (m && (m.onclick = doiPhaiModal),
     ($("#bSugAt").onclick = suggestModal),

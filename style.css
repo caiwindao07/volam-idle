@@ -1580,7 +1580,7 @@ body.deskland #jx-float-overlay {
     display: flex !important;
     flex-direction: column !important;
     gap: 2px !important;
-    width: 76px !important;
+    width: 86px !important;
     flex-shrink: 0 !important;
   }
   .hud-bars-row {
@@ -1589,13 +1589,16 @@ body.deskland #jx-float-overlay {
     width: 100% !important;
   }
   .hud-bars-row .bar {
-    height: 9px !important;
+    height: 10px !important;
     border-radius: 2px !important;
     flex: 1 !important;
   }
   .hud-bars-row .bar span {
-    font-size: 7px !important;
-    line-height: 9px !important;
+    font-size: 7.5px !important;
+    line-height: 10px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
   .hud-bars-row .bar.hp { flex: 1 !important; }
   .hud-bars-row .bar.mp { flex: 1 !important; }
@@ -2773,6 +2776,8 @@ body.deskland #jx-float-overlay {
   border-radius: 5px;
   box-shadow: 0 -8px 24px rgba(0,0,0,0.95), 0 0 10px rgba(142,108,56,0.3);
   min-width: 195px;
+  max-height: min(420px, calc(100vh - 65px));
+  overflow-y: auto;
   padding: 4px 0;
   z-index: 99999;
 }

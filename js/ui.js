@@ -1,5 +1,32 @@
 /* ======================= GIAO DIEN (5 the) ======================= */
 'use strict';
+
+window.openForgeModal = function(tab) {
+  if (typeof openForgeHub === 'function') openForgeHub(tab || 'enh');
+  else if (typeof forgeModal === 'function') forgeModal();
+  else if (typeof epModal === 'function') epModal();
+};
+
+window.rebornModal = function() {
+  if (typeof openRebornTab === 'function') {
+    openRebornTab();
+  } else {
+    window.giftTab = 'reborn';
+    if (typeof giftModal === 'function') giftModal();
+  }
+};
+window.openRebornTab = window.openRebornTab || window.rebornModal;
+
+window.openCasinoModal = function() {
+  if (typeof openTavernHub === 'function') openTavernHub();
+  else if (typeof openTaiXiuModal === 'function') openTaiXiuModal();
+};
+
+window.openVipModal = function() {
+  if (typeof vipModal === 'function') vipModal();
+  else if (window.VIP_SYSTEM && typeof VIP_SYSTEM.toggleWindow === 'function') VIP_SYSTEM.toggleWindow();
+};
+
 let curTab = 'log', invDirty = true;
 function log(h) { if (typeof R === 'undefined' || !R || R.quiet) return; if (!Array.isArray(R.logs)) R.logs = []; R.logs.unshift(h); if (R.logs.length > 40) R.logs.pop(); R.logDirty = true; if (typeof appendChatLine === 'function') appendChatLine('sys', '', h); }
 let toastT; function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 1800); }
@@ -773,8 +800,11 @@ function renderCharAttrib(targetEl) {
           <span>Danh hiệu: <b style="color:#f59e0b;">${vipLv >= 1 ? `Võ Lâm Chí Tôn (VIP ${vipLv})` : 'Hiệp Khách'}</b></span>
         </div>
         <div style="font-size:10px;color:#a39276;display:flex;justify-content:space-between;">
-          <span>Danh vọng: <b style="color:#a78bfa;">${S.fame || (S.lvl * 25 + 100)}</b></span>
+          <span>Chuyển sinh: <b style="color:#f59e0b;cursor:pointer;" onclick="if(typeof rebornModal==='function')rebornModal();" title="Bấm xem tính năng Chuyển Sinh">${rebornN() ? `CS ${rebornN()} (Cấp ${S.lvl})` : (S.lvl >= 200 ? 'Đủ Cấp 200 (Bấm CS)' : `Cấp ${S.lvl}/200`)}</b></span>
           <span>Phúc duyên: <b style="color:#f472b6;">${(typeof RW === 'function' && RW().fd) || 0}</b></span>
+        </div>
+        <div style="font-size:10px;color:#a39276;display:flex;justify-content:space-between;">
+          <span>Danh vọng: <b style="color:#a78bfa;">${S.fame || (S.lvl * 25 + 100)}</b></span>
           <span>Lực chiến: <b style="color:#ef4444;">${fmt(R.power)}</b></span>
         </div>
         <div style="font-size:10px;color:#a39276;display:flex;justify-content:space-between;">
@@ -879,8 +909,9 @@ function renderCharAttrib(targetEl) {
     </div>
 
     <!-- 5. Hang Nut Chuc Nang duoi day -->
-    <div class="jx-btn-grid" style="grid-template-columns:repeat(5,1fr);margin:0;">
+    <div class="jx-btn-grid" style="grid-template-columns:repeat(6,1fr);margin:0;gap:3px;">
       <button class="jx-action-btn gold" id="bBestEq" title="Tự động mặc trang bị tốt nhất">Mặc Tốt</button>
+      <button class="jx-action-btn ${S.lvl >= 200 ? 'gold' : ''}" id="bCharReborn" title="Chuyển sinh (Cấp 200): Nhận điểm tiềm năng vĩnh viễn, đồ Hoàng Kim/Bạch Kim, Phi Phong, Thần Thú">🌟 Chuyển Sinh${rebornN() ? ` (${rebornN()})` : ''}</button>
       <button class="jx-action-btn" id="bResetAttrs" title="Hoàn lại toàn bộ điểm tiềm năng">Tẩy Tủy</button>
       <button class="jx-action-btn" id="bFactionModal" title="Đổi sang môn phái khác">Đổi Phái</button>
       <button class="jx-action-btn" id="bOpenInvSide" title="Mở Hành Trang kế bên">Hành Trang</button>
@@ -927,6 +958,11 @@ function renderCharAttrib(targetEl) {
     const n = autoEquipAll(true);
     toast(n ? `Đã tự động mặc ${n} món tốt hơn!` : 'Đang mặc toàn bộ trang bị tốt nhất');
     refresh();
+  };
+  const bCr = el.querySelector('#bCharReborn');
+  if (bCr) bCr.onclick = () => {
+    if (typeof rebornModal === 'function') rebornModal();
+    else if (typeof openRebornTab === 'function') openRebornTab();
   };
   const bRa = el.querySelector('#bResetAttrs'); if (bRa) bRa.onclick = resetAttrs;
   const bFm = el.querySelector('#bFactionModal'); if (bFm) bFm.onclick = () => pvkChangeFactionModal();
@@ -1492,8 +1528,12 @@ function renderMore() {
         <span>🏆 Tính Năng Giang Hồ & Hoạt Động Server</span>
       </div>
       <div class="jx-feature-dashboard-grid">
+        <button class="jx-feat-card" onclick="if(typeof rebornModal==='function')rebornModal();"><span class="feat-ic">🌟</span><b>Chuyển Sinh</b><small>Cấp 200, nhận bảo vật</small></button>
+        <button class="jx-feat-card" onclick="toggleWin('party');"><span class="feat-ic">👥</span><b>Tổ Đội</b><small>Luyện công nhóm</small></button>
+        <button class="jx-feat-card" onclick="if(typeof openMapTravelModal==='function')openMapTravelModal();"><span class="feat-ic">🗺️</span><b>Xa Phu / Map</b><small>Dịch chuyển bản đồ</small></button>
+        <button class="jx-feat-card" onclick="toggleWin('auto');"><span class="feat-ic">🤖</span><b>Bảng Auto</b><small>Cài đặt chi tiết</small></button>
         <button class="jx-feat-card" onclick="if(window.DATAU)DATAU.toggle();"><span class="feat-ic">📜</span><b>Dã Tẩu</b><small>Nhiệm vụ 40 mốc</small></button>
-        <button class="jx-feat-card" onclick="if(window.TONGKIM)TONGKIM.openRegisterModal();"><span class="feat-ic">⚔️</span><b>Tống Kim</b><small>Đại chiến PK</small></button>
+        <button class="jx-feat-card" onclick="if(window.TONGKIM)TONGKIM.openRegisterModal();else if(typeof openWarModal==='function')openWarModal();"><span class="feat-ic">⚔️</span><b>Tống Kim</b><small>Đại chiến PK</small></button>
         <button class="jx-feat-card" onclick="if(window.COMPANION_SYSTEM)COMPANION_SYSTEM.toggleWindow();"><span class="feat-ic">🐾</span><b>Pet Đồng Hành</b><small>Trợ chiến cấp cao</small></button>
         <button class="jx-feat-card" onclick="if(typeof mountModal==='function')mountModal();"><span class="feat-ic">🐎</span><b>Chiến Mã</b><small>Thần mã & Tốc độ</small></button>
         <button class="jx-feat-card" onclick="if(window.BLACK_MARKET)BLACK_MARKET.toggleWindow();"><span class="feat-ic">🏪</span><b>Chợ Đen</b><small>Hắc thị mua bán</small></button>
@@ -1873,29 +1913,31 @@ function updateTop() {
   // Bars
   const need = J.exp[S.lvl - 1] || 1;
   const xpPct = clamp((S.xp / need) * 100, 0, 100);
-  const xpB = $('#xpBar'); if (xpB) xpB.style.width = xpPct + '%';
-  const xpT = $('#xpTxt'); if (xpT) xpT.textContent = `${xpPct.toFixed(1)}%`;
+  const xpTxtStr = `${xpPct.toFixed(1)}%`;
+  document.querySelectorAll('.bar.xp i, #xpBar, #hudXpBar').forEach(el => { el.style.width = xpPct + '%'; });
+  document.querySelectorAll('.bar.xp span, #xpTxt, #hudXpTxt').forEach(el => { el.textContent = xpTxtStr; });
 
   const hpPct = clamp((R.life / P.life) * 100, 0, 100);
-  const hpB = $('#hpBar');
-  if (hpB) {
-    hpB.style.width = hpPct + '%';
+  const hpTxtStr = `${Math.round(R.life)} / ${Math.round(P.life)}`;
+  document.querySelectorAll('.bar.hp i, #hpBar, #hudHpBar').forEach(el => {
+    el.style.width = hpPct + '%';
     if (S && S.pkMode === 'slaughter') {
-      hpB.style.background = 'linear-gradient(180deg, #f472b6 0%, #ec4899 50%, #be185d 100%)';
+      el.style.background = 'linear-gradient(180deg, #f472b6 0%, #ec4899 50%, #be185d 100%)';
     } else {
-      hpB.style.background = '';
+      el.style.background = '';
     }
-  }
-  const hpT = $('#hpTxt'); if (hpT) hpT.textContent = `${Math.round(R.life)} / ${Math.round(P.life)}`;
+  });
+  document.querySelectorAll('.bar.hp span, #hpTxt, #hudHpTxt').forEach(el => { el.textContent = hpTxtStr; });
 
   updatePkModeBtn();
 
   const mpPct = clamp((R.mana / P.mana) * 100, 0, 100);
-  const mpB = $('#mpBar'); if (mpB) mpB.style.width = mpPct + '%';
-  const mpT = $('#mpTxt'); if (mpT) mpT.textContent = `${Math.round(R.mana)} / ${Math.round(P.mana)}`;
+  const mpTxtStr = `${Math.round(R.mana)} / ${Math.round(P.mana)}`;
+  document.querySelectorAll('.bar.mp i, #mpBar, #hudMpBar').forEach(el => { el.style.width = mpPct + '%'; });
+  document.querySelectorAll('.bar.mp span, #mpTxt, #hudMpTxt').forEach(el => { el.textContent = mpTxtStr; });
 
-  const spB = $('#spBar'); if (spB) spB.style.width = '100%';
-  const spT = $('#spTxt'); if (spT) spT.textContent = '100 / 100';
+  document.querySelectorAll('.bar.sp i, #spBar').forEach(el => { el.style.width = '100%'; });
+  document.querySelectorAll('.bar.sp span, #spTxt').forEach(el => { el.textContent = '100 / 100'; });
 
   // Map banner coords
   const coordsEl = $('#hudCoords');
@@ -2697,7 +2739,9 @@ document.addEventListener('click', (e) => {
     drop.classList.remove('open');
   }
   const navDrop = document.getElementById('jxNavDropup');
-  if (navDrop && navDrop.classList.contains('open') && !navDrop.contains(e.target)) {
-    navDrop.classList.remove('open');
+  if (navDrop && navDrop.classList.contains('open')) {
+    if (!navDrop.contains(e.target) || e.target.closest('.jx-dropup-item')) {
+      navDrop.classList.remove('open');
+    }
   }
 });
