@@ -2399,8 +2399,8 @@ wss.on('connection', (ws, req) => {
 
             const reqExp = (JX && JX.exp && JX.exp[xpL - 1]) ? JX.exp[xpL - 1] : (xpL * 300);
             const party = getPlayerParty(p.id);
-            const partyMul = (party && party.members.length > 1) ? (1 + (party.members.length - 1) * 0.1) : 1;
-            const expGain = Math.round((reqExp / (10 + xpL * 1.4)) * (mob.cls === 'elite' ? 3.5 : 1.5) * mult * partyMul);
+            // Tăng EXP nhận được khi hạ quái x5 lần
+            const expGain = Math.round((reqExp / (10 + xpL * 1.4)) * (mob.cls === 'elite' ? 3.5 : 1.5) * mult * partyMul * 5);
             const goldDrop = Math.round(mob.L * 35 * (mob.cls === 'elite' ? 4 : 2));
 
             // Server-Authoritative: Cập nhật trực tiếp vào cơ sở dữ liệu nhân vật

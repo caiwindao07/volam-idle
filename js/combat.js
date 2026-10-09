@@ -82,8 +82,8 @@ const XP_SLOW_FROM = 60, XP_SLOW_K = 2, XP_SLOW_P = 1.1;
 const xpSlow = L => L <= XP_SLOW_FROM ? 1 : 1 + XP_SLOW_K * Math.pow((L - XP_SLOW_FROM) / 120, XP_SLOW_P);
 function expFor(L) {
   const need = (typeof expNeed === 'function' ? expNeed(L) : (J.exp[clamp(L, 1, MAX_LEVEL) - 1] || 1000));
-  // Tăng EXP khi đánh quái lên x3 lần (0.35 * 3 = 1.05)
-  return (need / (40 + L * 3.5)) * 1.05;
+  // Tăng EXP khi đánh quái lên x5 lần (0.35 * 5 = 1.75)
+  return (need / (40 + L * 3.5)) * 1.75;
 }
 function makeEnemy(tid, L, cls, x, y) {
   const m = MON[tid], z = zoneOf(S.stage), st = enemyStats(L, cls), D = diffOf();
