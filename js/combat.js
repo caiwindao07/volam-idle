@@ -77,13 +77,14 @@ function enemyStats(L, cls) {
 }
 /* Nhip len cap (docs/CONG_THUC.md): truoc day cap 150 chi mat ~2 gio choi. Den cap 30 giu nguyen (vao game nhanh),
    sau do kinh nghiem nhan duoc chia cho 1 + 200 x ((cap - 30) / 120)^1.4  (cap 60: /30, cap 90: /77, cap 150: /201)
-   -> cap 150 mat vai ngay choi (tests: pacing). */
-const XP_SLOW_FROM = 60, XP_SLOW_K = 2, XP_SLOW_P = 1.1;
-const xpSlow = L => L <= XP_SLOW_FROM ? 1 : 1 + XP_SLOW_K * Math.pow((L - XP_SLOW_FROM) / 120, XP_SLOW_P);
+const XP_SLOW_FROM = 200, XP_SLOW_K = 0, XP_SLOW_P = 1;
+const xpSlow = L => 1; // Loại bỏ giới hạn làm chậm kinh nghiệm
 function expFor(L) {
-  const need = (typeof expNeed === 'function' ? expNeed(L) : (J.exp[clamp(L, 1, MAX_LEVEL) - 1] || 1000));
-  // Tăng EXP khi đánh quái lên x5 lần (0.35 * 5 = 1.75)
-  return (need / (40 + L * 3.5)) * 1.75;
+  const curL = (typeof S !== 'undefined' && S && S.lvl) ? S.lvl : (L || 1);
+  const targetL = Math.max(1, Math.min(curL, MAX_LEVEL));
+  const need = (typeof expNeed === 'function' ? expNeed(targetL) : (J.exp[clamp(targetL, 1, MAX_LEVEL) - 1] || 1000));
+  // Tăng vọt EXP khi đánh quái: Mỗi quái thường tương đương 3.5% - 5% cấp độ (chỉ cần 20-30 quái là lên 1 cấp)
+  return Math.max(100, Math.round((need / (12 + targetL * 0.45)) * 1.6));
 }
 function makeEnemy(tid, L, cls, x, y) {
   const m = MON[tid], z = zoneOf(S.stage), st = enemyStats(L, cls), D = diffOf();
@@ -704,13 +705,17 @@ function onKill(e) {
   if (typeof checkWarMonsterKill === 'function') checkWarMonsterKill(e);
   const lvDiff = e.L - S.lvl;
   let mult = 1.0;
-  if (lvDiff > 10) mult = 0.1;
-  else if (lvDiff > 5) mult = 0.5;
-  else if (lvDiff < -10) mult = 0.2;
-  else if (lvDiff < -5) mult = 0.6;
-  const xpL = Math.min(e.L, S.lvl + 5);
+  if (lvDiff > 10) mult = 0.8;
+  else if (lvDiff > 5) mult = 1.0;
+  else if (lvDiff < -15) mult = 0.75;
+  else if (lvDiff < -8) mult = 0.88;
+  const xpL = Math.max(e.L, Math.round(S.lvl * 0.9));
   const mXp = (typeof mutationXpMul === 'function') ? mutationXpMul() : 1;
-  gainXp(expFor(xpL) * CLS[e.cls].xp * mult * diffOf().rew * mXp);
+  const gainedExp = Math.round(expFor(xpL) * CLS[e.cls].xp * mult * diffOf().rew * mXp);
+  gainXp(gainedExp, 5);
+  if (typeof addText === 'function') {
+    addText(e.x, e.y - 24, `+${typeof fmt === 'function' ? fmt(gainedExp) : gainedExp} EXP`, '#ffd700', 12);
+  }
   const mGold = (typeof mutationGoldMul === 'function') ? mutationGoldMul() : 1;
   const g = Math.round(moneyDrop(e) * diffOf().rew * mGold); S.gold += g;
   if (typeof journalAdd === 'function') {
@@ -867,12 +872,12 @@ function togglePushMode(forceVal) {
   if (typeof renderLog === 'function') renderLog();
 }
 
-function gainXp(x, maxLevels = 2) {
+function gainXp(x, maxLevels = 5) {
   if (S.lvl >= MAX_LEVEL) return;
   const campMul = typeof campExpMul === 'function' ? campExpMul() : 1;
   const vipMul = typeof vipExpMul === 'function' ? vipExpMul() : 1;
-  const partyMul = (typeof PARTY !== 'undefined' && PARTY.data && PARTY.data.members && PARTY.data.members.length > 1) ? (1 + (PARTY.data.members.length - 1) * 0.1) : 1;
-  const addedXp = x * campMul * vipMul * partyMul * (1 + rebornBonus().xp) / xpSlow(S.lvl);
+  const partyMul = (typeof PARTY !== 'undefined' && PARTY.data && PARTY.data.members && PARTY.data.members.length > 1) ? (1 + (PARTY.data.members.length - 1) * 0.15) : 1;
+  const addedXp = Math.round(x * campMul * vipMul * partyMul * (1 + rebornBonus().xp));
   window._legitExpGain = true;
   try {
     S.xp = Math.max(0, (S.xp || 0) + addedXp);
@@ -880,7 +885,7 @@ function gainXp(x, maxLevels = 2) {
   } finally {
     window._legitExpGain = false;
   }
-  let allowedLevels = (maxLevels !== undefined && maxLevels !== null) ? maxLevels : 2;
+  let allowedLevels = (maxLevels !== undefined && maxLevels !== null) ? maxLevels : 5;
   while (S.lvl < MAX_LEVEL && S.xp >= (J.exp[S.lvl - 1] || Infinity) && allowedLevels > 0) {
     allowedLevels--;
     window._legitExpGain = true;

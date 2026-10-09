@@ -2389,18 +2389,20 @@ wss.on('connection', (ws, req) => {
           if (mob.hp <= 0) {
             map.delete(mobId);
             const curLvl = (p.uKey && db.users[p.uKey] && db.users[p.uKey].state) ? (Number(db.users[p.uKey].state.lvl) || p.lvl || 1) : (p.lvl || 1);
-            const xpL = Math.min(mob.L, curLvl + 5);
             const lvDiff = mob.L - curLvl;
             let mult = 1.0;
-            if (lvDiff > 10) mult = 0.1;
-            else if (lvDiff > 5) mult = 0.5;
-            else if (lvDiff < -10) mult = 0.2;
-            else if (lvDiff < -5) mult = 0.6;
+            if (lvDiff > 10) mult = 0.8;
+            else if (lvDiff > 5) mult = 1.0;
+            else if (lvDiff < -15) mult = 0.75;
+            else if (lvDiff < -8) mult = 0.88;
 
-            const reqExp = (JX && JX.exp && JX.exp[xpL - 1]) ? JX.exp[xpL - 1] : (xpL * 300);
+            const targetL = Math.max(1, Math.min(curLvl, 200));
+            const reqExp = (JX && JX.exp && JX.exp[targetL - 1]) ? JX.exp[targetL - 1] : (targetL * 3000);
             const party = getPlayerParty(p.id);
-            // Tăng EXP nhận được khi hạ quái x5 lần
-            const expGain = Math.round((reqExp / (10 + xpL * 1.4)) * (mob.cls === 'elite' ? 3.5 : 1.5) * mult * partyMul * 5);
+            const partyMul = (party && party.members) ? (1 + (party.members.length - 1) * 0.15) : 1;
+            const baseRatio = (reqExp / (12 + targetL * 0.45)) * 1.6;
+            const clsMultiplier = (mob.cls === 'elite' ? 3 : (mob.cls === 'boss' ? 20 : 1));
+            const expGain = Math.round(Math.max(100, baseRatio * clsMultiplier * mult * partyMul));
             const goldDrop = Math.round(mob.L * 35 * (mob.cls === 'elite' ? 4 : 2));
 
             // Server-Authoritative: Cập nhật trực tiếp vào cơ sở dữ liệu nhân vật
@@ -2411,7 +2413,7 @@ wss.on('connection', (ws, req) => {
               uState.lvl = Math.max(1, Math.min(200, Number(uState.lvl) || 1));
               uState.xp = (uState.xp || 0) + expGain;
               let didLevelUp = false;
-              let maxServerLevels = 2;
+              let maxServerLevels = 5;
               while (uState.lvl < 200 && maxServerLevels > 0) {
                 const expNeeded = (JX && JX.exp && JX.exp[uState.lvl - 1]) ? JX.exp[uState.lvl - 1] : (uState.lvl * 1000);
                 if (uState.xp < expNeeded) break;
