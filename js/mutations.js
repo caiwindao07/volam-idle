@@ -1,6 +1,5 @@
 /* ==========================================================================
    HỆ THỐNG ĐỘT BIẾN HÀNG NGÀY & LUẬT TUẦN (MUTATIONS & WEEKLY RULES)
-   Ported & Enhanced from N.T.T (hoainiem2003.net/vltk)
    - Đột biến hàng ngày: Thay đổi mỗi ngày (Mưa Vàng, Rừng Đồ, Quái Cuồng...)
    - Luật tuần: Đổi vào mỗi thứ Hai (áp dụng Tháp & Chiến trường)
    ========================================================================== */

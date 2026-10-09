@@ -112,8 +112,16 @@ try {
 // ==========================================
 // 1. DATABASE & QUẢN LÝ TÀI KHOẢN (JSON + MONGODB ATLAS)
 // ==========================================
-let db = { users: {} };
+let db = { users: {}, bannedUsers: [], bannedIps: [] };
 const sessions = new Map(); // token -> username
+const bannedUsers = new Set();
+const bannedIps = new Set();
+
+function persistBanned() {
+  db.bannedUsers = Array.from(bannedUsers);
+  db.bannedIps = Array.from(bannedIps);
+  if (!mongoUsersCol) saveDb();
+}
 let mongoClient = null;
 let mongoDb = null;
 let mongoUsersCol = null;
@@ -252,6 +260,12 @@ async function loadDb() {
         const raw = fs.readFileSync(DB_FILE, 'utf8');
         db = JSON.parse(raw);
         if (!db.users) db.users = {};
+        if (Array.isArray(db.bannedUsers)) {
+          db.bannedUsers.forEach(u => bannedUsers.add(String(u).toLowerCase()));
+        }
+        if (Array.isArray(db.bannedIps)) {
+          db.bannedIps.forEach(ip => bannedIps.add(String(ip).toLowerCase()));
+        }
       }
       for (const uKey in db.users) {
         if (db.users[uKey].token) {
@@ -628,6 +642,9 @@ const server = http.createServer((req, res) => {
           return sendJson(res, 400, { ok: false, error: 'Thiếu tên tài khoản hoặc mật khẩu!' });
         }
         const uKey = String(data.username).trim().toLowerCase();
+        if (bannedUsers.has(uKey)) {
+          return sendJson(res, 403, { ok: false, error: 'Tài khoản của bạn đã bị CẤM truy cập máy chủ!' });
+        }
         const u = await findDbUser(uKey);
         if (!u) {
           return sendJson(res, 400, { ok: false, error: 'Tài khoản không tồn tại! Vui lòng đăng ký mới.' });
@@ -715,6 +732,82 @@ const server = http.createServer((req, res) => {
           persistUser(session.user);
         }
         return sendJson(res, 200, { ok: true, msg: 'Đã đăng xuất' });
+      });
+      return;
+    }
+
+    // 6. Danh sách người chơi online
+    if (pathname === '/api/online-players' && req.method === 'GET') {
+      return sendJson(res, 200, {
+        ok: true,
+        players: getOnlinePlayersList(null)
+      });
+    }
+
+    // 7. Admin kích người chơi
+    if (pathname === '/api/admin/kick' && req.method === 'POST') {
+      parseJsonBody(req, (err, data) => {
+        if (!data || data.targetId == null) return sendJson(res, 400, { ok: false, error: 'Thiếu targetId' });
+        const targetId = Number(data.targetId);
+        let kicked = false;
+        let kickedName = '';
+        for (const [sock, pl] of players.entries()) {
+          if (pl.id === targetId) {
+            kickedName = pl.name;
+            try {
+              sock.send(JSON.stringify({ type: 'kicked', reason: data.reason || 'Bị Quản Trị Viên kích khỏi máy chủ' }));
+              sock.close();
+            } catch (e) {}
+            players.delete(sock);
+            broadcast({ type: 'player_leave', id: pl.id });
+            kicked = true;
+            break;
+          }
+        }
+        broadcastOnlineCount();
+        return sendJson(res, 200, { ok: true, kicked, name: kickedName });
+      });
+      return;
+    }
+
+    // 8. Admin cấm tài khoản
+    if (pathname === '/api/admin/ban' && req.method === 'POST') {
+      parseJsonBody(req, (err, data) => {
+        const u = String(data.username || '').toLowerCase();
+        const targetId = Number(data.targetId || 0);
+        if (u) bannedUsers.add(u);
+        if (targetId) {
+          for (const [sock, pl] of players.entries()) {
+            if (pl.id === targetId) {
+              const uName = String(pl.username || pl.uKey || pl.name).toLowerCase();
+              if (uName) bannedUsers.add(uName);
+              if (sock._socket && sock._socket.remoteAddress) {
+                bannedIps.add(String(sock._socket.remoteAddress).toLowerCase());
+              }
+              try {
+                sock.send(JSON.stringify({ type: 'banned', reason: data.reason || 'Tài khoản của bạn đã bị CẤM vĩnh viễn!' }));
+                sock.close();
+              } catch (e) {}
+              players.delete(sock);
+              broadcast({ type: 'player_leave', id: pl.id });
+              break;
+            }
+          }
+        }
+        persistBanned();
+        broadcastOnlineCount();
+        return sendJson(res, 200, { ok: true, banned: u || targetId });
+      });
+      return;
+    }
+
+    // 9. Admin gỡ lệnh cấm
+    if (pathname === '/api/admin/unban' && req.method === 'POST') {
+      parseJsonBody(req, (err, data) => {
+        const u = String(data.username || '').toLowerCase();
+        if (u) bannedUsers.delete(u);
+        persistBanned();
+        return sendJson(res, 200, { ok: true, unbanned: u });
       });
       return;
     }
@@ -859,6 +952,42 @@ function initBots() {
   }
 }
 initBots();
+
+function getOnlinePlayersList(requesterWs) {
+  const list = [];
+  for (const [sock, pl] of players.entries()) {
+    if (!pl.initialized) continue;
+    const uName = String(pl.username || pl.uKey || pl.name || '').toLowerCase();
+    list.push({
+      id: pl.id,
+      name: pl.name || 'Hiệp Khách',
+      username: pl.username || pl.uKey || '',
+      fac: pl.fac || 'shaolin',
+      lvl: pl.lvl || 1,
+      vip: pl.vip || 0,
+      zoneId: pl.zoneId || 2,
+      isBot: false,
+      isSelf: (requesterWs && sock === requesterWs),
+      isBanned: bannedUsers.has(uName),
+      ip: (sock._socket && sock._socket.remoteAddress) ? sock._socket.remoteAddress : ''
+    });
+  }
+  for (const b of BOTS) {
+    list.push({
+      id: b.id,
+      name: b.name,
+      username: 'BOT AI',
+      fac: b.fac,
+      lvl: b.lvl || 1,
+      vip: b.vip || 0,
+      zoneId: b.zoneId,
+      isBot: true,
+      isSelf: false,
+      isBanned: false
+    });
+  }
+  return list;
+}
 
 const BOT_RANDOM_CHATS = [
   'Hôm nay cày cấp ở đây rớt nhiều đồ xịn quá các huynh đệ!',
@@ -1713,10 +1842,20 @@ setInterval(() => {
   }
 }, 1000);
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
+  const clientIp = (req && req.socket && req.socket.remoteAddress) || '';
+  if (clientIp && bannedIps.has(clientIp.toLowerCase())) {
+    try {
+      ws.send(JSON.stringify({ type: 'banned', reason: 'Địa chỉ IP của bạn đã bị cấm khỏi máy chủ!' }));
+      ws.close();
+    } catch (e) {}
+    return;
+  }
+
   const pId = ++nextPlayerId;
   const pData = {
     id: pId,
+    ip: clientIp,
     username: null,
     name: `Hiệp Khách ${pId}`,
     fac: 'shaolin',
@@ -1822,6 +1961,19 @@ wss.on('connection', (ws) => {
               });
             }
           }
+        }
+
+        const checkBanUser = String(p.username || p.uKey || p.name || data.name || '').toLowerCase();
+        if (checkBanUser && bannedUsers.has(checkBanUser)) {
+          try {
+            ws.send(JSON.stringify({
+              type: 'banned',
+              reason: 'Tài khoản của bạn đã bị CẤM khỏi máy chủ!'
+            }));
+            ws.close();
+          } catch (e) {}
+          players.delete(ws);
+          return;
         }
 
         if (data.name && !p.uKey) p.name = String(data.name).slice(0, 20);
@@ -3269,6 +3421,90 @@ wss.on('connection', (ws) => {
             }
           }
         }
+      } else if (data.type === 'get_online_list') {
+        ws.send(JSON.stringify({
+          type: 'online_list_sync',
+          players: getOnlinePlayersList(ws)
+        }));
+      } else if (data.type === 'admin_kick') {
+        const targetId = Number(data.targetId);
+        let kicked = false;
+        let kickedName = '';
+        for (const [sock, pl] of players.entries()) {
+          if (pl.id === targetId) {
+            kickedName = pl.name;
+            try {
+              sock.send(JSON.stringify({
+                type: 'kicked',
+                reason: data.reason || 'Bạn đã bị Quản Trị Viên kích khỏi máy chủ!'
+              }));
+              sock.close();
+            } catch (e) {}
+            players.delete(sock);
+            kicked = true;
+            broadcast({ type: 'player_leave', id: pl.id });
+            break;
+          }
+        }
+        broadcastOnlineCount();
+        ws.send(JSON.stringify({
+          type: 'toast',
+          msg: kicked ? `Đã kích hiệp khách [${kickedName || targetId}] khỏi game!` : `Không tìm thấy mục tiêu #${targetId}`
+        }));
+        ws.send(JSON.stringify({
+          type: 'online_list_sync',
+          players: getOnlinePlayersList(ws)
+        }));
+      } else if (data.type === 'admin_ban') {
+        const targetId = Number(data.targetId);
+        let banUser = String(data.username || '').toLowerCase();
+        let targetPl = null;
+        let targetSock = null;
+        for (const [sock, pl] of players.entries()) {
+          if (pl.id === targetId || (banUser && String(pl.username || pl.uKey || pl.name).toLowerCase() === banUser)) {
+            targetPl = pl;
+            targetSock = sock;
+            break;
+          }
+        }
+        if (targetPl) {
+          if (!banUser) banUser = String(targetPl.username || targetPl.uKey || targetPl.name).toLowerCase();
+          if (targetSock && targetSock._socket && targetSock._socket.remoteAddress) {
+            bannedIps.add(String(targetSock._socket.remoteAddress).toLowerCase());
+          }
+          try {
+            targetSock.send(JSON.stringify({
+              type: 'banned',
+              reason: data.reason || 'Tài khoản của bạn đã bị CẤM vĩnh viễn khỏi máy chủ!'
+            }));
+            targetSock.close();
+          } catch (e) {}
+          players.delete(targetSock);
+          broadcast({ type: 'player_leave', id: targetPl.id });
+        }
+        if (banUser) bannedUsers.add(banUser);
+        persistBanned();
+        broadcastOnlineCount();
+        ws.send(JSON.stringify({
+          type: 'toast',
+          msg: `Đã CẤM tài khoản [${banUser || targetId}] vĩnh viễn!`
+        }));
+        ws.send(JSON.stringify({
+          type: 'online_list_sync',
+          players: getOnlinePlayersList(ws)
+        }));
+      } else if (data.type === 'admin_unban') {
+        const unbanUser = String(data.username || '').toLowerCase();
+        bannedUsers.delete(unbanUser);
+        persistBanned();
+        ws.send(JSON.stringify({
+          type: 'toast',
+          msg: `Đã gỡ lệnh cấm cho tài khoản [${unbanUser}]!`
+        }));
+        ws.send(JSON.stringify({
+          type: 'online_list_sync',
+          players: getOnlinePlayersList(ws)
+        }));
       }
     } catch (e) {
       console.error('[Multiplayer] Message error:', e);

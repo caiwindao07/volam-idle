@@ -286,7 +286,7 @@ function renderLog(forceRebuild = false) {
       }).join('');
 
       const html = `
-        <!-- 6x4 Grid of 21 Features (hoainiem2003 / Media Screenshot) -->
+        <!-- Grid of Features -->
         <div class="mob-hub-grid">
           <button class="mob-hub-btn" data-hub="today">
             <div class="mob-hub-icon">📅</div>
@@ -571,14 +571,13 @@ function bindMobHub(el) {
     modal(`
       <div class="jx-client-window" style="margin:-14px;border:none;">
         <div class="jx-window-header">
-          <div class="jx-window-title"><span>❤️ ỦNG HỘ & PHÁT TRIỂN GAME</span></div>
+          <div class="jx-window-title"><span>❤️ GIỚI THIỆU TRÒ CHƠI</span></div>
         </div>
         <div style="padding:14px;text-align:center;color:#e2e8f0;">
-          <div style="font-size:15px;font-weight:bold;color:#ffd700;margin-bottom:6px;">VÕ LÂM TRUYỀN KỲ IDLE WEB</div>
-          <div style="font-size:11.5px;color:#a39276;margin-bottom:10px;">Dự án tâm huyết tái hiện hoàn hảo Võ Lâm 2003 trên nền tảng Web & Mobile.</div>
+          <div style="font-size:15px;font-weight:bold;color:#ffd700;margin-bottom:6px;">VÕ LÂM TRUYỀN KỲ IDLE</div>
+          <div style="font-size:11.5px;color:#a39276;margin-bottom:10px;">Hệ thống Võ Lâm Idle Web & Mobile đa nền tảng.</div>
           <div style="background:rgba(20,15,10,0.9);border:1px solid #8e6c38;border-radius:6px;padding:10px;margin-bottom:12px;font-size:12px;line-height:1.6;">
-            <div>Tác giả: <b>Mr Chinh</b></div>
-            <div style="color:#4ade80;">Cảm ơn tất cả các đồng đạo đã luôn đồng hành và ủng hộ Võ Lâm Idle!</div>
+            <div style="color:#4ade80;">Chúc toàn thể huynh đệ tỷ muội bôn tẩu giang hồ vui vẻ và hào hứng!</div>
           </div>
           <button class="jx-action-btn gold" onclick="closeModal();">Xác Nhận</button>
         </div>
@@ -2613,4 +2612,14 @@ if (typeof window !== 'undefined') {
     }, 200);
   });
 }
-
+window.toggleHudMoreMenu = function(e) {
+  if (e) e.stopPropagation();
+  const drop = document.getElementById('hudMoreDropdown');
+  if (drop) drop.classList.toggle('open');
+};
+document.addEventListener('click', (e) => {
+  const drop = document.getElementById('hudMoreDropdown');
+  if (drop && drop.classList.contains('open') && !drop.contains(e.target)) {
+    drop.classList.remove('open');
+  }
+});

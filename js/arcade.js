@@ -1,6 +1,5 @@
 /* ==========================================================================
    KHU GIẢI TRÍ: MINI-GAMES RẮN SĂN MỒI (SNAKE) & XẾP GẠCH (TETRIS)
-   Ported & Enhanced from N.T.T (hoainiem2003.net/vltk)
    - Chơi mini game giải trí trong lúc nhân vật vẫn tự động cày quái ngầm.
    - Hỗ trợ cả phím bấm bàn phím (WASD / Mũi tên / Space) và phím cảm ứng di động.
    - Tự động lưu kỷ lục điểm cao vào dữ liệu nhân vật (S.arc).

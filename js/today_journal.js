@@ -1,6 +1,5 @@
 /* ==========================================================================
    HỆ THỐNG DASHBOARD "HÔM NAY" & NHẬT KÝ 7 NGÀY (TODAY & 7-DAY JOURNAL)
-   Ported & Enhanced from N.T.T (hoainiem2003.net/vltk)
    - Bảng tổng hợp hoạt động ngày với nút "Tự Cày" (Vượt ải + Tự nhặt + Xoay chiêu)
    - Nhật ký 7 ngày theo dõi thời gian chơi, exp, tiền, quái diệt, đồ hiếm nhặt
    ========================================================================== */

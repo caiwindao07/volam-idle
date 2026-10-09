@@ -23,23 +23,24 @@ button[disabled]{opacity:.4;cursor:default}
 .lvbox .lvlbl{display:none}
 .lvbox #lv{position:absolute;right:-5px;bottom:-5px;min-width:20px;height:18px;padding:0 3px;border-radius:9px;border:1.5px solid #ffd700;background:linear-gradient(180deg,#991b1b,#450a0a);display:grid;place-items:center;font-weight:800;color:#ffd700;font-size:10px;text-shadow:0 1px 1px #000;box-shadow:0 2px 4px rgba(0,0,0,0.8)}
 
-.hud-bars-col{display:flex;flex-direction:column;gap:2px;width:190px}
+.hud-bars-col{display:flex;flex-direction:column;gap:2px;width:155px}
 .hud-bars-row{display:flex;gap:4px}
 .hud-bars-row .bar{flex:1}
 
 .topmid{flex:0 1 auto;min-width:0;padding:0 4px}
-.topmid .row{display:flex;align-items:center;gap:6px;white-space:nowrap;flex-wrap:nowrap}
+.topmid .row{display:flex;align-items:center;gap:4px;white-space:nowrap;flex-wrap:nowrap}
 .topmid b{color:var(--gold);font-family:var(--font);white-space:nowrap}
 #stageLbl{color:var(--dim);white-space:nowrap}
 
-.hud-rank-tag{font-size:10px;font-weight:700;color:#ffd700;background:linear-gradient(180deg,#3d1c14 0%,#1a0b08 100%);border:1px solid #8e6c38;padding:2px 6px;border-radius:4px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,215,0,0.2);cursor:pointer;user-select:none;transition:all .15s ease}
+.hud-rank-tag{font-size:10px;font-weight:700;color:#ffd700;background:linear-gradient(180deg,#3d1c14 0%,#1a0b08 100%);border:1px solid #8e6c38;padding:2px 5px;border-radius:4px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,215,0,0.2);cursor:pointer;user-select:none;transition:all .15s ease}
 .hud-rank-tag:hover{filter:brightness(1.25);transform:scale(1.04);border-color:#ffd700;box-shadow:0 0 8px rgba(255,215,0,0.4)}
 
-.hud-right-cluster{display:flex;align-items:center;gap:5px;flex-shrink:0;white-space:nowrap;flex-wrap:nowrap}
-.hud-map-banner{display:flex;align-items:center;gap:4px;background:radial-gradient(circle,#2a1f14 0%,#100b07 100%);border:1.5px solid #d4af37;border-radius:4px;padding:2px 7px;font-size:11px;color:#ffd700;box-shadow:0 0 8px rgba(212,175,55,0.25),inset 0 1px 0 rgba(255,255,255,0.15);white-space:nowrap;cursor:pointer}
+.hud-right-cluster{display:flex;align-items:center;gap:3px;flex-shrink:0;margin-left:auto;white-space:nowrap;flex-wrap:nowrap}
+.hud-map-banner{display:flex;align-items:center;gap:3px;background:radial-gradient(circle,#2a1f14 0%,#100b07 100%);border:1.5px solid #d4af37;border-radius:4px;padding:2px 6px;font-size:11px;color:#ffd700;box-shadow:0 0 8px rgba(212,175,55,0.25),inset 0 1px 0 rgba(255,255,255,0.15);white-space:nowrap;cursor:pointer}
 .hud-map-banner b{color:#fff;font-weight:700}
 .hud-map-icon{font-size:10px}
-.hud-online-badge{font-size:10px;font-weight:700;color:#4ade80;background:#0b1510;border:1px solid #166534;padding:2px 5px;border-radius:4px;white-space:nowrap}
+.hud-online-badge{font-size:10px;font-weight:700;color:#4ade80;background:#0b1510;border:1px solid #166534;padding:2px 5px;border-radius:4px;white-space:nowrap;cursor:pointer;user-select:none;transition:all .15s ease}
+.hud-online-badge:hover{filter:brightness(1.25);border-color:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.4)}
 
 .push-mode-btn{font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;cursor:pointer;white-space:nowrap;transition:all 0.2s;display:inline-flex;align-items:center;gap:3px;user-select:none;flex-shrink:0}
 .push-mode-btn.push-on{background:linear-gradient(180deg,#b91c1c 0%,#7f1d1d 100%);border:1px solid #ef4444;color:#fef08a;box-shadow:0 0 8px rgba(239,68,68,0.4),inset 0 1px 1px rgba(255,255,255,0.2)}
@@ -1112,7 +1113,7 @@ body.deskland #jx-float-overlay {
     min-height: 220px !important;
   }
 
-  /* Top HUD bố cục 2 tầng chuẩn hoainiem2003 / Media Screenshot */
+  /* Top HUD bố cục 2 tầng */
   #top {
     display: flex !important;
     flex-wrap: wrap !important;
@@ -2202,6 +2203,270 @@ body.deskland #jx-float-overlay {
 }
 .chat-top-btn:hover {
   border-color: #38bdf8;
+  color: #fff;
+}
+
+/* Unified Compact Top Header Button Style */
+.hud-top-btn {
+  height: 24px !important;
+  padding: 0 6px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  border-radius: 4px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  text-shadow: 0 1px 2px #000 !important;
+}
+
+.war-top-btn {
+  background: linear-gradient(180deg, #7c2d12 0%, #431407 100%) !important;
+  border: 1px solid #ea580c !important;
+  color: #ffedd5 !important;
+  box-shadow: inset 0 1px 0 rgba(234, 88, 12, 0.3) !important;
+}
+.war-top-btn:hover {
+  border-color: #f97316 !important;
+  color: #fff !important;
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.5) !important;
+}
+
+.arcade-top-btn {
+  background: linear-gradient(180deg, #0f766e 0%, #042f2e 100%) !important;
+  border: 1px solid #14b8a6 !important;
+  color: #ccfbf1 !important;
+  box-shadow: inset 0 1px 0 rgba(20, 184, 166, 0.3) !important;
+}
+.arcade-top-btn:hover {
+  border-color: #2dd4bf !important;
+  color: #fff !important;
+  box-shadow: 0 0 8px rgba(45, 212, 191, 0.5) !important;
+}
+
+.epdo-top-btn {
+  background: linear-gradient(180deg, #4c1d95 0%, #2e1065 100%) !important;
+  border: 1px solid #8b5cf6 !important;
+  color: #ede9fe !important;
+  box-shadow: inset 0 1px 0 rgba(139, 92, 246, 0.3) !important;
+}
+.epdo-top-btn:hover {
+  border-color: #a78bfa !important;
+  color: #fff !important;
+  box-shadow: 0 0 8px rgba(167, 139, 250, 0.5) !important;
+}
+
+.gift-top-btn {
+  background: linear-gradient(180deg, #831843 0%, #500724 100%) !important;
+  border: 1px solid #db2777 !important;
+  color: #fdf2f8 !important;
+  min-width: 26px !important;
+  padding: 0 5px !important;
+  position: relative !important;
+}
+.gift-top-btn:hover {
+  border-color: #f472b6 !important;
+  color: #fff !important;
+}
+
+/* Top HUD Dropdown "Khác ▾" Menu */
+.hud-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.hud-more-btn {
+  background: linear-gradient(180deg, #27272a 0%, #18181b 100%) !important;
+  border: 1px solid #52525b !important;
+  color: #e4e4e7 !important;
+}
+.hud-more-btn:hover, .hud-dropdown.open .hud-more-btn {
+  border-color: #d4af37 !important;
+  color: #ffd700 !important;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
+}
+.hud-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: #140e08;
+  border: 1.5px solid #8e6c38;
+  border-radius: 5px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.9), 0 0 10px rgba(142,108,56,0.3);
+  min-width: 200px;
+  padding: 4px 0;
+  z-index: 9999;
+}
+.hud-dropdown.open .hud-dropdown-menu {
+  display: flex;
+  flex-direction: column;
+}
+.hud-menu-item {
+  padding: 6px 12px !important;
+  width: 100% !important;
+  height: auto !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  font-size: 11.5px !important;
+  color: #e2e8f0 !important;
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  cursor: pointer !important;
+  transition: background 0.15s, color 0.15s !important;
+}
+.hud-menu-item:hover {
+  background: rgba(212,175,55,0.15) !important;
+  color: #ffd700 !important;
+}
+
+@media (max-width: 1550px) {
+  .hud-collapsible { display: none !important; }
+}
+
+/* Online Players Modal Styles */
+.online-modal-container {
+  color: #e2e8f0;
+  font-size: 12px;
+}
+.online-stats-summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid #3d2f1d;
+  border-radius: 5px;
+  font-size: 11.5px;
+  align-items: center;
+}
+.online-tabs-bar {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #3d2f1d;
+  padding-bottom: 6px;
+}
+.online-tab-btn {
+  padding: 3px 10px;
+  border-radius: 4px;
+  background: #1c150e;
+  border: 1px solid #5a4425;
+  color: #a39276;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.online-tab-btn.active {
+  background: linear-gradient(180deg, #3d2f1d 0%, #1e1710 100%);
+  border-color: #d4af37;
+  color: #ffd700;
+  box-shadow: 0 0 6px rgba(212,175,55,0.3);
+}
+.online-search-input {
+  width: 100%;
+  background: #0d0a07;
+  border: 1px solid #5a4425;
+  border-radius: 4px;
+  color: #ffd700;
+  padding: 5px 8px;
+  font-size: 11px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+.online-search-input:focus {
+  outline: none;
+  border-color: #d4af37;
+  box-shadow: 0 0 6px rgba(212,175,55,0.3);
+}
+.online-players-list {
+  max-height: 380px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-right: 2px;
+}
+.online-player-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(20,15,10,0.85);
+  border: 1px solid #3d2f1d;
+  border-radius: 5px;
+  gap: 8px;
+  transition: all 0.15s;
+}
+.online-player-card:hover {
+  border-color: #8e6c38;
+  background: rgba(30,22,15,0.9);
+}
+.online-badge-player {
+  background: #064e3b;
+  border: 1px solid #059669;
+  color: #6ee7b7;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.online-badge-bot {
+  background: #78350f;
+  border: 1px solid #d97706;
+  color: #fde68a;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.online-act-btn {
+  padding: 2px 7px;
+  font-size: 10.5px;
+  font-weight: bold;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.online-act-btn.kick {
+  background: #991b1b;
+  border: 1px solid #ef4444;
+  color: #fee2e2;
+}
+.online-act-btn.kick:hover {
+  background: #dc2626;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(239,68,68,0.5);
+}
+.online-act-btn.ban {
+  background: #4c1d95;
+  border: 1px solid #8b5cf6;
+  color: #ede9fe;
+}
+.online-act-btn.ban:hover {
+  background: #6d28d9;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(139,92,246,0.5);
+}
+.online-act-btn.unban {
+  background: #065f46;
+  border: 1px solid #10b981;
+  color: #d1fae5;
+}
+.online-act-btn.unban:hover {
+  background: #059669;
   color: #fff;
 }
 

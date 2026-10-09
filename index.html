@@ -63,19 +63,30 @@
         <span id="hudCoords">198/121</span>
         <b id="hudZoneName">Hoa Sơn</b>
       </div>
-      <span id="mpStatus" class="hud-online-badge">🟢 Trực tuyến</span>
-      <button id="jxSpd" class="spd-top-btn" title="Tốc độ game x1 / x1.5 / x2.5 (phím X)">⚡ x1</button>
-      <button id="jxAuto" class="auto-top-btn" title="Cày thông minh: bật Vượt ải + Tự nhặt + Xoay chiêu cùng lúc (phím Z)">🤖 Tự cày</button>
-      <button id="jxToday" class="today-top-btn" onclick="if(typeof openTodayDashboardModal==='function')openTodayDashboardModal();" title="Việc hôm nay: điểm danh, nhiệm vụ, hoạt động còn lượt">📅 Hôm nay</button>
-      <button id="warBtn" class="war-top-btn" onclick="if(typeof openWarModal==='function')openWarModal();" title="Chiến Trường Tống Kim & Công Thành Xưng Bá" style="background:#7c2d12;border:1.5px solid #ea580c;color:#ffedd5;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;">⚔️ Chiến Trường</button>
-      <button id="arcadeBtn" class="arcade-top-btn" onclick="if(typeof openArcadeModal==='function')openArcadeModal();" title="Khu Giải Trí Arcade (Rắn Săn Mồi & Xếp Gạch)" style="background:#0f766e;border:1.5px solid #14b8a6;color:#ccfbf1;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;cursor:pointer;">🎮 Giải Trí</button>
-      <button id="vipBtn" class="vip-top-btn" title="Đặc Quyền VIP">👑 VIP 1</button>
-      <button id="actBtn" class="act-top-btn" title="Hoạt Động / Phó Bản / Tháp">⚔ Hoạt Động</button>
-      <button id="forgeBtn" class="forge-top-btn" title="Dã Luyện Thần Binh (+16, Chế Hoàng Kim, Bạch Kim)">🔨 Rèn Đồ</button>
-      <button id="epdoBtn" class="epdo-top-btn" onclick="if(typeof epModal==='function')epModal();" title="Lò Ép Đồ (Huyền Tinh, Chế Phôi, Khảm Nạm Đồ Tím, Kho Rèn)">🔮 Ép Đồ</button>
-      <button id="casinoBtn" class="casino-top-btn" title="Tửu Quán Tiêu Dao (Tài Xỉu, Bầu Cua, Oản Tù Tì)">🎲 Tửu Quán</button>
-      <button id="giftBtn" title="Phần thưởng" class="gift-top-btn">🎁<em class="dot" id="dotGift"></em></button>
-      <button id="compactBtn" title="Thu gọn / mở rộng sân đấu">⛶</button>
+      <span id="mpStatus" class="hud-online-badge" onclick="if(typeof openOnlinePlayersModal==='function')openOnlinePlayersModal();" title="Nhấp xem danh sách trực tuyến (Người chơi & BOT, Kích/Chặn)">🟢 Trực tuyến</span>
+      <button id="jxSpd" class="hud-top-btn spd-top-btn" title="Tốc độ game x1 / x1.5 / x2.5 (phím X)">⚡ x1</button>
+      <button id="jxAuto" class="hud-top-btn auto-top-btn" title="Cày thông minh: bật Vượt ải + Tự nhặt + Xoay chiêu (phím Z)">🤖 Auto</button>
+      <button id="jxToday" class="hud-top-btn today-top-btn" onclick="if(typeof openTodayDashboardModal==='function')openTodayDashboardModal();" title="Việc hôm nay: điểm danh, nhiệm vụ, hoạt động còn lượt">📅 Hôm nay</button>
+      <button id="warBtn" class="hud-top-btn war-top-btn" onclick="if(typeof openWarModal==='function')openWarModal();" title="Chiến Trường Tống Kim & Công Thành Xưng Bá">⚔️ Chiến Trường</button>
+      <button id="arcadeBtn" class="hud-top-btn arcade-top-btn hud-collapsible" onclick="if(typeof openArcadeModal==='function')openArcadeModal();" title="Khu Giải Trí Arcade (Rắn Săn Mồi & Xếp Gạch)">🎮 Giải Trí</button>
+      <button id="vipBtn" class="hud-top-btn vip-top-btn" title="Đặc Quyền VIP">👑 VIP 1</button>
+      <button id="actBtn" class="hud-top-btn act-top-btn" title="Hoạt Động / Phó Bản / Tháp">⚔ Hoạt Động</button>
+      <button id="forgeBtn" class="hud-top-btn forge-top-btn" title="Dã Luyện Thần Binh (+16, Chế Hoàng Kim, Bạch Kim)">🔨 Rèn Đồ</button>
+      <button id="epdoBtn" class="hud-top-btn epdo-top-btn hud-collapsible" onclick="if(typeof epModal==='function')epModal();" title="Lò Ép Đồ (Huyền Tinh, Chế Phôi, Khảm Nạm Đồ Tím, Kho Rèn)">🔮 Ép Đồ</button>
+      <button id="casinoBtn" class="hud-top-btn casino-top-btn hud-collapsible" title="Tửu Quán Tiêu Dao (Tài Xỉu, Bầu Cua, Oản Tù Tì)">🎲 Tửu Quán</button>
+      <div class="hud-dropdown" id="hudMoreDropdown">
+        <button class="hud-top-btn hud-more-btn" id="hudMoreBtn" onclick="toggleHudMoreMenu(event);" title="Xem thêm tính năng mở rộng">⋯ Khác ▾</button>
+        <div class="hud-dropdown-menu" id="hudMoreMenu">
+          <button class="hud-menu-item" onclick="if(typeof openArcadeModal==='function')openArcadeModal();">🎮 Khu Giải Trí Arcade</button>
+          <button class="hud-menu-item" onclick="if(typeof openCasinoModal==='function')openCasinoModal();">🎲 Tửu Quán Tiêu Dao</button>
+          <button class="hud-menu-item" onclick="if(typeof epModal==='function')epModal();">🔮 Lò Ép Huyền Tinh</button>
+          <button class="hud-menu-item" onclick="if(typeof openStashIoModal==='function')openStashIoModal();">🧰 Xuất / Nạp Kho File (.jxkho)</button>
+          <button class="hud-menu-item" onclick="if(window.TRADE)TRADE.openRequestModal();">🤝 Giao Dịch Vật Phẩm</button>
+          <button class="hud-menu-item" onclick="if(typeof openMarketModal==='function')openMarketModal();">🏮 Sạp Hàng Chợ Đen</button>
+        </div>
+      </div>
+      <button id="giftBtn" title="Phần thưởng" class="hud-top-btn gift-top-btn">🎁<em class="dot" id="dotGift"></em></button>
+      <button id="compactBtn" title="Thu gọn / mở rộng sân đấu" class="hud-top-btn">⛶</button>
     </div>
   </header>
 
@@ -86,10 +97,10 @@
       <div id="mainSk"></div>
     </div>
 
-    <!-- Mobile Viewport Overlay (hoainiem2003 / Media Screenshot) -->
+    <!-- Mobile Viewport Overlay -->
     <div id="mobBattleOverlay" class="mob-battle-overlay">
       <div class="mob-status-center">
-        <div class="mob-status-title">Võ Lâm Idle · 6 N.T.T</div>
+        <div class="mob-status-title">Võ Lâm Truyền Kỳ Idle</div>
         <div class="mob-status-online">🟢 <span id="mobOnlineTxt">771</span> người đang online</div>
         <div class="mob-status-event" id="mobStatusEvent">👑 Trùm Đại Náo</div>
       </div>

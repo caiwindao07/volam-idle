@@ -1,6 +1,5 @@
 /* ==========================================================================
    HỆ THỐNG XUẤT / NHẬP KHO CHUNG (STASH EXPORT & IMPORT)
-   Ported & Enhanced from N.T.T (hoainiem2003.net/vltk)
    - Xuất toàn bộ trang bị trong kho + nguyên liệu + ngân lượng ra file .jxkho
    - Nạp file kho vào tài khoản khác an toàn, tự động cấp mã UID mới chống trùng lặp
    ========================================================================== */

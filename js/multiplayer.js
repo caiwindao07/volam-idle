@@ -123,18 +123,29 @@ function connectWs(url) {
 function handleServerMessage(msg) {
   if (!msg || !msg.type) return;
 
-  if (msg.type === 'kicked') {
+  if (msg.type === 'kicked' || msg.type === 'banned') {
     MP.connected = false;
+    const isBan = (msg.type === 'banned');
+    const reason = msg.reason || msg.message || (isBan ? 'Tài khoản của bạn đã bị cấm khỏi máy chủ!' : 'Bạn đã bị kích khỏi máy chủ!');
     if (typeof modal === 'function') {
       modal(`
         <div style="padding:16px;text-align:center;">
-          <h3 style="color:#ef4444;margin-bottom:10px;">⚠️ MẤT KẾT NỐI</h3>
-          <p style="color:#ffd700;font-size:13px;margin-bottom:14px;">${typeof esc === 'function' ? esc(msg.message) : msg.message}</p>
+          <h3 style="color:#ef4444;margin-bottom:10px;">${isBan ? '⛔ BỊ CẤM TRUY CẬP' : '⚠️ BỊ KÍCH KHỎI GAME'}</h3>
+          <p style="color:#ffd700;font-size:13px;margin-bottom:14px;">${typeof esc === 'function' ? esc(reason) : reason}</p>
           <button class="jx-action-btn gold" onclick="location.reload()">Đăng nhập lại</button>
         </div>
       `, null, true);
     } else {
-      alert(msg.message);
+      alert(reason);
+    }
+    return;
+  }
+
+  if (msg.type === 'online_list_sync') {
+    MP.lastOnlineList = msg.players;
+    if (typeof renderOnlineListModal === 'function') {
+      const container = document.getElementById('onlinePlayersListContainer');
+      if (container) renderOnlineListModal(msg.players);
     }
     return;
   }
@@ -1113,6 +1124,11 @@ function updateOnlineStatusBadge(online) {
     el.innerHTML = online 
       ? `<span style="color:#4ade80;">🟢 Trực tuyến (${count})</span>` 
       : `<span style="color:#ef4444;">🔴 Ngoại tuyến</span>`;
+    el.style.cursor = 'pointer';
+    el.title = 'Nhấp để xem danh sách trực tuyến (Người chơi & BOT, Quyền Kích/Chặn)';
+    el.onclick = () => {
+      if (typeof openOnlinePlayersModal === 'function') openOnlinePlayersModal();
+    };
   }
   const chatBtn = $('#chatBtn');
   if (chatBtn) {
@@ -1219,3 +1235,201 @@ function setManualAttackTarget(targetId) {
   if (typeof toast === 'function') toast(`🎯 Đang nhắm mục tiêu: ${p.name}`);
 }
 window.setManualAttackTarget = setManualAttackTarget;
+
+// ==========================================
+// HỆ THỐNG QUẢN LÝ NGƯỜI CHƠI TRỰC TUYẾN & BOT
+// Xem danh sách, phân loại Người chơi / BOT, Quyền Kích & Cấm tài khoản
+// ==========================================
+let _curOnlineTab = 'all'; // 'all' | 'human' | 'bot'
+let _curOnlineSearch = '';
+
+function openOnlinePlayersModal() {
+  if (MP.ws && MP.ws.readyState === 1) {
+    MP.ws.send(JSON.stringify({ type: 'get_online_list' }));
+  }
+  fetch('/api/online-players')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.ok && Array.isArray(data.players)) {
+        MP.lastOnlineList = data.players;
+        renderOnlineListModal(data.players);
+      }
+    })
+    .catch(() => {});
+
+  renderOnlineListModal(MP.lastOnlineList || []);
+}
+window.openOnlinePlayersModal = openOnlinePlayersModal;
+
+function renderOnlineListModal(playersList) {
+  if (!Array.isArray(playersList)) playersList = MP.lastOnlineList || [];
+  MP.lastOnlineList = playersList;
+
+  const total = playersList.length;
+  const humanCount = playersList.filter(p => !p.isBot).length;
+  const botCount = playersList.filter(p => p.isBot).length;
+
+  const q = String(_curOnlineSearch || '').trim().toLowerCase();
+  const filtered = playersList.filter(p => {
+    if (_curOnlineTab === 'human' && p.isBot) return false;
+    if (_curOnlineTab === 'bot' && !p.isBot) return false;
+    if (q) {
+      const matchName = String(p.name || '').toLowerCase().includes(q);
+      const matchFac = String(p.fac || '').toLowerCase().includes(q);
+      const matchUser = String(p.username || '').toLowerCase().includes(q);
+      if (!matchName && !matchFac && !matchUser) return false;
+    }
+    return true;
+  });
+
+  const getFacName = (f) => (typeof FAC !== 'undefined' && FAC[f]) ? FAC[f].n : (f || 'Vô phái');
+  const getZoneName = (zid) => {
+    if (typeof JX !== 'undefined' && JX.zones) {
+      const found = JX.zones.find(z => z.id === zid);
+      if (found) return found.n;
+    }
+    if (zid === 37) return 'Biện Kinh';
+    if (zid === 386) return 'Chiến Trường Tống Kim';
+    if (zid === 2) return 'Hoa Sơn';
+    return `Bản đồ #${zid}`;
+  };
+
+  const cardsHtml = filtered.length === 0 
+    ? `<div style="text-align:center;padding:24px;color:#94a3b8;font-style:italic;">Không tìm thấy hiệp khách nào phù hợp.</div>`
+    : filtered.map(p => {
+        const facName = getFacName(p.fac);
+        const zoneName = getZoneName(p.zoneId);
+        const typeBadge = p.isBot 
+          ? `<span class="online-badge-bot">🤖 BOT AI</span>` 
+          : `<span class="online-badge-player">👤 Người chơi</span>`;
+
+        let actionBtns = '';
+        if (p.isSelf) {
+          actionBtns = `<span style="color:#d4af37;font-size:11px;font-style:italic;">(Chính bạn)</span>`;
+        } else if (!p.isBot) {
+          if (p.isBanned) {
+            actionBtns = `
+              <button class="online-act-btn unban" onclick="adminUnbanPlayer('${esc(p.username || p.name)}');">✅ Mở Chặn</button>
+            `;
+          } else {
+            actionBtns = `
+              <button class="online-act-btn kick" onclick="adminKickPlayer(${p.id}, '${esc(p.name)}');" title="Kích người chơi khỏi game">⚡ Kích</button>
+              <button class="online-act-btn ban" onclick="adminBanPlayer(${p.id}, '${esc(p.username || p.name)}', '${esc(p.name)}');" title="Cấm tài khoản vĩnh viễn">🚫 Chặn</button>
+            `;
+          }
+        } else {
+          actionBtns = `<span style="color:#78350f;font-size:10px;font-weight:bold;">Luyện công AI</span>`;
+        }
+
+        return `
+          <div class="online-player-card">
+            <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
+              <div style="display:flex;flex-direction:column;min-width:0;">
+                <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+                  <b style="color:#ffd700;font-size:12px;">${esc(p.name)}</b>
+                  <span style="font-size:10.5px;color:#e2e8f0;background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;">Lv.${p.lvl || 1}</span>
+                  ${p.vip ? `<span style="font-size:9.5px;color:#fde047;font-weight:bold;background:#451a03;border:1px solid #d97706;padding:0 3px;border-radius:2px;">VIP ${p.vip}</span>` : ''}
+                  ${typeBadge}
+                </div>
+                <div style="font-size:10.5px;color:#94a3b8;margin-top:2px;">
+                  Môn phái: <span style="color:#38bdf8;">${esc(facName)}</span> · Vị trí: <span style="color:#4ade80;">${esc(zoneName)}</span>
+                  ${p.username ? ` · <span style="color:#64748b;">(TK: ${esc(p.username)})</span>` : ''}
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+              ${actionBtns}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+  const modalHtml = `
+    <div class="jx-client-window online-modal-container" style="margin:-14px;border:none;">
+      <div class="jx-window-header">
+        <div class="jx-window-title"><span>👥 DANH SÁCH ĐỒNG ĐẠO TRỰC TUYẾN</span></div>
+        <button class="jx-window-close" onclick="closeModal();">×</button>
+      </div>
+      <div style="padding:12px;">
+        <div class="online-stats-summary">
+          <div>🟢 Tổng trực tuyến: <b style="color:#4ade80;">${total}</b></div>
+          <div>👤 Người chơi: <b style="color:#38bdf8;">${humanCount}</b></div>
+          <div>🤖 BOT AI: <b style="color:#fbbf24;">${botCount}</b></div>
+          <button class="btn sm" onclick="openOnlinePlayersModal();" style="margin-left:auto;height:22px;padding:0 8px;font-size:10.5px;" title="Cập nhật danh sách mới">🔄 Làm mới</button>
+        </div>
+
+        <div class="online-tabs-bar">
+          <button class="online-tab-btn ${_curOnlineTab === 'all' ? 'active' : ''}" onclick="_curOnlineTab='all';renderOnlineListModal();">Tất cả (${total})</button>
+          <button class="online-tab-btn ${_curOnlineTab === 'human' ? 'active' : ''}" onclick="_curOnlineTab='human';renderOnlineListModal();">👤 Người chơi (${humanCount})</button>
+          <button class="online-tab-btn ${_curOnlineTab === 'bot' ? 'active' : ''}" onclick="_curOnlineTab='bot';renderOnlineListModal();">🤖 BOT AI (${botCount})</button>
+        </div>
+
+        <input type="text" id="txtSearchOnline" class="online-search-input" placeholder="🔍 Nhập tên nhân vật, môn phái, tài khoản để tìm nhanh..." value="${esc(_curOnlineSearch)}" oninput="_curOnlineSearch=this.value;renderOnlineListModal();">
+
+        <div class="online-players-list" id="onlinePlayersListContainer">
+          ${cardsHtml}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const container = document.getElementById('onlinePlayersListContainer');
+  if (container && document.getElementById('txtSearchOnline')) {
+    container.innerHTML = cardsHtml;
+  } else {
+    modal(modalHtml);
+    setTimeout(() => {
+      const inp = document.getElementById('txtSearchOnline');
+      if (inp) {
+        inp.focus();
+        inp.setSelectionRange(inp.value.length, inp.value.length);
+      }
+    }, 100);
+  }
+}
+window.renderOnlineListModal = renderOnlineListModal;
+
+window.adminKickPlayer = function(targetId, targetName) {
+  if (!confirm(`Bạn có chắc chắn muốn KÍCH người chơi [${targetName}] khỏi game ngay lập tức?`)) return;
+  if (MP.ws && MP.ws.readyState === 1) {
+    MP.ws.send(JSON.stringify({ type: 'admin_kick', targetId: Number(targetId) }));
+  }
+  fetch('/api/admin/kick', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ targetId: Number(targetId) })
+  }).then(r => r.json()).then(d => {
+    if (d && d.ok && typeof toast === 'function') toast(`Đã kích [${targetName}] khỏi máy chủ!`);
+    setTimeout(openOnlinePlayersModal, 300);
+  }).catch(() => {});
+};
+
+window.adminBanPlayer = function(targetId, username, targetName) {
+  if (!confirm(`CẢNH BÁO: Bạn có chắc chắn muốn CẤM vĩnh viễn tài khoản [${targetName}] (${username})?\nNgười chơi này sẽ bị ngắt kết nối và không thể đăng nhập lại máy chủ.`)) return;
+  if (MP.ws && MP.ws.readyState === 1) {
+    MP.ws.send(JSON.stringify({ type: 'admin_ban', targetId: Number(targetId), username: username }));
+  }
+  fetch('/api/admin/ban', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ targetId: Number(targetId), username: username })
+  }).then(r => r.json()).then(d => {
+    if (d && d.ok && typeof toast === 'function') toast(`Đã CẤM tài khoản [${targetName}] thành công!`);
+    setTimeout(openOnlinePlayersModal, 300);
+  }).catch(() => {});
+};
+
+window.adminUnbanPlayer = function(username) {
+  if (!confirm(`Xác nhận mở chặn cho tài khoản [${username}]?`)) return;
+  if (MP.ws && MP.ws.readyState === 1) {
+    MP.ws.send(JSON.stringify({ type: 'admin_unban', username: username }));
+  }
+  fetch('/api/admin/unban', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: username })
+  }).then(r => r.json()).then(d => {
+    if (d && d.ok && typeof toast === 'function') toast(`Đã gỡ lệnh cấm cho [${username}]!`);
+    setTimeout(openOnlinePlayersModal, 300);
+  }).catch(() => {});
+};

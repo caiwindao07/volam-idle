@@ -1,6 +1,5 @@
 /* ==========================================================================
    HỆ THỐNG CHIẾN TRƯỜNG: TỐNG KIM & CÔNG THÀNH + CỬA HÀNG QUÂN CÔNG
-   Ported & Enhanced from N.T.T (hoainiem2003.net/vltk)
    - Tống Kim: 4 đợt quân + Nguyên Soái, tính điểm chiến công, nhận Quân Công
    - Công Thành: 4 cấp độ thành trì (Trấn nhỏ -> Kinh thành), hạ Chủ tướng
    - Cửa Hàng Quân Công: Đổi điểm Quân Công lấy Mảnh HK, Đồ HK, Huyền Tinh...
