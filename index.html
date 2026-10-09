@@ -100,23 +100,6 @@
       <div id="mainSk"></div>
     </div>
 
-    <!-- Mobile Viewport Overlay -->
-    <div id="mobBattleOverlay" class="mob-battle-overlay">
-      <div class="mob-status-center">
-        <div class="mob-status-title">Võ Lâm Truyền Kỳ Idle</div>
-        <div class="mob-status-online">🟢 <span id="mobOnlineTxt">771</span> người đang online</div>
-        <div class="mob-status-event" id="mobStatusEvent">👑 Trùm Đại Náo</div>
-      </div>
-      <div class="mob-top-controls">
-        <button id="mobSettingsBtn" class="mob-icon-btn" onclick="showTab('more')" title="Cài đặt hệ thống">⚙</button>
-        <div class="mob-auto-pill" id="mobAutoPill" onclick="if(typeof toggleAuto==='function')toggleAuto();else if(window.AUTO_SYSTEM)AUTO_SYSTEM.toggle();" title="Bật / Tắt Tự động đánh">
-          <span>Auto</span>
-          <div class="mob-switch-track"><div class="mob-switch-thumb"></div></div>
-        </div>
-      </div>
-    </div>
-    <div id="mobAutoCombatNotice" class="mob-autocombat-notice">Tự động đánh</div>
-
     <button id="rebornBtn" class="chip" title="Chuyển Sinh - Quay về cấp 1, nhận bảo vật quý hiếm">🌟 Chuyển Sinh</button>
     <button id="ktcBtn" class="chip">💎 Kỳ Trân</button>
     <button id="inBtn" class="chip"></button>
@@ -347,7 +330,8 @@
     <button data-t="char">Nhân vật<em class="dot" id="dotChar"></em></button>
     <button data-t="skill">Võ công<em class="dot" id="dotSkill"></em></button>
     <button data-t="inv">Hành trang</button>
-    <button data-t="more">Khác</button>
+    <button data-t="party">Tổ đội</button>
+    <button data-t="more">Tính năng</button>
   </nav>
 
   <div id="modal" class="hidden" role="dialog" aria-modal="true"><div class="mbox" tabindex="-1"><button class="mx" id="mClose">✕</button><div id="mBody"></div></div></div>

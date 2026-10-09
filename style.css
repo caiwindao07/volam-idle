@@ -709,7 +709,7 @@ select,textarea{background:#0b100e;color:var(--text);border:1px solid var(--line
   color: #ef4444;
 }
 
-#tabs{display:grid;grid-template-columns:repeat(5,1fr);background:#0b100e;border-top:1px solid var(--gold2);padding-bottom:var(--safe-b)}
+#tabs{display:grid;grid-template-columns:repeat(6,1fr);background:#0b100e;border-top:1px solid var(--gold2);padding-bottom:var(--safe-b)}
 #tabs button{position:relative;padding:10px 2px;font-size:12px;color:var(--dim)} #tabs button.on{color:var(--gold);box-shadow:inset 0 2px 0 var(--gold)}
 .dot{position:absolute;top:6px;right:12%;width:7px;height:7px;border-radius:50%;background:#f55;display:none} .dot.on{display:block}
 
@@ -787,7 +787,7 @@ body.sv #campBtn,body.sv #bossBtn,body.sv #ktcBtn,body.sv #marketBtn{display:non
 #tabs button.on::before{background-position:50% 0}
 #tabs button[data-t=log]::before{background-image:url(ui/ic_log.png)} #tabs button[data-t=char]::before{background-image:url(ui/ic_char.png)}
 #tabs button[data-t=skill]::before{background-image:url(ui/ic_skill.png)} #tabs button[data-t=inv]::before{background-image:url(ui/ic_item.png)}
-#tabs button[data-t=more]::before{background-image:url(ui/ic_more.png)}
+#tabs button[data-t=party]::before{background-image:url(ui/ic_char.png)} #tabs button[data-t=more]::before{background-image:url(ui/ic_more.png)}
 #pad .pbtn.sk{background:url(ui/slot.png) center / 100% 100%,radial-gradient(#26302b,#0b100e)}
 .facpick button{position:relative}
 .s5b{position:absolute;right:4px;top:4px;width:28px;height:28px;background-size:200% 100%;background-position:0 0;filter:drop-shadow(0 0 2px #000)}
@@ -1464,28 +1464,27 @@ body.deskland #jx-float-overlay {
     min-height: 220px !important;
   }
 
-  /* Top HUD bố cục 2 tầng */
+  /* Top HUD bố cục 2 tầng trên di động (Đầy đủ 100% chức năng server) */
   #top {
     display: flex !important;
     flex-wrap: wrap !important;
     padding: calc(4px + var(--safe-t, 0px)) 6px 4px !important;
-    background: #0e0a06 !important;
-    border-bottom: 1px solid #3d2f1d !important;
+    background: linear-gradient(180deg, #1b130c 0%, #0c0805 100%) !important;
+    border-bottom: 1.5px solid #8e6c38 !important;
     height: auto !important;
     min-height: auto !important;
-    gap: 4px 6px !important;
+    max-height: none !important;
+    gap: 3px 0 !important;
     align-items: center !important;
+    justify-content: space-between !important;
     overflow: visible !important;
+    z-index: 50 !important;
   }
   #top::-webkit-scrollbar {
     display: none !important;
   }
   .hud-clock,
-  .hud-online-badge,
-  .hud-map-banner,
   #hudRankTag,
-  .spd-top-btn,
-  .auto-top-btn,
   .today-top-btn,
   .war-top-btn,
   .arcade-top-btn,
@@ -1496,41 +1495,40 @@ body.deskland #jx-float-overlay {
   .casino-top-btn,
   .hud-btn-group,
   .hud-btn-sep,
-  #hudMoreDropdown,
+  #compactBtn,
   .desktop-only {
     display: none !important;
   }
 
+  /* Hàng 1: Trái (Avatar, Tên, 4 Thanh Máu/Mana) & Phải (Lực Chiến, Online, Menu, Quà) */
   .hud-left-cluster {
     display: flex !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: 5px !important;
     flex: 1 1 auto !important;
     min-width: 0 !important;
   }
   .lvbox {
-    width: 38px !important;
-    height: 38px !important;
-    border: 1.5px solid #8e6c38 !important;
+    width: 32px !important;
+    height: 32px !important;
+    border: 1.5px solid #d4af37 !important;
     border-radius: 4px !important;
     position: relative !important;
-    background-size: cover !important;
-    overflow: visible !important;
     flex-shrink: 0 !important;
   }
   .lvbox #lv {
     position: absolute !important;
-    left: -4px !important;
-    bottom: -4px !important;
+    left: -3px !important;
+    bottom: -3px !important;
     right: auto !important;
-    width: 18px !important;
-    height: 18px !important;
+    width: 16px !important;
+    height: 16px !important;
     border-radius: 50% !important;
     background: #000 !important;
     border: 1.5px solid #ffd700 !important;
     color: #ffd700 !important;
-    font-size: 9.5px !important;
-    font-weight: bold !important;
+    font-size: 9px !important;
+    font-weight: 800 !important;
     display: grid !important;
     place-items: center !important;
     z-index: 2 !important;
@@ -1543,254 +1541,265 @@ body.deskland #jx-float-overlay {
   .hud-hero-meta {
     display: flex !important;
     flex-direction: column !important;
-    gap: 2px !important;
+    gap: 1px !important;
     flex-shrink: 0 !important;
+    line-height: 1 !important;
+  }
+  .hud-hero-name {
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    color: #ffd700 !important;
+    white-space: nowrap !important;
+    max-width: 65px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
   .hud-fac-name {
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    color: #e2e8f0 !important;
-    line-height: 1.1 !important;
-  }
-  .hud-server-badge {
-    font-size: 8.5px !important;
-    font-weight: bold !important;
-    color: #93c5fd !important;
-    background: #1e3a8a !important;
-    border: 1px solid #3b82f6 !important;
-    border-radius: 8px !important;
-    padding: 1px 5px !important;
-    line-height: 1 !important;
-    width: fit-content !important;
-  }
-
-  .topmid {
-    display: flex !important;
-    align-items: center !important;
-    gap: 5px !important;
-    flex: 0 0 auto !important;
-  }
-  .hud-power-box {
-    display: flex !important;
-    align-items: center !important;
-    gap: 3px !important;
-    background: rgba(22, 16, 10, 0.9) !important;
-    border: 1px solid #785a2d !important;
-    border-radius: 4px !important;
-    padding: 2px 5px !important;
-    cursor: pointer !important;
-  }
-  .hud-power-box .lbl {
     font-size: 9px !important;
-    color: #a39276 !important;
-  }
-  .hud-power-box b {
-    font-size: 11px !important;
-    color: #fbbf24 !important;
-    font-weight: bold !important;
-  }
-  .hud-stage-box {
-    display: flex !important;
-    align-items: center !important;
-    font-size: 10px !important;
-    color: #cbd5e1 !important;
-  }
-  .hud-stage-box #stageLbl {
-    font-size: 10px !important;
-    color: #fde047 !important;
-    font-weight: bold !important;
+    font-weight: 700 !important;
+    color: #94a3b8 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    max-width: 65px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
-  .hud-right-cluster {
-    display: flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-    flex-shrink: 0 !important;
-  }
-  .gold {
-    display: flex !important;
-    align-items: center !important;
-    gap: 3px !important;
-    font-size: 11px !important;
-    font-weight: bold !important;
-    color: #ffd700 !important;
-  }
-  #giftBtn {
-    display: grid !important;
-    place-items: center !important;
-    width: 26px !important;
-    height: 26px !important;
-    border-radius: 4px !important;
-    border: 1px solid #785a2d !important;
-    background: #24160d !important;
-    font-size: 13px !important;
-    padding: 0 !important;
-    position: relative !important;
-  }
-  #compactBtn {
-    display: grid !important;
-    place-items: center !important;
-    width: 26px !important;
-    height: 26px !important;
-    border-radius: 4px !important;
-    border: 1px solid #5a4425 !important;
-    background: #1a1208 !important;
-    font-size: 12px !important;
-    color: #a39276 !important;
-    padding: 0 !important;
-  }
-
-  /* Hàng thanh máu/nội lực/kinh nghiệm trên mobile */
+  /* 4 thanh chỉ số trên mobile */
   .hud-bars-col {
-    width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 2px !important;
-    margin-top: 2px !important;
+    width: 76px !important;
     flex-shrink: 0 !important;
   }
   .hud-bars-row {
     display: flex !important;
-    gap: 4px !important;
+    gap: 2px !important;
     width: 100% !important;
   }
   .hud-bars-row .bar {
-    height: 10px !important;
+    height: 9px !important;
     border-radius: 2px !important;
+    flex: 1 !important;
   }
   .hud-bars-row .bar span {
-    font-size: 7.5px !important;
-    line-height: 10px !important;
-  }
-  .hud-bars-row .bar.hp {
-    flex: 1 !important;
-  }
-  .hud-bars-row .bar.mp {
-    flex: 1 !important;
-  }
-  .hud-bars-row .bar.sp {
-    display: none !important;
-  }
-  .hud-bars-row.xp-row {
-    display: flex !important;
-  }
-  .hud-bars-row.xp-row .bar.xp {
-    width: 100% !important;
-    display: block !important;
-    height: 8px !important;
-  }
-  .hud-bars-row.xp-row .bar.xp span {
     font-size: 7px !important;
-    line-height: 8px !important;
+    line-height: 9px !important;
+  }
+  .hud-bars-row .bar.hp { flex: 1 !important; }
+  .hud-bars-row .bar.mp { flex: 1 !important; }
+  .hud-bars-row.xp-row { display: flex !important; }
+  .hud-bars-row.xp-row .bar.sp { flex: 1 !important; display: block !important; }
+  .hud-bars-row.xp-row .bar.xp { flex: 1 !important; display: block !important; }
+
+  /* Cụm góc phải hàng 1: Trực tuyến, Menu, Quà */
+  .hud-right-cluster {
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+  }
+  .hud-online-badge {
+    display: inline-flex !important;
+    height: 22px !important;
+    padding: 0 5px !important;
+    font-size: 9.5px !important;
+    font-weight: 700 !important;
+    border-radius: 3px !important;
+    white-space: nowrap !important;
+  }
+  #giftBtn {
+    display: inline-flex !important;
+    width: 25px !important;
+    height: 22px !important;
+    border-radius: 4px !important;
+    border: 1px solid #db2777 !important;
+    background: #500724 !important;
+    font-size: 12px !important;
+    padding: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+  }
+  .hud-more-btn {
+    display: inline-flex !important;
+    height: 22px !important;
+    padding: 0 5px !important;
+    font-size: 10px !important;
+    border-radius: 3px !important;
+    white-space: nowrap !important;
+  }
+  .hud-dropdown-menu {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: min(88vw, 320px) !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+    background: #140e08 !important;
+    border: 2px solid #8e6c38 !important;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.7), 0 10px 30px rgba(0,0,0,0.95) !important;
+    border-radius: 8px !important;
+    z-index: 10000 !important;
+    padding: 6px 0 !important;
+  }
+  .hud-dropdown-menu .hud-menu-item {
+    font-size: 12.5px !important;
+    padding: 8px 14px !important;
+    border-bottom: 1px solid rgba(142, 108, 56, 0.2) !important;
   }
 
-  /* Mobile Battle Overlay Elements */
-  .mob-battle-overlay {
-    position: absolute !important;
-    top: 6px !important;
-    left: 8px !important;
-    right: 8px !important;
+  /* Hàng 2: Thanh điều khiển Giang Hồ & Chiến Đấu (Scrollable ngang) */
+  .topmid {
     display: flex !important;
-    justify-content: space-between !important;
-    align-items: flex-start !important;
-    z-index: 15 !important;
-    pointer-events: none !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    flex: 0 0 100% !important;
+    gap: 4px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 3px 0 1px 0 !important;
+    border-top: 1px solid rgba(142, 108, 56, 0.3) !important;
+    margin-top: 2px !important;
   }
-  .mob-status-center {
+  .topmid::-webkit-scrollbar { display: none !important; }
+
+  .hud-power-box {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 22px !important;
+    padding: 0 5px !important;
+    gap: 3px !important;
+    background: rgba(22, 16, 10, 0.9) !important;
+    border: 1px solid #785a2d !important;
+    border-radius: 4px !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+  }
+  .hud-power-box .lbl { font-size: 8.5px !important; color: #a39276 !important; }
+  .hud-power-box b { font-size: 10.5px !important; color: #fbbf24 !important; font-weight: bold !important; }
+
+  .hud-map-banner {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 22px !important;
+    padding: 0 5px !important;
+    border-radius: 4px !important;
+    font-size: 10px !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+  }
+  .hud-coords-txt { display: inline-block !important; font-size: 9px !important; margin-left: 2px !important; }
+  .hud-channel-badge, #hudChannelBtn {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 20px !important;
+    padding: 0 4px !important;
+    font-size: 9.5px !important;
+    border-radius: 3px !important;
+    flex-shrink: 0 !important;
+    margin-left: 3px !important;
+    cursor: pointer !important;
+  }
+  .hud-camp-badge, #hudCampSelectBtn {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 20px !important;
+    padding: 0 4px !important;
+    font-size: 9.5px !important;
+    border-radius: 3px !important;
+    flex-shrink: 0 !important;
+    margin-left: 2px !important;
+    cursor: pointer !important;
+  }
+  .push-mode-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 22px !important;
+    padding: 0 6px !important;
+    font-size: 10px !important;
+    border-radius: 4px !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+  }
+  .pk-mode-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 22px !important;
+    padding: 0 6px !important;
+    font-size: 10px !important;
+    border-radius: 4px !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+  }
+  .spd-top-btn, #jxSpd {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 22px !important;
+    padding: 0 5px !important;
+    font-size: 10px !important;
+    border-radius: 4px !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+  }
+  .auto-top-btn, #jxAuto {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 22px !important;
+    padding: 0 6px !important;
+    font-size: 10px !important;
+    border-radius: 4px !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+  }
+
+  /* Bảng Dashboard Tính Năng Giang Hồ trong tab Tính Năng (renderMore) */
+  .jx-feature-dashboard-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
+    margin-bottom: 6px !important;
+  }
+  .jx-feat-card {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    gap: 1px !important;
-    pointer-events: auto !important;
-    margin: 0 auto !important;
-  }
-  .mob-status-title {
-    font-size: 9px !important;
-    color: rgba(255,255,255,0.7) !important;
-    text-shadow: 0 1px 2px #000 !important;
-  }
-  .mob-status-online {
-    font-size: 9.5px !important;
-    font-weight: bold !important;
-    color: #4ade80 !important;
-    text-shadow: 0 1px 3px #000 !important;
-  }
-  .mob-status-event {
-    font-size: 10px !important;
-    font-weight: bold !important;
-    color: #ffd700 !important;
-    text-shadow: 0 1px 3px #000 !important;
-    background: rgba(0,0,0,0.55) !important;
-    padding: 1px 6px !important;
-    border-radius: 8px !important;
-    border: 1px solid rgba(251,191,36,0.3) !important;
-  }
-  .mob-top-controls {
-    display: flex !important;
-    align-items: center !important;
-    gap: 5px !important;
-    pointer-events: auto !important;
-  }
-  .mob-icon-btn {
-    width: 26px !important;
-    height: 26px !important;
-    border-radius: 4px !important;
-    border: 1px solid #785a2d !important;
-    background: rgba(18,14,10,0.85) !important;
-    color: #ffd700 !important;
-    font-size: 13px !important;
-    display: grid !important;
-    place-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    padding: 8px 3px !important;
+    background: radial-gradient(circle, #251c13 0%, #100b07 100%) !important;
+    border: 1px solid #7d6034 !important;
+    border-radius: 6px !important;
     cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,215,0,0.15) !important;
+    text-align: center !important;
   }
-  .mob-auto-pill {
-    display: flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-    background: rgba(18,14,10,0.85) !important;
-    border: 1px solid #785a2d !important;
-    border-radius: 12px !important;
-    padding: 2px 5px !important;
-    font-size: 9.5px !important;
-    color: #cbd5e1 !important;
-    font-weight: bold !important;
-    cursor: pointer !important;
+  .jx-feat-card:active, .jx-feat-card:hover {
+    border-color: #ffd700 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 0 8px rgba(255,215,0,0.3) !important;
   }
-  .mob-switch-track {
-    width: 24px !important;
-    height: 13px !important;
-    border-radius: 7px !important;
-    background: #334155 !important;
-    position: relative !important;
-    transition: background 0.2s !important;
+  .jx-feat-card .feat-ic {
+    font-size: 20px !important;
+    line-height: 1 !important;
   }
-  .mob-switch-thumb {
-    width: 11px !important;
-    height: 11px !important;
-    border-radius: 50% !important;
-    background: #fff !important;
-    position: absolute !important;
-    top: 1px !important;
-    left: 1px !important;
-    transition: transform 0.2s !important;
-  }
-  .mob-auto-pill.on .mob-switch-track {
-    background: #eab308 !important;
-  }
-  .mob-auto-pill.on .mob-switch-thumb {
-    transform: translateX(11px) !important;
-  }
-  .mob-autocombat-notice {
-    position: absolute !important;
-    left: 50% !important;
-    top: 60% !important;
-    transform: translateX(-50%) !important;
+  .jx-feat-card b {
     font-size: 11px !important;
-    font-weight: bold !important;
-    color: #fde047 !important;
-    text-shadow: 0 1px 3px #000, 0 0 6px rgba(0,0,0,0.9) !important;
-    pointer-events: none !important;
-    z-index: 12 !important;
+    color: #fbbf24 !important;
+    white-space: nowrap !important;
+  }
+  .jx-feat-card small {
+    font-size: 9px !important;
+    color: #94a3b8 !important;
+    white-space: nowrap !important;
   }
   #rotBtn {
     position: absolute !important;
@@ -2001,16 +2010,24 @@ body.deskland #jx-float-overlay {
 
   /* Thanh tabs điều hướng dưới đáy màn hình */
   #tabs {
-    height: calc(50px + var(--safe-b, 0px)) !important;
+    display: grid !important;
+    grid-template-columns: repeat(6, 1fr) !important;
+    height: calc(52px + var(--safe-b, 0px)) !important;
     padding-bottom: var(--safe-b, 0px) !important;
     background: linear-gradient(180deg, #241b12 0%, #0d0a06 100%) !important;
-    border-top: 2px solid #8e6c38 !important;
+    border-top: 1.5px solid #8e6c38 !important;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.6) !important;
   }
   #tabs button {
-    padding: 4px 2px calc(4px + var(--safe-b, 0px)) !important;
-    font-size: 11px !important;
+    padding: 24px 1px calc(4px + var(--safe-b, 0px)) !important;
+    font-size: 10px !important;
     font-weight: 700 !important;
     touch-action: manipulation !important;
+    white-space: nowrap !important;
+  }
+  #tabs button::before {
+    top: 3px !important;
+    transform: scale(0.9) !important;
   }
 
   /* Layout Trang Bị & Thuộc Tính trên di động: cuộn dọc mượt mà */

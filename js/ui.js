@@ -1482,11 +1482,36 @@ function renderInv() {
   if (window.ITEM_TOOLTIP) window.ITEM_TOOLTIP.updateUI();
 }
 
-/* ---------- the: khac ---------- */
+/* ---------- the: khac / tinh nang ---------- */
 function renderMore() {
   const moreEl = tabEl('more'); if (!moreEl) return;
   moreEl.innerHTML = `
-
+    <!-- Bang Tinh Nang Giang Ho Server -->
+    <div class="jx-box">
+      <div class="jx-box-header">
+        <span>🏆 Tính Năng Giang Hồ & Hoạt Động Server</span>
+      </div>
+      <div class="jx-feature-dashboard-grid">
+        <button class="jx-feat-card" onclick="if(window.DATAU)DATAU.toggle();"><span class="feat-ic">📜</span><b>Dã Tẩu</b><small>Nhiệm vụ 40 mốc</small></button>
+        <button class="jx-feat-card" onclick="if(window.TONGKIM)TONGKIM.openRegisterModal();"><span class="feat-ic">⚔️</span><b>Tống Kim</b><small>Đại chiến PK</small></button>
+        <button class="jx-feat-card" onclick="if(window.COMPANION_SYSTEM)COMPANION_SYSTEM.toggleWindow();"><span class="feat-ic">🐾</span><b>Pet Đồng Hành</b><small>Trợ chiến cấp cao</small></button>
+        <button class="jx-feat-card" onclick="if(typeof mountModal==='function')mountModal();"><span class="feat-ic">🐎</span><b>Chiến Mã</b><small>Thần mã & Tốc độ</small></button>
+        <button class="jx-feat-card" onclick="if(window.BLACK_MARKET)BLACK_MARKET.toggleWindow();"><span class="feat-ic">🏪</span><b>Chợ Đen</b><small>Hắc thị mua bán</small></button>
+        <button class="jx-feat-card" onclick="if(window.CLOAK_MERIDIAN)CLOAK_MERIDIAN.toggleWindow();"><span class="feat-ic">✨</span><b>Phi Phong</b><small>Kinh mạch huyệt vị</small></button>
+        <button class="jx-feat-card" onclick="if(window.STALL)STALL.toggle();"><span class="feat-ic">🏮</span><b>Bày Bán</b><small>Sạp hàng rong</small></button>
+        <button class="jx-feat-card" onclick="if(typeof openForgeModal==='function')openForgeModal();"><span class="feat-ic">🔨</span><b>Dã Luyện</b><small>Cường hóa +16</small></button>
+        <button class="jx-feat-card" onclick="if(typeof epModal==='function')epModal();"><span class="feat-ic">🔮</span><b>Lò Ép Đồ</b><small>Huyền Tinh & Khảm</small></button>
+        <button class="jx-feat-card" onclick="if(window.ACTIVITY_SYSTEM)ACTIVITY_SYSTEM.toggleWindow();"><span class="feat-ic">⚔️</span><b>Hoạt Động</b><small>Boss & Phó bản</small></button>
+        <button class="jx-feat-card" onclick="if(typeof openVipModal==='function')openVipModal();if(window.VIP_SYSTEM)VIP_SYSTEM.toggleWindow();"><span class="feat-ic">👑</span><b>Đặc Quyền VIP</b><small>Phúc lợi cấp VIP</small></button>
+        <button class="jx-feat-card" onclick="if(typeof openCasinoModal==='function')openCasinoModal();"><span class="feat-ic">🎲</span><b>Tửu Quán</b><small>Tài xỉu, Bầu cua</small></button>
+        <button class="jx-feat-card" onclick="if(typeof openArcadeModal==='function')openArcadeModal();"><span class="feat-ic">🎮</span><b>Arcade</b><small>Rắn mồi & Xếp gạch</small></button>
+        <button class="jx-feat-card" onclick="if(typeof openStashIoModal==='function')openStashIoModal();"><span class="feat-ic">🧰</span><b>Kho File</b><small>Xuất / Nạp .jxkho</small></button>
+        <button class="jx-feat-card" onclick="if(window.TRADE)TRADE.openRequestModal();"><span class="feat-ic">🤝</span><b>Giao Dịch</b><small>Trao đổi đồ & Vàng</small></button>
+        <button class="jx-feat-card" onclick="if(typeof openRankModal==='function')openRankModal();"><span class="feat-ic">🏆</span><b>Xếp Hạng</b><small>Cao thủ giang hồ</small></button>
+        <button class="jx-feat-card" onclick="if(window.SIGNIN)SIGNIN.toggle();"><span class="feat-ic">🎁</span><b>Điểm Danh</b><small>Nhận quà mỗi ngày</small></button>
+        <button class="jx-feat-card" onclick="if(typeof openOnlinePlayersModal==='function')openOnlinePlayersModal();"><span class="feat-ic">🟢</span><b>Trực Tuyến</b><small>Danh sách & Kích</small></button>
+      </div>
+    </div>
 
     <!-- Am thanh -->
     <div class="jx-box">
