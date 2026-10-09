@@ -1243,16 +1243,41 @@ window.setManualAttackTarget = setManualAttackTarget;
 let _curOnlineTab = 'all'; // 'all' | 'human' | 'bot'
 let _curOnlineSearch = '';
 
+function isMitomAdmin() {
+  if (typeof ACC !== 'undefined' && ACC && ACC.user && ACC.user.username) {
+    return String(ACC.user.username).trim().toLowerCase() === 'mitom01';
+  }
+  try {
+    const rawUser = localStorage.getItem('jx_auth_user') || localStorage.getItem('jxidle_user_acc');
+    if (rawUser && String(rawUser).trim().toLowerCase() === 'mitom01') return true;
+  } catch (e) {}
+  return false;
+}
+window.isMitomAdmin = isMitomAdmin;
+
 function openOnlinePlayersModal() {
+  if (!isMitomAdmin()) {
+    if (typeof toast === 'function') {
+      toast('⚠️ Chỉ tài khoản quản trị [mitom01] mới có quyền xem danh sách trực tuyến!');
+    } else {
+      alert('Chỉ tài khoản quản trị [mitom01] mới có quyền xem danh sách trực tuyến!');
+    }
+    return;
+  }
+  const token = (typeof ACC !== 'undefined' && ACC.token) || localStorage.getItem('jx_auth_token') || '';
   if (MP.ws && MP.ws.readyState === 1) {
     MP.ws.send(JSON.stringify({ type: 'get_online_list' }));
   }
-  fetch('/api/online-players')
+  fetch('/api/online-players?token=' + encodeURIComponent(token), {
+    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+  })
     .then(r => r.json())
     .then(data => {
       if (data && data.ok && Array.isArray(data.players)) {
         MP.lastOnlineList = data.players;
         renderOnlineListModal(data.players);
+      } else if (data && data.error && typeof toast === 'function') {
+        toast(data.error);
       }
     })
     .catch(() => {});
@@ -1303,11 +1328,14 @@ function renderOnlineListModal(playersList) {
           ? `<span class="online-badge-bot">🤖 BOT AI</span>` 
           : `<span class="online-badge-player">👤 Người chơi</span>`;
 
+        const isAdmin = isMitomAdmin();
         let actionBtns = '';
         if (p.isSelf) {
           actionBtns = `<span style="color:#d4af37;font-size:11px;font-style:italic;">(Chính bạn)</span>`;
         } else if (!p.isBot) {
-          if (p.isBanned) {
+          if (!isAdmin) {
+            actionBtns = `<span style="color:#64748b;font-size:10px;">Thành viên</span>`;
+          } else if (p.isBanned) {
             actionBtns = `
               <button class="online-act-btn unban" onclick="adminUnbanPlayer('${esc(p.username || p.name)}');">✅ Mở Chặn</button>
             `;
@@ -1344,10 +1372,12 @@ function renderOnlineListModal(playersList) {
         `;
       }).join('');
 
+  const isAdmin = isMitomAdmin();
+
   const modalHtml = `
     <div class="jx-client-window online-modal-container" style="margin:-14px;border:none;">
       <div class="jx-window-header">
-        <div class="jx-window-title"><span>👥 DANH SÁCH ĐỒNG ĐẠO TRỰC TUYẾN</span></div>
+        <div class="jx-window-title"><span>👥 DANH SÁCH ĐỒNG ĐẠO TRỰC TUYẾN ${isAdmin ? '<small style="color:#ffd700;font-size:11px;">[Admin: mitom01]</small>' : ''}</span></div>
         <button class="jx-window-close" onclick="closeModal();">×</button>
       </div>
       <div style="padding:12px;">
@@ -1390,46 +1420,73 @@ function renderOnlineListModal(playersList) {
 window.renderOnlineListModal = renderOnlineListModal;
 
 window.adminKickPlayer = function(targetId, targetName) {
+  if (!isMitomAdmin()) {
+    if (typeof toast === 'function') toast('⚠️ Bạn không có quyền thực hiện! (Chỉ tài khoản mitom01)');
+    return;
+  }
   if (!confirm(`Bạn có chắc chắn muốn KÍCH người chơi [${targetName}] khỏi game ngay lập tức?`)) return;
+  const token = (typeof ACC !== 'undefined' && ACC.token) || localStorage.getItem('jx_auth_token') || '';
   if (MP.ws && MP.ws.readyState === 1) {
-    MP.ws.send(JSON.stringify({ type: 'admin_kick', targetId: Number(targetId) }));
+    MP.ws.send(JSON.stringify({ type: 'admin_kick', targetId: Number(targetId), adminUser: 'mitom01', token: token }));
   }
   fetch('/api/admin/kick', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ targetId: Number(targetId) })
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify({ targetId: Number(targetId), token: token, adminUser: 'mitom01' })
   }).then(r => r.json()).then(d => {
     if (d && d.ok && typeof toast === 'function') toast(`Đã kích [${targetName}] khỏi máy chủ!`);
+    else if (d && d.error && typeof toast === 'function') toast(d.error);
     setTimeout(openOnlinePlayersModal, 300);
   }).catch(() => {});
 };
 
 window.adminBanPlayer = function(targetId, username, targetName) {
+  if (!isMitomAdmin()) {
+    if (typeof toast === 'function') toast('⚠️ Bạn không có quyền thực hiện! (Chỉ tài khoản mitom01)');
+    return;
+  }
   if (!confirm(`CẢNH BÁO: Bạn có chắc chắn muốn CẤM vĩnh viễn tài khoản [${targetName}] (${username})?\nNgười chơi này sẽ bị ngắt kết nối và không thể đăng nhập lại máy chủ.`)) return;
+  const token = (typeof ACC !== 'undefined' && ACC.token) || localStorage.getItem('jx_auth_token') || '';
   if (MP.ws && MP.ws.readyState === 1) {
-    MP.ws.send(JSON.stringify({ type: 'admin_ban', targetId: Number(targetId), username: username }));
+    MP.ws.send(JSON.stringify({ type: 'admin_ban', targetId: Number(targetId), username: username, adminUser: 'mitom01', token: token }));
   }
   fetch('/api/admin/ban', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ targetId: Number(targetId), username: username })
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify({ targetId: Number(targetId), username: username, token: token, adminUser: 'mitom01' })
   }).then(r => r.json()).then(d => {
     if (d && d.ok && typeof toast === 'function') toast(`Đã CẤM tài khoản [${targetName}] thành công!`);
+    else if (d && d.error && typeof toast === 'function') toast(d.error);
     setTimeout(openOnlinePlayersModal, 300);
   }).catch(() => {});
 };
 
 window.adminUnbanPlayer = function(username) {
+  if (!isMitomAdmin()) {
+    if (typeof toast === 'function') toast('⚠️ Bạn không có quyền thực hiện! (Chỉ tài khoản mitom01)');
+    return;
+  }
   if (!confirm(`Xác nhận mở chặn cho tài khoản [${username}]?`)) return;
+  const token = (typeof ACC !== 'undefined' && ACC.token) || localStorage.getItem('jx_auth_token') || '';
   if (MP.ws && MP.ws.readyState === 1) {
-    MP.ws.send(JSON.stringify({ type: 'admin_unban', username: username }));
+    MP.ws.send(JSON.stringify({ type: 'admin_unban', username: username, adminUser: 'mitom01', token: token }));
   }
   fetch('/api/admin/unban', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: username })
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify({ username: username, token: token, adminUser: 'mitom01' })
   }).then(r => r.json()).then(d => {
     if (d && d.ok && typeof toast === 'function') toast(`Đã gỡ lệnh cấm cho [${username}]!`);
+    else if (d && d.error && typeof toast === 'function') toast(d.error);
     setTimeout(openOnlinePlayersModal, 300);
   }).catch(() => {});
 };

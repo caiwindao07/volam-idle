@@ -736,17 +736,37 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    // 6. Danh sách người chơi online
+    // Helper kiểm tra quyền quản trị viên mitom01
+    function isMitomAdminReq(req, data) {
+      const authHeader = req.headers['authorization'] || '';
+      const token = (data && data.token) || authHeader.replace(/^Bearer\s+/i, '') || (parsedUrl && parsedUrl.searchParams.get('token'));
+      let uKey = token ? sessions.get(token) : null;
+      if (!uKey && data && data.adminUser) {
+        uKey = String(data.adminUser).trim().toLowerCase();
+      }
+      return String(uKey || '').trim().toLowerCase() === 'mitom01';
+    }
+
+    // 6. Danh sách người chơi online (Chỉ tài khoản mitom01)
     if (pathname === '/api/online-players' && req.method === 'GET') {
+      if (!isMitomAdminReq(req, null)) {
+        return sendJson(res, 403, {
+          ok: false,
+          error: 'Chỉ tài khoản quản trị [mitom01] mới có quyền xem danh sách trực tuyến!'
+        });
+      }
       return sendJson(res, 200, {
         ok: true,
         players: getOnlinePlayersList(null)
       });
     }
 
-    // 7. Admin kích người chơi
+    // 7. Admin kích người chơi (Chỉ tài khoản mitom01)
     if (pathname === '/api/admin/kick' && req.method === 'POST') {
       parseJsonBody(req, (err, data) => {
+        if (!isMitomAdminReq(req, data)) {
+          return sendJson(res, 403, { ok: false, error: 'Chỉ tài khoản [mitom01] mới có quyền kích người chơi!' });
+        }
         if (!data || data.targetId == null) return sendJson(res, 400, { ok: false, error: 'Thiếu targetId' });
         const targetId = Number(data.targetId);
         let kicked = false;
@@ -755,7 +775,7 @@ const server = http.createServer((req, res) => {
           if (pl.id === targetId) {
             kickedName = pl.name;
             try {
-              sock.send(JSON.stringify({ type: 'kicked', reason: data.reason || 'Bị Quản Trị Viên kích khỏi máy chủ' }));
+              sock.send(JSON.stringify({ type: 'kicked', reason: data.reason || 'Bị Quản Trị Viên [mitom01] kích khỏi máy chủ' }));
               sock.close();
             } catch (e) {}
             players.delete(sock);
@@ -770,9 +790,12 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    // 8. Admin cấm tài khoản
+    // 8. Admin cấm tài khoản (Chỉ tài khoản mitom01)
     if (pathname === '/api/admin/ban' && req.method === 'POST') {
       parseJsonBody(req, (err, data) => {
+        if (!isMitomAdminReq(req, data)) {
+          return sendJson(res, 403, { ok: false, error: 'Chỉ tài khoản [mitom01] mới có quyền cấm tài khoản!' });
+        }
         const u = String(data.username || '').toLowerCase();
         const targetId = Number(data.targetId || 0);
         if (u) bannedUsers.add(u);
@@ -785,7 +808,7 @@ const server = http.createServer((req, res) => {
                 bannedIps.add(String(sock._socket.remoteAddress).toLowerCase());
               }
               try {
-                sock.send(JSON.stringify({ type: 'banned', reason: data.reason || 'Tài khoản của bạn đã bị CẤM vĩnh viễn!' }));
+                sock.send(JSON.stringify({ type: 'banned', reason: data.reason || 'Tài khoản của bạn đã bị Quản Trị Viên [mitom01] CẤM vĩnh viễn!' }));
                 sock.close();
               } catch (e) {}
               players.delete(sock);
@@ -801,9 +824,12 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    // 9. Admin gỡ lệnh cấm
+    // 9. Admin gỡ lệnh cấm (Chỉ tài khoản mitom01)
     if (pathname === '/api/admin/unban' && req.method === 'POST') {
       parseJsonBody(req, (err, data) => {
+        if (!isMitomAdminReq(req, data)) {
+          return sendJson(res, 403, { ok: false, error: 'Chỉ tài khoản [mitom01] mới có quyền gỡ cấm!' });
+        }
         const u = String(data.username || '').toLowerCase();
         if (u) bannedUsers.delete(u);
         persistBanned();
@@ -3424,11 +3450,27 @@ wss.on('connection', (ws, req) => {
           }
         }
       } else if (data.type === 'get_online_list') {
+        const uSender = (p && (p.username || p.uKey)) || (data.token && sessions.get(data.token)) || data.adminUser;
+        if (String(uSender || '').trim().toLowerCase() !== 'mitom01') {
+          ws.send(JSON.stringify({
+            type: 'toast',
+            msg: '⚠️ Chỉ tài khoản quản trị [mitom01] mới có quyền xem danh sách trực tuyến!'
+          }));
+          return;
+        }
         ws.send(JSON.stringify({
           type: 'online_list_sync',
           players: getOnlinePlayersList(ws)
         }));
       } else if (data.type === 'admin_kick') {
+        const uSender = (p && (p.username || p.uKey)) || (data.token && sessions.get(data.token)) || data.adminUser;
+        if (String(uSender || '').trim().toLowerCase() !== 'mitom01') {
+          ws.send(JSON.stringify({
+            type: 'toast',
+            msg: '⚠️ Chỉ tài khoản quản trị [mitom01] mới có quyền kích người chơi!'
+          }));
+          return;
+        }
         const targetId = Number(data.targetId);
         let kicked = false;
         let kickedName = '';
@@ -3438,7 +3480,7 @@ wss.on('connection', (ws, req) => {
             try {
               sock.send(JSON.stringify({
                 type: 'kicked',
-                reason: data.reason || 'Bạn đã bị Quản Trị Viên kích khỏi máy chủ!'
+                reason: data.reason || 'Bạn đã bị Quản Trị Viên [mitom01] kích khỏi máy chủ!'
               }));
               sock.close();
             } catch (e) {}
@@ -3458,6 +3500,14 @@ wss.on('connection', (ws, req) => {
           players: getOnlinePlayersList(ws)
         }));
       } else if (data.type === 'admin_ban') {
+        const uSender = (p && (p.username || p.uKey)) || (data.token && sessions.get(data.token)) || data.adminUser;
+        if (String(uSender || '').trim().toLowerCase() !== 'mitom01') {
+          ws.send(JSON.stringify({
+            type: 'toast',
+            msg: '⚠️ Chỉ tài khoản quản trị [mitom01] mới có quyền cấm tài khoản!'
+          }));
+          return;
+        }
         const targetId = Number(data.targetId);
         let banUser = String(data.username || '').toLowerCase();
         let targetPl = null;
@@ -3477,7 +3527,7 @@ wss.on('connection', (ws, req) => {
           try {
             targetSock.send(JSON.stringify({
               type: 'banned',
-              reason: data.reason || 'Tài khoản của bạn đã bị CẤM vĩnh viễn khỏi máy chủ!'
+              reason: data.reason || 'Tài khoản của bạn đã bị Quản Trị Viên [mitom01] CẤM vĩnh viễn khỏi máy chủ!'
             }));
             targetSock.close();
           } catch (e) {}
@@ -3496,6 +3546,14 @@ wss.on('connection', (ws, req) => {
           players: getOnlinePlayersList(ws)
         }));
       } else if (data.type === 'admin_unban') {
+        const uSender = (p && (p.username || p.uKey)) || (data.token && sessions.get(data.token)) || data.adminUser;
+        if (String(uSender || '').trim().toLowerCase() !== 'mitom01') {
+          ws.send(JSON.stringify({
+            type: 'toast',
+            msg: '⚠️ Chỉ tài khoản quản trị [mitom01] mới có quyền gỡ cấm!'
+          }));
+          return;
+        }
         const unbanUser = String(data.username || '').toLowerCase();
         bannedUsers.delete(unbanUser);
         persistBanned();
