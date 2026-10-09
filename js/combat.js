@@ -80,11 +80,10 @@ function enemyStats(L, cls) {
 const XP_SLOW_FROM = 200, XP_SLOW_K = 0, XP_SLOW_P = 1;
 const xpSlow = L => 1; // Loại bỏ giới hạn làm chậm kinh nghiệm
 function expFor(L) {
-  const curL = (typeof S !== 'undefined' && S && S.lvl) ? S.lvl : (L || 1);
-  const targetL = Math.max(1, Math.min(curL, MAX_LEVEL));
-  const need = (typeof expNeed === 'function' ? expNeed(targetL) : (J.exp[clamp(targetL, 1, MAX_LEVEL) - 1] || 1000));
-  // Tăng vọt EXP khi đánh quái: Mỗi quái thường tương đương 3.5% - 5% cấp độ (chỉ cần 20-30 quái là lên 1 cấp)
-  return Math.max(100, Math.round((need / (12 + targetL * 0.45)) * 1.6));
+  const monL = Math.max(1, Math.min(Math.floor(L) || 1, MAX_LEVEL));
+  const need = (typeof expNeed === 'function' ? expNeed(monL) : (J.exp[clamp(monL, 1, MAX_LEVEL) - 1] || 1000));
+  // Cân bằng kinh nghiệm chuẩn theo cấp quái L (đặc biệt quái sơ nhập Hoa Sơn cấp 1-10 không bị vọt cấp)
+  return Math.max(5, Math.round((need / (25 + monL * 1.8)) * 1.5));
 }
 function makeEnemy(tid, L, cls, x, y) {
   const m = MON[tid], z = zoneOf(S.stage), st = enemyStats(L, cls), D = diffOf();
@@ -703,15 +702,20 @@ function onKill(e) {
   R.stall = 0; // Đang tiêu diệt quái thành công -> xóa bộ đếm stall
   R.kills++; S.totalKills = (S.totalKills || 0) + 1;
   if (typeof checkWarMonsterKill === 'function') checkWarMonsterKill(e);
-  const lvDiff = e.L - S.lvl;
+  const monL = Math.max(1, Math.min(Math.floor(e.L) || 1, MAX_LEVEL));
+  const playerL = (typeof S !== 'undefined' && S && S.lvl) ? S.lvl : monL;
+  const lvDiff = monL - playerL;
   let mult = 1.0;
-  if (lvDiff > 10) mult = 0.8;
-  else if (lvDiff > 5) mult = 1.0;
-  else if (lvDiff < -15) mult = 0.75;
-  else if (lvDiff < -8) mult = 0.88;
-  const xpL = Math.max(e.L, Math.round(S.lvl * 0.9));
+  if (lvDiff <= -25) mult = 0.02;       // Người chơi vượt quá 25 cấp đánh quái tân thủ: giảm 98% EXP
+  else if (lvDiff <= -15) mult = 0.10;  // Người chơi vượt quá 15 cấp: giảm 90% EXP
+  else if (lvDiff <= -10) mult = 0.25;  // Người chơi vượt quá 10 cấp: giảm 75% EXP
+  else if (lvDiff <= -5) mult = 0.60;   // Người chơi vượt quá 5 cấp: giảm 40% EXP
+  else if (lvDiff <= 5) mult = 1.0;     // Trong phạm vi chênh lệch +-5 cấp: nhận 100% EXP chuẩn
+  else if (lvDiff <= 10) mult = 0.85;   // Đánh quái cao hơn 6-10 cấp: 85% EXP
+  else mult = 0.50;                     // Đánh quái quá cao: 50% EXP
+
   const mXp = (typeof mutationXpMul === 'function') ? mutationXpMul() : 1;
-  const gainedExp = Math.round(expFor(xpL) * CLS[e.cls].xp * mult * diffOf().rew * mXp);
+  const gainedExp = Math.max(1, Math.round(expFor(monL) * CLS[e.cls].xp * mult * diffOf().rew * mXp));
   gainXp(gainedExp, 5);
   if (typeof addText === 'function') {
     addText(e.x, e.y - 24, `+${typeof fmt === 'function' ? fmt(gainedExp) : gainedExp} EXP`, '#ffd700', 12);
@@ -726,8 +730,10 @@ function onKill(e) {
   for (const it of rollDrops(e)) dropToGround(it, e);
   const matDrops = typeof allDrops === 'function' ? allDrops(e) : [];
   for (const m of matDrops) log(`Nhặt được <b style="color:${RAR_COL[3]}">${esc(m)}</b>`);
-  const isBoss = !!(e.cls === 'boss' || e.stageBoss || e.goldBoss || e.worldBoss);
-  if (isBoss) {
+  // Chỉ Boss Hoàng Kim, Boss Thế Giới hoặc Boss cấp cao (L >= 70) mới rơi Mảnh Hoàng Kim
+  // Quái map tân thủ Hoa Sơn (L <= 10) và Boss cấp thấp tuyệt đối KHÔNG rơi Mảnh HK!
+  const isHighBoss = !!(e.worldBoss || e.goldBoss || (e.cls === 'boss' && e.L >= 70));
+  if (isHighBoss) {
     const shardCount = (e.worldBoss || e.goldBoss) ? (2 + Math.floor(Math.random() * 3)) : (1 + (Math.random() < 0.35 ? 1 : 0));
     if (typeof matAdd === 'function') {
       matAdd('shard', 'gold_shard', shardCount);

@@ -73,7 +73,10 @@ function rollDrops(e) {
     part = sexPart(detail, part);
     let it = makeItem(detail, part, itemTier(e.L, df), magicCount(e.cls));
     for (let t = 0; it && !sexOk(it) && t < 6; t++) it = makeItem(detail, part, itemTier(e.L, df), magicCount(e.cls));   // khong roi trang phuc khac gioi tinh
-    if (it && sexOk(it)) out.push(it);
+    if (it && sexOk(it)) {
+      if (e.L < 70 && (it.r >= 4 || it.set || it.plv)) continue;
+      out.push(it);
+    }
   }
   return out;
 }

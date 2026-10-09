@@ -646,11 +646,11 @@ const orePool = (n) => [
   dropP = (n, t) =>
     (DROP[n][t.cls] ?? DROP[n].normal) *
     dropMul() *
-    densK(t) *
+    (typeof densK === 'function' ? densK(t) : 1) *
     ((n === "ore" || n === "ht") && typeof boatDropMul == "function" ? boatDropMul() : 1);
 function oreDrop(n) {
   const t = [];
-  if (!verVio()) return null;
+  if (!verVio() || !n || n.L < 20) return null; // Quái sơ nhập Hoa Sơn (L <= 10) không rơi khoáng tím
   if (Math.random() < dropP("ore", n)) {
     const e = typeof enchaseTargets == "function" && rcRand() < 0.7 ? enchaseTargets()[0] : null,
       o = e ? e.mag.length : rcInt(0, VIO_SLOTS - 1),
@@ -755,6 +755,7 @@ const SHARDS = window.RCP.shards,
   })(),
   reqOfRow = (n, t) => (n.req.find((e) => e[0] === t) || [0, -1])[1];
 function shardDrop(n, t) {
+  if (!n || n.L < 70) return null; // Quái tân thủ map Hoa Sơn (L <= 10) và quái dưới cấp 70 tuyệt đối không rơi Mảnh Hoàng Kim!
   if (!t && Math.random() >= dropP("shard", n) * goldMul("shard")) return null;
   const e = Math.max(S.lvl, n.L) + 10,
     o = FAC[S.fac] ? FAC[S.fac].id : -1;
@@ -888,7 +889,7 @@ function upgradePlatina(n) {
           : ((n.plv = t + 1), { ok: !0, msg: `Thăng cấp thành công: +${n.plv}` }));
 }
 function platDrop(n) {
-  if (!verPlat() || (n.L < 60 && n.cls !== "boss")) return null;
+  if (!verPlat() || !n || n.L < 90) return null; // Chỉ quái/Boss cấp 90 trở lên mới có tỉ lệ rơi nguyên liệu Bạch Kim
   const t = [];
   return (
     Math.random() < dropP("wc", n) && (matAdd("misc", "wc", 1), t.push("1 Thủy Tinh Trắng")),

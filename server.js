@@ -2415,20 +2415,23 @@ wss.on('connection', (ws, req) => {
           if (mob.hp <= 0) {
             map.delete(mobId);
             const curLvl = (p.uKey && db.users[p.uKey] && db.users[p.uKey].state) ? (Number(db.users[p.uKey].state.lvl) || p.lvl || 1) : (p.lvl || 1);
-            const lvDiff = mob.L - curLvl;
+            const monL = Math.max(1, Math.min(200, Number(mob.L) || 1));
+            const lvDiff = monL - curLvl;
             let mult = 1.0;
-            if (lvDiff > 10) mult = 0.8;
-            else if (lvDiff > 5) mult = 1.0;
-            else if (lvDiff < -15) mult = 0.75;
-            else if (lvDiff < -8) mult = 0.88;
+            if (lvDiff <= -25) mult = 0.02;
+            else if (lvDiff <= -15) mult = 0.10;
+            else if (lvDiff <= -10) mult = 0.25;
+            else if (lvDiff <= -5) mult = 0.60;
+            else if (lvDiff <= 5) mult = 1.0;
+            else if (lvDiff <= 10) mult = 0.85;
+            else mult = 0.50;
 
-            const targetL = Math.max(1, Math.min(curLvl, 200));
-            const reqExp = (JX && JX.exp && JX.exp[targetL - 1]) ? JX.exp[targetL - 1] : (targetL * 3000);
+            const reqExp = (JX && JX.exp && JX.exp[monL - 1]) ? JX.exp[monL - 1] : (monL * 1000);
             const party = getPlayerParty(p.id);
             const partyMul = (party && party.members) ? (1 + (party.members.length - 1) * 0.15) : 1;
-            const baseRatio = (reqExp / (12 + targetL * 0.45)) * 1.6;
-            const clsMultiplier = (mob.cls === 'elite' ? 3 : (mob.cls === 'boss' ? 20 : 1));
-            const expGain = Math.round(Math.max(100, baseRatio * clsMultiplier * mult * partyMul));
+            const baseRatio = (reqExp / (25 + monL * 1.8)) * 1.5;
+            const clsMultiplier = (mob.cls === 'elite' ? 3 : (mob.cls === 'boss' ? 15 : 1));
+            const expGain = Math.max(1, Math.round(baseRatio * clsMultiplier * mult * partyMul));
             const goldDrop = Math.round(mob.L * 35 * (mob.cls === 'elite' ? 4 : 2));
 
             // Server-Authoritative: Cập nhật trực tiếp vào cơ sở dữ liệu nhân vật
