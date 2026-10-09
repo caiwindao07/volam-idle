@@ -1883,7 +1883,69 @@ function updateTop() {
   if (typeof updateMountHudBtn === 'function') {
     updateMountHudBtn();
   }
+
+  updatePcHud();
 }
+
+function updatePcHud() {
+  if (typeof S === 'undefined' || !S || !S.fac) return;
+  const P = R && R.P;
+
+  // pcZone dropdown
+  const pcZone = document.getElementById('pcZone');
+  if (pcZone && typeof JW !== 'undefined' && Array.isArray(JW.zones)) {
+    const curZ = (typeof zoneOf === 'function') ? zoneOf(Math.min(S.stage || 1, STAGES)) : null;
+    const curZId = curZ ? curZ.id : 2;
+    if (pcZone.dataset.lastStage !== String(S.maxStage)) {
+      pcZone.dataset.lastStage = String(S.maxStage);
+      const avail = JW.zones.map((z, idx) => [z, idx]).filter(([, idx]) => (S.maxStage || 1) >= idx * 10 + 1);
+      pcZone.innerHTML = avail.map(([z, idx]) => `<option value="${idx}" ${z.id === curZId ? 'selected' : ''}>${z.n} · cấp ${z.lo}–${z.hi}</option>`).join('');
+    } else {
+      const curIdx = JW.zones.findIndex(z => z.id === curZId);
+      if (curIdx !== -1 && pcZone.value !== String(curIdx)) pcZone.value = String(curIdx);
+    }
+  }
+
+  // pcPush button
+  const pcPush = document.getElementById('pcPush');
+  if (pcPush) {
+    pcPush.textContent = `Ải ${S.stage}/10 · ${S.push ? `Vượt ải (${S.wave}/${WAVES})` : 'Luyện công'}`;
+    pcPush.classList.toggle('on', !!S.push);
+  }
+  const pcNext = document.getElementById('pcNext');
+  if (pcNext) pcNext.disabled = (S.stage || 1) >= (S.maxStage || 1);
+  const pcPrev = document.getElementById('pcPrev');
+  if (pcPrev) pcPrev.disabled = (S.stage || 1) <= 1;
+
+  // pcMain (Left Skill)
+  const pcMain = document.getElementById('pcMain');
+  if (pcMain && P && P.main) {
+    const mi = pcMain.querySelector('i');
+    if (mi && P.main.ic) mi.style.backgroundImage = `url('${P.main.ic}')`;
+    pcMain.title = `Chiêu chính: ${P.main.n} (Bấm để mở Võ công)`;
+  }
+
+  // Right Skill (sk 1)
+  const rightSk = document.querySelector('#pad .sk[data-i="1"]');
+  if (rightSk && P && Array.isArray(P.skills) && P.skills[1]) {
+    const rIcon = rightSk.querySelector('i');
+    if (rIcon && P.skills[1].ic) rIcon.style.backgroundImage = `url('${P.skills[1].ic}')`;
+    rightSk.title = `Chiêu phụ: ${P.skills[1].n}`;
+  }
+
+  // Auto button
+  const jxAuto = document.getElementById('jxAuto');
+  if (jxAuto) jxAuto.classList.toggle('on', !!(S.auto && S.auto.on));
+
+  // Rot button
+  const jxRot = document.getElementById('jxRot');
+  if (jxRot) jxRot.classList.toggle('on', !S.rot === false);
+
+  // Mount button
+  const bRide = document.getElementById('bRide');
+  if (bRide) bRide.classList.toggle('on', !!(R.P && R.P.riding));
+}
+window.updatePcHud = updatePcHud;
 /* Nap tu file .jxsave (hoac ma van ban): chon slot dich, canh bao ghi de, roi tai lai trang */
 function pickSaveFile(after) {
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.jxsave,.json,.txt,application/json,text/plain'; inp.style.display = 'none';
