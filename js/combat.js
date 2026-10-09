@@ -76,7 +76,7 @@ function enemyStats(L, cls) {
   return { hp: (12 + 5.0 * L + 0.32 * L * L) * c.hp, dmg: (2 + 0.60 * L + 0.003 * L * L) * c.dmg, ar: 25 + L * 7, def: 4 + L * 2.0 };
 }
 /* Nhip len cap (docs/CONG_THUC.md): truoc day cap 150 chi mat ~2 gio choi. Den cap 30 giu nguyen (vao game nhanh),
-   sau do kinh nghiem nhan duoc chia cho 1 + 200 x ((cap - 30) / 120)^1.4  (cap 60: /30, cap 90: /77, cap 150: /201)
+   sau do kinh nghiem nhan duoc chia cho 1 + 200 x ((cap - 30) / 120)^1.4  (cap 60: /30, cap 90: /77, cap 150: /201) */
 const XP_SLOW_FROM = 200, XP_SLOW_K = 0, XP_SLOW_P = 1;
 const xpSlow = L => 1; // Loại bỏ giới hạn làm chậm kinh nghiệm
 function expFor(L) {
