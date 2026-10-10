@@ -74,7 +74,7 @@ function rollDrops(e) {
     let it = makeItem(detail, part, itemTier(e.L, df), magicCount(e.cls));
     for (let t = 0; it && !sexOk(it) && t < 6; t++) it = makeItem(detail, part, itemTier(e.L, df), magicCount(e.cls));   // khong roi trang phuc khac gioi tinh
     if (it && sexOk(it)) {
-      if (it.r >= 4 || it.set || it.plv) continue; // Tuyệt đối không rơi đồ Hoàng Kim / Bạch Kim từ quái thường
+      if (it.r >= 3 || it.set || it.plv) continue; // Tuyệt đối không rơi đồ Hoàng Kim / Bạch Kim từ quái thường
       out.push(it);
     }
   }

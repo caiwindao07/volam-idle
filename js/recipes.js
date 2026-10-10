@@ -755,7 +755,7 @@ const SHARDS = window.RCP.shards,
   })(),
   reqOfRow = (n, t) => (n.req.find((e) => e[0] === t) || [0, -1])[1];
 function shardDrop(n, t) {
-  if (!n || n.L < 70) return null; // Quái tân thủ map Hoa Sơn (L <= 10) và quái dưới cấp 70 tuyệt đối không rơi Mảnh Hoàng Kim!
+  if (!n || n.L < 70 || (!n.goldBoss && !n.worldBoss)) return null; // Quái thường & tinh anh tuyệt đối không rơi Mảnh Hoàng Kim
   if (!t && Math.random() >= dropP("shard", n) * goldMul("shard")) return null;
   const e = Math.max(S.lvl, n.L) + 10,
     o = FAC[S.fac] ? FAC[S.fac].id : -1;
@@ -889,7 +889,7 @@ function upgradePlatina(n) {
           : ((n.plv = t + 1), { ok: !0, msg: `Thăng cấp thành công: +${n.plv}` }));
 }
 function platDrop(n) {
-  if (!verPlat() || !n || n.L < 90) return null; // Chỉ quái/Boss cấp 90 trở lên mới có tỉ lệ rơi nguyên liệu Bạch Kim
+  if (!verPlat() || !n || n.L < 90 || (!n.goldBoss && !n.worldBoss)) return null; // Quái thường & tinh anh tuyệt đối không rơi nguyên liệu Bạch Kim
   const t = [];
   return (
     Math.random() < dropP("wc", n) && (matAdd("misc", "wc", 1), t.push("1 Thủy Tinh Trắng")),
@@ -929,7 +929,7 @@ if (typeof window !== "undefined") {
   window.fuse = fuse;
   window.fusePlan = fusePlan;
   window.fuseCost = fuseCost;
-  window.fusePool = fusePool;
+  window.fusePool = typeof fusePool !== 'undefined' ? fusePool : null;
   window.fusePick = fusePick;
   window.fuseErr = fuseErr;
   window.makePhoi = makePhoi;

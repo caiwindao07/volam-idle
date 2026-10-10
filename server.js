@@ -2454,7 +2454,7 @@ wss.on('connection', (ws, req) => {
               uState.lvl = Math.max(1, Math.min(200, Number(uState.lvl) || 1));
               uState.xp = (uState.xp || 0) + expGain;
               let didLevelUp = false;
-              let maxServerLevels = 5;
+              let maxServerLevels = 1;
               while (uState.lvl < 200 && maxServerLevels > 0) {
                 const expNeeded = (JX && JX.exp && JX.exp[uState.lvl - 1]) ? JX.exp[uState.lvl - 1] : (uState.lvl * 1000);
                 if (uState.xp < expNeeded) break;

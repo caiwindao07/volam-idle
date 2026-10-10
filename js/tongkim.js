@@ -219,28 +219,23 @@ const TONGKIM = {
     }
     if (typeof S !== 'undefined' && S) {
       S.chosenZone = 37;
-      const curZ = (typeof zoneOf === 'function' && typeof STAGES !== 'undefined') ? zoneOf(Math.min(S.stage || 1, STAGES)) : null;
-      if (curZ && curZ.id === 386) {
-        S.stage = (typeof bestStageForLevel === 'function') ? bestStageForLevel(S.lvl) : 1;
-        S.chosenStage = S.stage;
-      }
+      S.stage = (typeof bestStageForLevel === 'function') ? bestStageForLevel(S.lvl) : 1;
+      S.chosenStage = S.stage;
     }
     if (typeof travelToTown === 'function') {
-      travelToTown(0); // Trở về Biện Kinh
+      travelToTown(37); // Trở về Biện Kinh (id: 37)
     } else if (typeof travelToZone === 'function') {
-      travelToZone(0);
+      travelToZone(37);
     }
   },
 
   // 4. Đồng bộ dữ liệu Tống Kim từ Server
   onSync(msg) {
     const wasInBattle = this.inBattle;
-    if (this.userLeft && !msg.inBattle) {
+    if (this.userLeft) {
       this.inBattle = false;
-    } else if (!this.userLeft) {
-      this.inBattle = !!msg.inBattle;
     } else {
-      this.inBattle = false;
+      this.inBattle = !!msg.inBattle;
     }
     if (msg.phase !== undefined) this.phase = msg.phase;
     if (msg.phaseName !== undefined) this.phaseName = msg.phaseName;
@@ -268,7 +263,7 @@ const TONGKIM = {
     } else if (wasInBattle && !this.inBattle) {
       // Hết trận hoặc rời trận, nếu đang ở map 386 thì trở về Biện Kinh
       const curZ = (typeof S !== 'undefined' && S) ? S.chosenZone : 0;
-      if (curZ === 386 && typeof travelToTown === 'function') travelToTown(0);
+      if (curZ === 386 && typeof travelToTown === 'function') travelToTown(37);
     }
 
     this.updateHud();

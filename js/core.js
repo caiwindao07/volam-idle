@@ -65,7 +65,14 @@ for (const f of FACTIONS) {
 const skVal = (s, attr, L) => { const a = s.attr[attr]; if (!a) return null; const v = a[clamp(L, 1, a.length) - 1]; return Array.isArray(v) ? v : [v, 0, 0]; };
 const DMG_ATTRS = ['physicsenhance_p', 'physicsdamage_v', 'poisondamage_v', 'colddamage_v', 'firedamage_v', 'lightingdamage_v'];
 const isAttack = s => !!(s && s.enemy && DMG_ATTRS.some(a => s.attr[a]));
-const ZONES = W.zones, MON = W.mon;
+const ZONES = (W.zones || []).filter(z => z.id !== 386), MON = W.mon;
+window.ZONES = ZONES;
+if (!W.specialZones) {
+  W.specialZones = {};
+  const tkZ = (W.zones || []).find(z => z.id === 386);
+  if (tkZ) W.specialZones[386] = tkZ;
+}
+window.SPECIAL_ZONES = W.specialZones;
 const ZALT = W.zalt || {};
 const zoneOpen = t => !!ZONES[t] && (ZONES[t].lo <= (typeof S !== 'undefined' && S ? (S.lvl || 1) + 3 : 1) || (typeof S !== 'undefined' && S ? (S.maxStage || 1) >= (t * (typeof ZONE_STAGES !== 'undefined' ? ZONE_STAGES : 10) + 1) : true));
 const ZONE_STAGES = 10, WAVES = 4;

@@ -295,7 +295,7 @@ function offlineGains() {
   const L = stageLevel(S.stage), lv0 = S.lvl;
   const xp = expFor(L) * kills * (S.lvl - L > 10 ? 0.2 : S.lvl - L > 5 ? 0.6 : 1);
   const gold = moneyDrop({ L, cls: 'normal' }) * kills;
-  gainXp(xp, 100); S.gold += gold;
+  gainXp(xp, 3); S.gold += gold;
   let got = 0, sold = 0;
   const nDrops = Math.min(30, Math.floor(kills * 0.08));
   for (let i = 0; i < nDrops; i++) {

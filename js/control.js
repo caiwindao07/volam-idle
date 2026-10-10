@@ -168,6 +168,17 @@ function drinkNow(kind) {
 function goTown() {
   if (R.town) return;
   if ((R.tpCd || 0) > 0) { toast(`Thổ Địa Phù hồi sau ${Math.ceil(R.tpCd)} giây`); return; }
+  if (typeof TONGKIM !== 'undefined' && TONGKIM.inBattle) {
+    TONGKIM.userLeft = true;
+    TONGKIM.inBattle = false;
+    if (typeof TONGKIM.updateHud === 'function') TONGKIM.updateHud();
+    if (typeof MP !== 'undefined' && MP.connected && MP.ws) {
+      MP.ws.send(JSON.stringify({ type: 'tongkim_leave' }));
+    }
+  }
+  if (typeof S !== 'undefined' && S) {
+    S.chosenZone = (W.town && W.town.id) || 37;
+  }
   R.town = true; R.enemies = []; R.corpses = []; R.pickTarget = null; R.moveTo = null; INPUT.target = null;
   obsLoad('town'); [H.x, H.y] = inWorld(WORLD.w / 2, WORLD.h / 2); snapCamera();
   R.bgImg = img(W.town.bg); uiSfx('use');
@@ -175,6 +186,18 @@ function goTown() {
   $('#townName').textContent = W.town.n; $('#townBar').classList.remove('hidden');
   R.banner = { t: 2.2, text: W.town.n, sub: 'Hồi phục · bán đồ · trở lại ải' };
   log(`Dùng Thổ Địa Phù về <b>${esc(W.town.n)}</b>.`);
+  if (typeof MP !== 'undefined' && MP.connected && MP.ws && MP.ws.readyState === 1) {
+    MP.lastZone = W.town.id;
+    MP.ws.send(JSON.stringify({
+      type: 'move',
+      zoneId: W.town.id,
+      stage: S.stage,
+      x: Math.round(H.x),
+      y: Math.round(H.y),
+      dir: H.dir || 0,
+      act: 'st'
+    }));
+  }
 }
 function backFromTown() {
   if (!R.town) return;
@@ -210,6 +233,18 @@ function backFromTown() {
   if (tb) tb.classList.add('hidden');
   if (typeof onZoneChange === 'function') onZoneChange(z);
   toast(`Đã trở lại ải luyện công ${z.n}!`);
+  if (typeof MP !== 'undefined' && MP.connected && MP.ws && MP.ws.readyState === 1) {
+    MP.lastZone = z.id;
+    MP.ws.send(JSON.stringify({
+      type: 'move',
+      zoneId: z.id,
+      stage: S.stage,
+      x: Math.round(H.x),
+      y: Math.round(H.y),
+      dir: H.dir || 0,
+      act: H.act || 'st'
+    }));
+  }
 }
 function townTick(dt) { // trong thanh thi / thon tran: nghi ngoi hoi day, an toan tuyet doi, khong danh nhau
   if (R.P) {

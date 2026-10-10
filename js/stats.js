@@ -89,11 +89,12 @@ function calc(eq) {
       if (p && passiveApplies(s, name, p, wc)) addAttr(A, name, p);
     }
   }
-  titleAttr(A);                                            // danh hieu dang deo (rewards.js)
+  if (typeof titleAttr === 'function') titleAttr(A);        // danh hieu dang deo (rewards.js)
   if (typeof partnerAttr === 'function') partnerAttr(A);    // dong hanh (pvk_upgrade.js)
   if (typeof mountAttr === 'function') mountAttr(A);        // chien ma (pvk_upgrade.js)
   if (typeof campAttr === 'function') campAttr(A);          // lua trai & ruou (pvk_upgrade.js)
-  P.rebDmg = 1 + rebornBonus().dmg;                        // chuyen sinh: +10% sat thuong moi lan
+  const reb = (typeof rebornBonus === 'function') ? rebornBonus() : { dmg: 0, hp: 0 };
+  P.rebDmg = 1 + (reb.dmg || 0);                           // chuyen sinh: +10% sat thuong moi lan
   P.dmgMul = P.rebDmg * facNorm(S.fac, lv);                // + can bang theo phai / cap (FAC_DMG_NORM)
   // thuoc tinh co ban: diem goc cua he + diem phan phoi + trang bi
   P.str = st.str + S.attr.str + av(A, 'strength_v');
@@ -104,7 +105,6 @@ function calc(eq) {
   // sinh luc / noi luc: goc + cap * X/cap + diem * X/diem (KPlayer::SetBaseLifeMax)
   const vitScale = Math.max((add.LifePerVitality || 3) * 3, 10);
   const equipLife = av(A, 'lifemax_v') * (1 + Math.min(2.0, (lv - 1) / 100));
-  const reb = (typeof rebornBonus === 'function') ? rebornBonus() : { hp: 0 };
   const rebHpMul = 1 + (reb.hp || 0);
   P.life = (st.life + (lv - 1) * (add.LifePerLevel + IDLE_LIFE_PER_LEVEL) + (P.vit - st.vit) * vitScale + equipLife) * (1 + av(A, 'lifemax_p') / 100) * rebHpMul;
   P.mana = (st.mana + (lv - 1) * (add.ManaPerLevel + 10) + (P.eng - st.eng) * Math.max((add.ManaPerEnergy || 3) * 2, 6) + av(A, 'manamax_v') * (1 + Math.min(1.5, (lv - 1) / 100))) * (1 + av(A, 'manamax_p') / 100);
@@ -248,7 +248,8 @@ function basicAttack(P) {
 /* Noi luc hoi duoc moi giay tu thuoc (Ngung Than dan tot nhat da mo khoa theo cap, uong noi nhau) */
 function manaPotRate(lv) {
   let best = 0;
-  for (const p of J.potions) if (p.kind === 'mana' && lv >= (POT_TIER_LV[p.tier] || 999)) best = Math.max(best, p.total / Math.max(1, p.dur));
+  const tiers = (typeof POT_TIER_LV !== 'undefined') ? POT_TIER_LV : [0, 1, 20, 40, 70, 100];
+  for (const p of J.potions) if (p.kind === 'mana' && lv >= (tiers[p.tier] || 999)) best = Math.max(best, p.total / Math.max(1, p.dur));
   return best;
 }
 const W_TIER1 = {};

@@ -22,9 +22,10 @@ function bestStageForLevel(lvl) {
   let bestZIdx = 0;
   for (let i = 0; i < ZONES.length; i++) {
     const z = ZONES[i];
+    if (z.id === 386) continue;
     if (lvl >= z.lo) bestZIdx = i;
   }
-  const z = ZONES[bestZIdx];
+  const z = ZONES[bestZIdx] || ZONES[0];
   // Tu dong mo khoa ai toi thieu cua ban do khi du cap do
   const minStageOfZone = bestZIdx * ZONE_STAGES + 1;
   if (S && (S.maxStage || 1) < minStageOfZone) {
@@ -43,7 +44,7 @@ function bestStageForLevel(lvl) {
 }
 
 function checkAutoMap() {
-  if (!S || S.autoMap === false || R.town || R.tower || (typeof SV !== 'undefined' && SV.on)) return;
+  if (!S || S.autoMap === false || R.town || R.tower || (typeof SV !== 'undefined' && SV.on) || S.chosenZone === 386 || (typeof TONGKIM !== 'undefined' && TONGKIM.inBattle)) return;
   const curZ = zoneOf(S.stage);
   // Ưu tiên bản đồ người chơi chọn để luyện công với điều kiện không vượt cấp (S.lvl >= curZ.lo)
   if (S.chosenZone && curZ && curZ.id === S.chosenZone) {
@@ -717,7 +718,7 @@ function onKill(e) {
 
   const mXp = (typeof mutationXpMul === 'function') ? mutationXpMul() : 1;
   const gainedExp = Math.max(1, Math.round(expFor(monL) * CLS[e.cls].xp * mult * diffOf().rew * mXp));
-  gainXp(gainedExp, 5);
+  gainXp(gainedExp, 1);
   if (typeof addText === 'function') {
     addText(e.x, e.y - 24, `+${typeof fmt === 'function' ? fmt(gainedExp) : gainedExp} EXP`, '#ffd700', 12);
   }
@@ -879,7 +880,7 @@ function togglePushMode(forceVal) {
   if (typeof renderLog === 'function') renderLog();
 }
 
-function gainXp(x, maxLevels = 5) {
+function gainXp(x, maxLevels = 1) {
   if (S.lvl >= MAX_LEVEL) return;
   const campMul = typeof campExpMul === 'function' ? campExpMul() : 1;
   const vipMul = typeof vipExpMul === 'function' ? vipExpMul() : 1;
@@ -892,9 +893,11 @@ function gainXp(x, maxLevels = 5) {
   } finally {
     window._legitExpGain = false;
   }
-  let allowedLevels = (maxLevels !== undefined && maxLevels !== null) ? maxLevels : 5;
+  let allowedLevels = (maxLevels !== undefined && maxLevels !== null) ? maxLevels : 1;
+  let didLevelUp = false;
   while (S.lvl < MAX_LEVEL && S.xp >= (J.exp[S.lvl - 1] || Infinity) && allowedLevels > 0) {
     allowedLevels--;
+    didLevelUp = true;
     window._legitExpGain = true;
     window._legitLevelTransition = true;
     window._legitPtsGain = true;
@@ -913,10 +916,12 @@ function gainXp(x, maxLevels = 5) {
     log(`<b class="up">Lên cấp ${S.lvl}!</b> +${PTS_PER_LEVEL} tiềm năng, +${SKILL_PTS_PER_LEVEL} kỹ năng`);
     if (typeof onLevelUp === 'function') onLevelUp();
     if (typeof sendProfile === 'function') sendProfile();
-    checkAutoMap();
   }
   if (allowedLevels <= 0 && S.xp >= (J.exp[S.lvl - 1] || Infinity)) {
     S.xp = Math.min(S.xp, (J.exp[S.lvl - 1] || 1000) * 0.95);
+  }
+  if (didLevelUp && typeof checkAutoMap === 'function') {
+    checkAutoMap();
   }
 }
 

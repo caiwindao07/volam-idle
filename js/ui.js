@@ -2116,8 +2116,7 @@ function openMapTravelModal(initialTab) {
   const villages = JX_TOWNS.filter(x => x.type === 'village');
 
   const renderTownList = (list) => list.map(t => {
-    const idx = JX_TOWNS.indexOf(t);
-    const isCurrent = R.town && R.currentTown === t.n;
+    const isCurrent = R.town && (R.currentTown === t.n || R.townId === t.id);
     return `
       <div class="map-card ${isCurrent ? 'current' : ''}">
         <div class="map-card-info">
@@ -2132,16 +2131,17 @@ function openMapTravelModal(initialTab) {
         <div>
           ${isCurrent 
             ? `<button class="jx-action-btn" disabled style="opacity:0.6;">Tại Chỗ</button>`
-            : `<button class="jx-action-btn gold" onclick="travelToTown(${idx})">Dịch Chuyển</button>`}
+            : `<button class="jx-action-btn gold" onclick="travelToTown(${t.id})">Dịch Chuyển</button>`}
         </div>
       </div>
     `;
   }).join('');
 
   // Lọc các bản đồ luyện công thông thường (không bao gồm map chiến trường Tống Kim 386)
-  const regularZones = ZONES.filter(z => z.id !== 386);
+  const allZones = (typeof ZONES !== 'undefined' && Array.isArray(ZONES)) ? ZONES : (window.JW && window.JW.zones ? window.JW.zones : []);
+  const regularZones = allZones.filter(z => z && z.id !== 386);
   const zonesHtml = regularZones.map((z) => {
-    const idx = ZONES.indexOf(z);
+    const idx = allZones.indexOf(z);
     const ok = S.lvl >= z.lo;
     const stageStart = idx * ZONE_STAGES + 1;
     const alts = (typeof ZALT !== 'undefined' ? ZALT[idx] : null);
@@ -2149,7 +2149,7 @@ function openMapTravelModal(initialTab) {
     const curZ = (alts && curAlt && alts[curAlt - 1]) || z;
     const altChips = (alts && ok) ? `
       <div class="zalt" style="margin:4px 0 2px 0;">
-        ${[z].concat(alts).map((p, m) => `<button class="chip2${m === curAlt ? ' on' : ''}" onclick="event.stopPropagation();if(!S.zalt)S.zalt={};S.zalt[${idx}]=${m};travelToZone(${idx});">${esc(p.n)}</button>`).join('')}
+        ${[z].concat(alts).map((p, m) => `<button class="chip2${m === curAlt ? ' on' : ''}" onclick="event.stopPropagation();if(!S.zalt)S.zalt={};S.zalt[${idx}]=${m};travelToZone(${p.id});">${esc(p.n)}</button>`).join('')}
       </div>
     ` : '';
     const bossName = (typeof MON !== 'undefined' && MON && MON[z.boss]) ? MON[z.boss].n : 'Thủ Lĩnh';
@@ -2167,7 +2167,7 @@ function openMapTravelModal(initialTab) {
         </div>
         <div>
           ${ok 
-            ? `<button class="jx-action-btn gold" onclick="travelToZone(${idx})">Đến Ngay</button>` 
+            ? `<button class="jx-action-btn gold" onclick="travelToZone(${curZ.id})">Đến Ngay</button>` 
             : `<button class="jx-action-btn" disabled style="opacity:0.5;color:#888;">Cần Cấp ${z.lo}</button>`}
         </div>
       </div>
@@ -2205,8 +2205,8 @@ window.openMapTravelModal = openMapTravelModal;
 function travelToTown(target) {
   let t = null;
   if (typeof target === 'number') {
-    if (target >= 0 && target < JX_TOWNS.length) t = JX_TOWNS[target];
-    else t = JX_TOWNS.find(item => item.id === target);
+    t = JX_TOWNS.find(item => item.id === target);
+    if (!t && target >= 0 && target < JX_TOWNS.length) t = JX_TOWNS[target];
   } else if (typeof target === 'string') {
     t = JX_TOWNS.find(item => item.n === target || String(item.id) === target);
   } else if (target && typeof target === 'object') {
@@ -2260,28 +2260,51 @@ function travelToTown(target) {
   }
   log(`Xa Phu đưa bạn đến <b>${esc(t.n)}</b> (${t.type === 'city' ? 'Đại Thành Thị' : 'Thôn Trấn'}).`);
   toast(`Đã đến ${t.n}!`);
+  if (typeof MP !== 'undefined' && MP.connected && MP.ws && MP.ws.readyState === 1) {
+    MP.lastZone = t.id;
+    MP.ws.send(JSON.stringify({
+      type: 'move',
+      zoneId: t.id,
+      stage: S.stage,
+      x: Math.round(H.x),
+      y: Math.round(H.y),
+      dir: H.dir || 0,
+      act: 'st'
+    }));
+  }
 }
 
 function travelToZone(target) {
+  const allZones = (typeof ZONES !== 'undefined' && Array.isArray(ZONES)) ? ZONES : (window.JW && window.JW.zones ? window.JW.zones : []);
+  const specialZ = (window.JW && window.JW.specialZones) ? window.JW.specialZones : {};
   let idx = -1;
   let z = null;
   if (typeof target === 'number') {
-    if (target >= 0 && target < ZONES.length) {
-      idx = target;
-      const u = (S.zalt || {})[idx] || 0;
-      z = (typeof ZALT !== 'undefined' && ZALT[idx] && u && ZALT[idx][u - 1]) || ZONES[idx];
+    if (target === 386 || specialZ[target]) {
+      z = specialZ[target] || (window.JW && window.JW.zones ? window.JW.zones.find(item => item.id === 386) : null) || { id: 386, n: 'Chiến Trường Tống Kim', lo: 60, hi: 160, bg: 'img/z/386.jpg' };
+      idx = -1;
     } else {
-      idx = ZONES.findIndex(item => item.id === target);
-      if (idx !== -1) {
+      const matchIdx = allZones.findIndex(item => item && item.id === target);
+      if (matchIdx !== -1) {
+        idx = matchIdx;
         const u = (S.zalt || {})[idx] || 0;
-        z = (typeof ZALT !== 'undefined' && ZALT[idx] && u && ZALT[idx][u - 1]) || ZONES[idx];
+        z = (typeof ZALT !== 'undefined' && ZALT[idx] && u && ZALT[idx][u - 1]) || allZones[idx];
+      } else if (target >= 0 && target < allZones.length) {
+        idx = target;
+        const u = (S.zalt || {})[idx] || 0;
+        z = (typeof ZALT !== 'undefined' && ZALT[idx] && u && ZALT[idx][u - 1]) || allZones[idx];
       }
     }
   } else if (target && typeof target === 'object' && target.id) {
-    idx = ZONES.findIndex(item => item.id === target.id);
-    z = ZONES[idx] || target;
+    if (target.id === 386 || specialZ[target.id]) {
+      z = specialZ[target.id] || target;
+      idx = -1;
+    } else {
+      idx = allZones.findIndex(item => item && item.id === target.id);
+      z = allZones[idx] || target;
+    }
   }
-  if (!z || idx === -1) return;
+  if (!z) return;
   if (S && S.jailUntil && S.jailUntil > Date.now() && z.id !== 37) {
     const remM = Math.ceil((S.jailUntil - Date.now()) / 60000);
     const remH = Math.floor(remM / 60);
@@ -2311,7 +2334,8 @@ function travelToZone(target) {
     S.chosenZone = 386;
     S.chosenStage = S.stage;
   } else {
-    const targetStage = idx * ZONE_STAGES + 1;
+    const validIdx = idx >= 0 ? idx : Math.max(0, allZones.findIndex(item => item && item.id === z.id));
+    const targetStage = validIdx * ZONE_STAGES + 1;
     S.chosenZone = z.id;
     S.chosenStage = targetStage;
     S.maxStage = Math.max(S.maxStage || 1, targetStage);
