@@ -548,23 +548,222 @@ async function getAuthUserAsync(req) {
   return { username: uKey, user, token };
 }
 
+// ==========================================
+// 1.5. HỆ THỐNG WORLD CHAT (SSE & REST API CHO VINARPG)
+// ==========================================
+const chatClients = new Set();
+const chatHistory = [
+  { id: 'm_init_1', name: 'Độc Cô Kiếm', faction: 'huashan', level: 90, message: 'Chào mừng các vị hiệp khách bước vào giang hồ!', time: '12:00' },
+  { id: 'm_init_2', name: 'Tiểu Long Nữ', faction: 'cuiyan', level: 85, message: 'Hệ thống chat thế giới & lưu đám mây đã kết nối thành công.', time: '12:01' }
+];
+const chatPresence = new Map(); // clientId -> { name, faction, level, profile, lastSeen }
+
+function broadcastChatMessage(msgObj) {
+  chatHistory.push(msgObj);
+  if (chatHistory.length > 80) chatHistory.shift();
+  const sseData = `event: message\ndata: ${JSON.stringify(msgObj)}\n\n`;
+  for (const client of chatClients) {
+    try { client.write(sseData); } catch (e) {}
+  }
+}
+
+// BOT chat tự động định kỳ
+setInterval(() => {
+  if (chatClients.size === 0) return;
+  const botMsgs = [
+    { name: 'Độc Cô Kiếm', faction: 'huashan', level: 95, message: 'Có ai cùng tổ đội vượt Tháp II không?' },
+    { name: 'Tiểu Long Nữ', faction: 'cuiyan', level: 88, message: 'Vừa nhặt được Lam Thủy Tinh ở bãi quái!' },
+    { name: 'Kiều Phong', faction: 'gaibang', level: 92, message: 'Tống Kim trận này đông vui quá chừng.' },
+    { name: 'Vô Danh Tăng', faction: 'shaolin', level: 99, message: 'Vạn vật giai không, an nhiên luyện công.' }
+  ];
+  const b = botMsgs[Math.floor(Math.random() * botMsgs.length)];
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  broadcastChatMessage({
+    id: 'm_bot_' + Date.now(),
+    name: b.name,
+    faction: b.faction,
+    level: b.level,
+    message: b.message,
+    time: timeStr
+  });
+}, 45000);
+
 const server = http.createServer((req, res) => {
   // CORS Preflight
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Chat-GM-Token',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
     });
     res.end();
     return;
   }
 
-  const urlParts = req.url.split('?');
-  const pathname = urlParts[0];
+  const parsedUrl = new URL(req.url, 'http://' + (req.headers.host || 'localhost'));
+  const pathname = parsedUrl.pathname;
 
   // API ROUTING
   if (pathname.startsWith('/api/')) {
+    // CHAT API CHO VINARPG
+    if (pathname === '/api/chat/status' && req.method === 'GET') {
+      return sendJson(res, 200, { ok: true, server: 'Võ Lâm Idle' });
+    }
+
+    if (pathname === '/api/chat/stream' && req.method === 'GET') {
+      const clientId = parsedUrl.searchParams.get('client_id') || ('c_' + Date.now());
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*'
+      });
+      if (res.flushHeaders) res.flushHeaders();
+
+      chatClients.add(res);
+      const onlineCount = Math.max(1, chatPresence.size + (Array.isArray(BOTS) ? BOTS.length : 0));
+      res.write(`event: ready\ndata: ${JSON.stringify({ messages: chatHistory.slice(-40), online: onlineCount })}\n\n`);
+
+      const keepAliveTimer = setInterval(() => {
+        try { res.write(': keepalive\n\n'); } catch (e) { clearInterval(keepAliveTimer); }
+      }, 25000);
+
+      req.on('close', () => {
+        clearInterval(keepAliveTimer);
+        chatClients.delete(res);
+        chatPresence.delete(clientId);
+      });
+      return;
+    }
+
+    if (pathname === '/api/chat/presence' && req.method === 'POST') {
+      parseJsonBody(req, (err, data) => {
+        if (data && data.client_id) {
+          const profile = data.profile || {};
+          chatPresence.set(data.client_id, {
+            name: profile.name || 'Hiệp Khách',
+            faction: profile.faction || 'shaolin',
+            level: Number(profile.level) || 1,
+            profile: profile,
+            lastSeen: Date.now()
+          });
+        }
+        return sendJson(res, 200, { ok: true });
+      });
+      return;
+    }
+
+    if (pathname === '/api/chat/messages' && req.method === 'POST') {
+      parseJsonBody(req, (err, data) => {
+        if (err || !data || !data.message) {
+          return sendJson(res, 400, { ok: false, error: 'Nội dung tin nhắn không được để trống' });
+        }
+        const text = String(data.message).trim().slice(0, 240);
+        if (!text) return sendJson(res, 400, { ok: false, error: 'Tin nhắn trống' });
+
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const msgObj = {
+          id: 'm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          name: String(data.name || 'Hiệp Khách').slice(0, 24),
+          faction: String(data.faction || 'shaolin'),
+          level: Number(data.level) || 1,
+          message: text,
+          time: timeStr,
+          item: data.item || null
+        };
+        broadcastChatMessage(msgObj);
+        return sendJson(res, 200, { ok: true, message: msgObj });
+      });
+      return;
+    }
+
+    if (pathname === '/api/chat/profile' && req.method === 'GET') {
+      const qName = String(parsedUrl.searchParams.get('name') || '').trim();
+      let foundProfile = null;
+      for (const p of chatPresence.values()) {
+        if (p.name && p.name.toLowerCase() === qName.toLowerCase() && p.profile) {
+          foundProfile = p.profile;
+          break;
+        }
+      }
+      if (!foundProfile) {
+        const u = Object.values(db.users).find(u => (u.heroName && u.heroName.toLowerCase() === qName.toLowerCase()) || (u.username && u.username.toLowerCase() === qName.toLowerCase()));
+        if (u && u.state) {
+          foundProfile = {
+            name: u.heroName || u.username,
+            faction: u.fac || (u.state && u.state.fac) || 'shaolin',
+            level: (u.state && u.state.lvl) || 1,
+            combat_power: (u.state && u.state.power) || 1000
+          };
+        }
+      }
+      if (!foundProfile) {
+        return sendJson(res, 404, { ok: false, error: 'Không tìm thấy hồ sơ người chơi' });
+      }
+      return sendJson(res, 200, { ok: true, profile: foundProfile });
+    }
+
+    // RANKINGS API CHO VINARPG
+    if (pathname === '/api/rankings' && req.method === 'GET') {
+      const type = parsedUrl.searchParams.get('type') || 'level';
+      const fetchRankings = async () => {
+        let usersList = [];
+        if (mongoUsersCol) {
+          try {
+            usersList = await mongoUsersCol.find({}).limit(100).toArray();
+          } catch (e) {}
+        }
+        if (!usersList.length) {
+          usersList = Object.values(db.users);
+        }
+        const allUsers = usersList.map(u => {
+          const s = u.state || {};
+          return {
+            rank_id: u.username,
+            name: u.heroName || s.name || u.username,
+            faction: u.fac || s.fac || 'shaolin',
+            level: Number(s.lvl) || 1,
+            combat_power: Number(s.power || s.cp) || (Number(s.lvl) || 1) * 350,
+            tower_best: Number(s.tower) || 1,
+            bosses: Number(s.bossCount || s.stage) || 1
+          };
+        });
+        if (type === 'power') {
+          allUsers.sort((a, b) => b.combat_power - a.combat_power);
+        } else if (type === 'tower') {
+          allUsers.sort((a, b) => b.tower_best - a.tower_best);
+        } else {
+          allUsers.sort((a, b) => b.level - a.level);
+        }
+        const rows = allUsers.slice(0, 50);
+        return sendJson(res, 200, { my_rank: 1, rows });
+      };
+      fetchRankings();
+      return;
+    }
+
+    if (pathname === '/api/rankings/profile' && req.method === 'GET') {
+      const rankId = String(parsedUrl.searchParams.get('rank_id') || '').trim();
+      findDbUser(rankId).then(u => {
+        if (!u || !u.state) {
+          return sendJson(res, 404, { ok: false, error: 'Không tìm thấy hồ sơ' });
+        }
+        return sendJson(res, 200, {
+          ok: true,
+          profile: {
+            name: u.heroName || u.state.name || u.username,
+            faction: u.fac || u.state.fac || 'shaolin',
+            level: u.state.lvl || 1,
+            combat_power: u.state.power || (u.state.lvl || 1) * 350,
+            equipment: u.state.eq || {}
+          }
+        });
+      }).catch(() => sendJson(res, 500, { ok: false, error: 'Lỗi máy chủ' }));
+      return;
+    }
+
     // 0. Kiểm tra trạng thái cơ sở dữ liệu (Database Health / Diagnostic)
     if (pathname === '/api/db-status' && req.method === 'GET') {
       const getCount = async () => {
