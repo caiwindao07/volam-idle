@@ -183,7 +183,7 @@ function towerExit(dead) {
 /* ---------- 7. chuyen sinh (Chuyen sinh tu cap 200, toi da 10 lan) ---------- */
 function rebornBonus() {
   const n = S.rw && S.rw.stat ? S.rw.stat.reborn || 0 : 0;
-  return { xp: 0.25 * n, dmg: 0.15 * n };
+  return { xp: 0.25 * n, dmg: 0.15 * n, hp: 0.10 * n };
 }
 
 function grantRebornRewards(n) {

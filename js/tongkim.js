@@ -169,6 +169,7 @@ const TONGKIM = {
 
   // 2. Vào chiến trường
   join(camp) {
+    this.userLeft = false;
     this.inBattle = true;
     this.camp = (camp === 'auto' || !camp) ? (Math.random() < 0.5 ? 'song' : 'jin') : camp;
     if (MP && MP.connected && MP.ws) {
@@ -210,6 +211,7 @@ const TONGKIM = {
   },
 
   doLeave() {
+    this.userLeft = true;
     this.inBattle = false;
     this.updateHud();
     if (MP && MP.connected && MP.ws) {
@@ -225,7 +227,13 @@ const TONGKIM = {
   // 4. Đồng bộ dữ liệu Tống Kim từ Server
   onSync(msg) {
     const wasInBattle = this.inBattle;
-    this.inBattle = !!msg.inBattle;
+    if (this.userLeft && !msg.inBattle) {
+      this.inBattle = false;
+    } else if (!this.userLeft) {
+      this.inBattle = !!msg.inBattle;
+    } else {
+      this.inBattle = false;
+    }
     if (msg.phase !== undefined) this.phase = msg.phase;
     if (msg.phaseName !== undefined) this.phaseName = msg.phaseName;
     if (msg.camp !== undefined) this.camp = msg.camp;
@@ -238,8 +246,9 @@ const TONGKIM = {
     if (msg.quanco !== undefined) this.quanco = msg.quanco;
     if (msg.ladder) this.ladder = msg.ladder;
 
-    // Tự động chuyển map 386 khi server báo đã vào trận
-    if (this.inBattle) {
+    // Tự động chuyển map 386 CHỈ KHI đang trong trận và người chơi không chủ động rời
+    const isBattlePhase = (this.phase === 'staging' || this.phase === 'battle');
+    if (this.inBattle && !this.userLeft && isBattlePhase) {
       const curZ = (typeof S !== 'undefined' && S) ? S.chosenZone : 0;
       if (curZ !== 386 && typeof travelToZone === 'function') {
         travelToZone(386);
@@ -249,8 +258,9 @@ const TONGKIM = {
         }
       }
     } else if (wasInBattle && !this.inBattle) {
-      // Hết trận, trở về Biện Kinh
-      if (typeof travelToTown === 'function') travelToTown(0);
+      // Hết trận hoặc rời trận, nếu đang ở map 386 thì trở về Biện Kinh
+      const curZ = (typeof S !== 'undefined' && S) ? S.chosenZone : 0;
+      if (curZ === 386 && typeof travelToTown === 'function') travelToTown(0);
     }
 
     this.updateHud();

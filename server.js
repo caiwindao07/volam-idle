@@ -1717,10 +1717,11 @@ function getTongkimLadder() {
 
 function syncTongkimToAll() {
   const ladder = getTongkimLadder();
+  const isTkBattlePhase = (TONGKIM_SERVER.phase === 'staging' || TONGKIM_SERVER.phase === 'battle');
   for (const [ws, pl] of players.entries()) {
     if (ws.readyState !== 1) continue;
     const tkP = TONGKIM_SERVER.players.get(pl.id);
-    const inBattle = (pl.zoneId === 386) || !!tkP;
+    const inBattle = isTkBattlePhase && !!tkP && (pl.zoneId === 386);
     const qBal = pl.uKey ? getPlayerQuanco(pl.uKey) : 0;
     ws.send(JSON.stringify({
       type: 'tongkim_sync',
@@ -1755,9 +1756,7 @@ setInterval(() => {
       TONGKIM_SERVER.jinScore = 0;
       TONGKIM_SERVER.bossSpawned = false;
       TONGKIM_SERVER.rewardGiven = false;
-      for (const tkP of TONGKIM_SERVER.players.values()) {
-        tkP.kills = 0; tkP.score = 0; tkP.combo = 0;
-      }
+      TONGKIM_SERVER.players.clear();
       broadcast({
         type: 'player_chat',
         fromId: 0,
@@ -1838,7 +1837,11 @@ setInterval(() => {
         }
         saveDb();
       }
+      TONGKIM_SERVER.players.clear();
+      syncTongkimToAll();
     } else if (sched.phase === 'idle') {
+      TONGKIM_SERVER.players.clear();
+      syncTongkimToAll();
       broadcast({
         type: 'player_chat',
         fromId: 0,
@@ -2165,6 +2168,13 @@ wss.on('connection', (ws, req) => {
           const oldZone = p.zoneId;
           p.zoneId = Number(data.zoneId);
           if (oldZone !== p.zoneId) {
+            // Nếu người chơi rời khỏi map 386 (Tống Kim)
+            if (oldZone === 386 && p.zoneId !== 386) {
+              if (TONGKIM_SERVER.players.has(p.id)) {
+                TONGKIM_SERVER.players.delete(p.id);
+                syncTongkimToAll();
+              }
+            }
             // Thông báo cho zone CŨ: người chơi rời đi
             broadcastToZone(oldZone, {
               type: 'player_leave',

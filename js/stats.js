@@ -57,14 +57,15 @@ function calc(eq) {
   eq = eq || S.eq;
   const A = {}, lv = S.lvl, ser = heroSeries(), add = J.levelAdd[ser], st = heroStart();
   const skAdd = {};                                        // allskill_v co tham so 3 = id ky nang: +cap cho rieng ky nang do
-  const addItemAttr = (m) => {
+  const addItemAttr = (m, mult = 1) => {
     if (!m) return;
     const a = m.a !== undefined ? m.a : (Array.isArray(m) ? m[0] : null);
     const rawP = m.p !== undefined ? m.p : (Array.isArray(m) ? m[1] : null);
     if (a == null || !rawP || !Array.isArray(rawP)) return;
     const name = attrName(a), p = rawP.map(v => v === -1 ? 0 : v);
     if (name === 'allskill_v' && p[2] > 0) { skAdd[p[2]] = (skAdd[p[2]] || 0) + p[0]; return; }
-    addAttr(A, name, p);
+    const scaleAttr = /^(lifemax_v|manamax_v|strength_v|vitality_v|dexterity_v|energy_v|adddefense_v)$/.test(name);
+    addAttr(A, name, p, scaleAttr ? mult : 1);
   };
   // trang bi: thuoc tinh goc + thuoc tinh ma thuat (bo qua mon chua du dieu kien)
   for (const k in eq) {
@@ -72,8 +73,8 @@ function calc(eq) {
     const em = enhMul(it);                                 // cuong hoa (forge.js): nhan thuoc tinh goc
     for (const [id, mn, mx] of it.base) addAttr(A, attrName(id), [(id === 28 || id === 29 ? mn : (mn + mx) / 2) * em, 0, 0]);
     const act = hiddenActive(it, eq);
-    (it.mag || []).forEach((m, i) => { if (i % 2 === 0 || Math.floor(i / 2) < act) addItemAttr(m); });
-    if (it.set) { const ex = goldEnhance(it, eq); (it.ext || []).slice(0, ex).forEach(addItemAttr); }
+    (it.mag || []).forEach((m, i) => { if (i % 2 === 0 || Math.floor(i / 2) < act) addItemAttr(m, em); });
+    if (it.set) { const ex = goldEnhance(it, eq); (it.ext || []).slice(0, ex).forEach(m => addItemAttr(m, em)); }
   }
   // ky nang bi dong
   const wc = weaponCode(eq), plus = av(A, 'allskill_v');
@@ -101,8 +102,12 @@ function calc(eq) {
   P.eng = st.eng + S.attr.eng + av(A, 'energy_v');
   P.series = ser;
   // sinh luc / noi luc: goc + cap * X/cap + diem * X/diem (KPlayer::SetBaseLifeMax)
-  P.life = (st.life + (lv - 1) * (add.LifePerLevel + IDLE_LIFE_PER_LEVEL) + (P.vit - st.vit) * add.LifePerVitality + av(A, 'lifemax_v')) * (1 + av(A, 'lifemax_p') / 100);
-  P.mana = (st.mana + (lv - 1) * add.ManaPerLevel + (P.eng - st.eng) * add.ManaPerEnergy + av(A, 'manamax_v')) * (1 + av(A, 'manamax_p') / 100);
+  const vitScale = Math.max((add.LifePerVitality || 3) * 3, 10);
+  const equipLife = av(A, 'lifemax_v') * (1 + Math.min(2.0, (lv - 1) / 100));
+  const reb = (typeof rebornBonus === 'function') ? rebornBonus() : { hp: 0 };
+  const rebHpMul = 1 + (reb.hp || 0);
+  P.life = (st.life + (lv - 1) * (add.LifePerLevel + IDLE_LIFE_PER_LEVEL) + (P.vit - st.vit) * vitScale + equipLife) * (1 + av(A, 'lifemax_p') / 100) * rebHpMul;
+  P.mana = (st.mana + (lv - 1) * (add.ManaPerLevel + 10) + (P.eng - st.eng) * Math.max((add.ManaPerEnergy || 3) * 2, 6) + av(A, 'manamax_v') * (1 + Math.min(1.5, (lv - 1) / 100))) * (1 + av(A, 'manamax_p') / 100);
   const tp = (typeof tpStacks === 'function') ? tpStacks() : { ho: 0, bao: 0, tru: 0 };
   P.life = Math.max(50, P.life) * (1 + (tp.ho || 0) * 0.06);
   P.mana = Math.max(20, P.mana);

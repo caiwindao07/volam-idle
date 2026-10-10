@@ -2210,6 +2210,17 @@ function travelToTown(target) {
     return;
   }
   closeModal();
+  if (typeof TONGKIM !== 'undefined' && TONGKIM.inBattle) {
+    TONGKIM.userLeft = true;
+    TONGKIM.inBattle = false;
+    if (typeof TONGKIM.updateHud === 'function') TONGKIM.updateHud();
+    if (typeof MP !== 'undefined' && MP.connected && MP.ws) {
+      MP.ws.send(JSON.stringify({ type: 'tongkim_leave' }));
+    }
+  }
+  if (typeof S !== 'undefined' && S) {
+    S.chosenZone = (t && t.id) || 37;
+  }
   if (!R.town) {
     R.town = true;
     R.enemies = []; R.corpses = []; R.pickTarget = null; R.moveTo = null; INPUT.target = null;
@@ -2266,6 +2277,14 @@ function travelToZone(target) {
     return;
   }
   closeModal();
+  if (z.id !== 386 && typeof TONGKIM !== 'undefined' && TONGKIM.inBattle) {
+    TONGKIM.userLeft = true;
+    TONGKIM.inBattle = false;
+    if (typeof TONGKIM.updateHud === 'function') TONGKIM.updateHud();
+    if (typeof MP !== 'undefined' && MP.connected && MP.ws) {
+      MP.ws.send(JSON.stringify({ type: 'tongkim_leave' }));
+    }
+  }
   if (R.town) {
     R.town = false;
     const tb = $('#townBar');

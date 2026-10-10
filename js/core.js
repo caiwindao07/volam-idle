@@ -28,7 +28,7 @@ const ELEM_ENH = { poison: 'poisonenhance_p', cold: 'coldenhance_p', fire: 'fire
 const MAX_RESIST = 95, PLAYER_RES_MAX = 75, MAX_HIT = 95, MIN_HIT = 40, CRIT_MULT = 2;
 const STR_PER_DMG = 5, DEX_PER_DMG = 5, ENG_PER_DMG = 4;
 /* Can bang rieng game idle (ban goc khong co): 1 Noi cong = +1% sat thuong nguyen to cua chieu, 1 Suc manh (Than phap voi am khi) = +1% sat thuong vat ly */
-const ENG_PER_PCT = 1, STR_PER_PCT = 1, DEX_PCT_RANGED = 0.5, IDLE_LIFE_PER_LEVEL = 8; // +8 sinh luc moi cap cho moi he (quai danh lien tuc theo dot)
+const ENG_PER_PCT = 1, STR_PER_PCT = 1, DEX_PCT_RANGED = 0.5, IDLE_LIFE_PER_LEVEL = 25; // +25 sinh luc moi cap cho moi he (can bang cap do 200)
 const PTS_PER_LEVEL = 5, SKILL_PTS_PER_LEVEL = 1, MAX_LEVEL = Math.min(200, J.exp.length);   // gioi han cap 200 theo bang exp data.js
 const EXP_TAIL_R = (J.exp && J.exp.length > 98) ? (J.exp[98] / (J.exp[97] || 1)) : 1.1;
 function expNeed(L) {
@@ -112,4 +112,4 @@ const WORLD = { w: 3072, h: 3072, pad: 20 };
 const clampWorld = (x, y) => [clamp(x, WORLD.pad, WORLD.w - WORLD.pad), clamp(y, WORLD.pad + 30, WORLD.h - WORLD.pad)];
 /* vi tri trong the gioi, o di duoc gan nhat khi co vat can (mapobs.js) */
 const inWorld = (x, y) => { const p = clampWorld(x, y); return typeof OBS !== 'undefined' && OBS.g ? obsSnap(p[0], p[1]) : p; };
-const attrName = id => J.attr[id] || ('#' + id);
+const attrName = id => (typeof id === 'string' ? id : (J.attr[id] || ('#' + id)));

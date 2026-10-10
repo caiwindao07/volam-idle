@@ -19,6 +19,7 @@ const MP = {
 
 function getCurZoneId() {
   if (typeof R !== 'undefined' && R && R.town) return 37; // Biện Kinh
+  if (typeof S !== 'undefined' && S && S.chosenZone) return S.chosenZone;
   if (typeof S !== 'undefined' && S && S.stage && typeof zoneOf === 'function' && typeof STAGES !== 'undefined') {
     try {
       const z = zoneOf(Math.min(S.stage || 1, STAGES));
