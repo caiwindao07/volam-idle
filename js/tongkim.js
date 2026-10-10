@@ -217,6 +217,14 @@ const TONGKIM = {
     if (MP && MP.connected && MP.ws) {
       MP.ws.send(JSON.stringify({ type: 'tongkim_leave' }));
     }
+    if (typeof S !== 'undefined' && S) {
+      S.chosenZone = 37;
+      const curZ = (typeof zoneOf === 'function' && typeof STAGES !== 'undefined') ? zoneOf(Math.min(S.stage || 1, STAGES)) : null;
+      if (curZ && curZ.id === 386) {
+        S.stage = (typeof bestStageForLevel === 'function') ? bestStageForLevel(S.lvl) : 1;
+        S.chosenStage = S.stage;
+      }
+    }
     if (typeof travelToTown === 'function') {
       travelToTown(0); // Trở về Biện Kinh
     } else if (typeof travelToZone === 'function') {

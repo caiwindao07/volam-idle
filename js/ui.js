@@ -2085,7 +2085,13 @@ function toggleMiniMap() {
 }
 window.toggleMiniMap = toggleMiniMap;
 
-function openMapTravelModal() {
+let travelTab = 'city';
+window.travelTab = travelTab;
+
+function openMapTravelModal(initialTab) {
+  if (initialTab && typeof initialTab === 'string') travelTab = initialTab;
+  if (!travelTab) travelTab = 'city';
+
   if (S && S.jailUntil && S.jailUntil > Date.now()) {
     const remM = Math.ceil((S.jailUntil - Date.now()) / 60000);
     const remH = Math.floor(remM / 60);
@@ -2132,7 +2138,10 @@ function openMapTravelModal() {
     `;
   }).join('');
 
-  const zonesHtml = ZONES.map((z, idx) => {
+  // Lọc các bản đồ luyện công thông thường (không bao gồm map chiến trường Tống Kim 386)
+  const regularZones = ZONES.filter(z => z.id !== 386);
+  const zonesHtml = regularZones.map((z) => {
+    const idx = ZONES.indexOf(z);
     const ok = S.lvl >= z.lo;
     const stageStart = idx * ZONE_STAGES + 1;
     const alts = (typeof ZALT !== 'undefined' ? ZALT[idx] : null);
@@ -2143,6 +2152,7 @@ function openMapTravelModal() {
         ${[z].concat(alts).map((p, m) => `<button class="chip2${m === curAlt ? ' on' : ''}" onclick="event.stopPropagation();if(!S.zalt)S.zalt={};S.zalt[${idx}]=${m};travelToZone(${idx});">${esc(p.n)}</button>`).join('')}
       </div>
     ` : '';
+    const bossName = (typeof MON !== 'undefined' && MON && MON[z.boss]) ? MON[z.boss].n : 'Thủ Lĩnh';
     return `
       <div class="map-card ${ok ? '' : 'locked'}">
         <div class="map-card-info">
@@ -2151,7 +2161,7 @@ function openMapTravelModal() {
             <span class="map-card-badge ${ok ? '' : 'lock'}">Cấp ${z.lo} – ${z.hi}</span>
             ${alts ? `<span style="font-size:10px;color:#38bdf8;">(${alts.length + 1} bản đồ)</span>` : ''}
           </div>
-          <span class="map-card-sub">Ải ${stageStart} · Quái cấp ${z.lo}+ · Boss ${MON[z.boss] ? MON[z.boss].n : 'Thủ Lĩnh'}</span>
+          <span class="map-card-sub">Ải ${stageStart} · Quái cấp ${z.lo}+ · Boss ${bossName}</span>
           <small style="font-size:10px;color:${ok ? '#4ade80' : '#f87171'};">${ok ? '✓ Đủ điều kiện luyện công' : `🔒 Cần đạt cấp ${z.lo} mới được vào`}</small>
           ${altChips}
         </div>
@@ -2175,7 +2185,7 @@ function openMapTravelModal() {
       <div class="dtabs" style="margin:6px 12px 4px 12px;">
         <button id="bTravelTabCity" class="${travelTab === 'city' ? 'on' : ''}">🏯 Thất Đại Thành Thị (7)</button>
         <button id="bTravelTabVillage" class="${travelTab === 'village' ? 'on' : ''}">🏡 Thập Đại Thôn Trấn (10)</button>
-        <button id="bTravelTabZone" class="${travelTab === 'zone' ? 'on' : ''}">⚔️ Bản Đồ Luyện Công (${ZONES.length})</button>
+        <button id="bTravelTabZone" class="${travelTab === 'zone' ? 'on' : ''}">⚔️ Bản Đồ Luyện Công (${regularZones.length})</button>
       </div>
       <div style="padding:10px 12px;">
         <div class="map-travel-grid">
@@ -2190,6 +2200,7 @@ function openMapTravelModal() {
     if (btZone) btZone.onclick = () => { travelTab = 'zone'; openMapTravelModal(); };
   });
 }
+window.openMapTravelModal = openMapTravelModal;
 
 function travelToTown(target) {
   let t = null;
@@ -2220,6 +2231,12 @@ function travelToTown(target) {
   }
   if (typeof S !== 'undefined' && S) {
     S.chosenZone = (t && t.id) || 37;
+    // Đảm bảo S.stage không bị kẹt ở map Tống Kim (386)
+    const curZ = (typeof zoneOf === 'function' && typeof STAGES !== 'undefined') ? zoneOf(Math.min(S.stage || 1, STAGES)) : null;
+    if (curZ && curZ.id === 386) {
+      S.stage = (typeof bestStageForLevel === 'function') ? bestStageForLevel(S.lvl) : 1;
+      S.chosenStage = S.stage;
+    }
   }
   if (!R.town) {
     R.town = true;
@@ -2290,11 +2307,16 @@ function travelToZone(target) {
     const tb = $('#townBar');
     if (tb) tb.classList.add('hidden');
   }
-  const targetStage = idx * ZONE_STAGES + 1;
-  S.chosenZone = z.id;
-  S.chosenStage = targetStage;
-  S.maxStage = Math.max(S.maxStage || 1, targetStage);
-  S.stage = targetStage;
+  if (z.id === 386) {
+    S.chosenZone = 386;
+    S.chosenStage = S.stage;
+  } else {
+    const targetStage = idx * ZONE_STAGES + 1;
+    S.chosenZone = z.id;
+    S.chosenStage = targetStage;
+    S.maxStage = Math.max(S.maxStage || 1, targetStage);
+    S.stage = targetStage;
+  }
   S.wave = 1;
   S.push = false;
   R.enemies = [];

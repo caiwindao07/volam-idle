@@ -183,18 +183,32 @@ function backFromTown() {
     return;
   }
   R.town = false;
-  const z = zoneOf(Math.min(S.stage, STAGES));
+  let st = Math.min(S.stage || 1, STAGES);
+  let z = (typeof zoneOf === 'function') ? zoneOf(st) : null;
+  // Tuyệt đối không để rơi vào map 386 (Tống Kim) khi rời thành
+  if (!z || z.id === 386) {
+    st = (typeof bestStageForLevel === 'function') ? bestStageForLevel(S.lvl) : 1;
+    S.stage = st;
+    z = (typeof zoneOf === 'function') ? zoneOf(st) : null;
+  }
+  if (!z || z.id === 386) {
+    z = (typeof ZONES !== 'undefined' && ZONES[0]) ? ZONES[0] : { id: 2, n: 'Hoa Sơn', lo: 1, hi: 10, bg: 'img/z/2.jpg' };
+    st = 1;
+    S.stage = 1;
+  }
+  S.chosenZone = z.id;
+  S.chosenStage = st;
   obsLoad(z.id);
   R.bgImg = img(z.bg);
-  [H.x, H.y] = inWorld(H.x, H.y);
+  [H.x, H.y] = inWorld(WORLD.w / 2, WORLD.h / 2);
   snapCamera();
   R.tpCd = TP_CD;
   S.wave = 1;
-  R.spawnT = 0.5;
+  S.spawnT = 0.5;
   R.zoneShown = null;
   const tb = $('#townBar');
   if (tb) tb.classList.add('hidden');
-  onZoneChange(z);
+  if (typeof onZoneChange === 'function') onZoneChange(z);
   toast(`Đã trở lại ải luyện công ${z.n}!`);
 }
 function townTick(dt) { // trong thanh thi / thon tran: nghi ngoi hoi day, an toan tuyet doi, khong danh nhau
