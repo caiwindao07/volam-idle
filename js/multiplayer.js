@@ -916,31 +916,34 @@ function drawSingleOtherPlayer(c, dt, p) {
     CLOAK_SYSTEM.drawCloak(c, p.x, playerY, p.dir || 0, cTier, p.moving);
   }
 
-  // 3. Hoạt ảnh nhân vật
+  // 3. Hoạt ảnh nhân vật (chỉ khi đi bộ; khi cưỡi ngựa đã vẽ drawHorseRiderBody)
   let drawn = false;
-  let dollH = 0;
-  if (typeof drawDoll === 'function') {
-    const fakeState = {
-      eq: p.eq || {},
-      fac: p.fac,
-      sex: (p.fac === 'emei' || p.fac === 'cuiyan' || p.sex === 1) ? 1 : 0
-    };
-    dollH = drawDoll(c, p.x, playerY, p.act || 'st', p.dir || 0, p.actT || 0, (typeof HERO_DOLL_SCALE !== 'undefined' ? HERO_DOLL_SCALE : (1 / 0.6)), 1, fakeState);
-    if (dollH > 0) drawn = dollH;
-  }
-  if (!drawn && typeof drawAnim === 'function') {
-    drawn = drawAnim(animKey, p.act || 'st', p.dir || 0, p.actT || 0, p.x, playerY, (typeof HERO_SCALE !== 'undefined' ? HERO_SCALE : 1.35));
-  }
-  if (!drawn && heroCfg && typeof drawSprite === 'function' && typeof img === 'function') {
-    drawn = drawSprite(img(heroCfg.img), heroCfg.sz, p.x, playerY, 0.9, p.face < 0);
-  }
-  if (!drawn) {
-    // Dự phòng đồ họa nếu sprite chưa nạp xong
-    c.fillStyle = seriesCol;
-    c.beginPath();
-    c.arc(p.x, playerY - 20, 14, 0, 7);
-    c.fill();
-    drawn = 30;
+  if (!p.mounted) {
+    if (typeof drawAnim === 'function') {
+      drawn = drawAnim(animKey, p.act || 'st', p.dir || 0, p.actT || 0, p.x, playerY, (typeof HERO_SCALE !== 'undefined' ? HERO_SCALE : 1.35));
+    }
+    if (!drawn && typeof drawDoll === 'function') {
+      const fakeState = {
+        eq: p.eq || {},
+        fac: p.fac,
+        sex: (p.fac === 'emei' || p.fac === 'cuiyan' || p.sex === 1) ? 1 : 0
+      };
+      const dollH = drawDoll(c, p.x, playerY, p.act || 'st', p.dir || 0, p.actT || 0, (typeof HERO_DOLL_SCALE !== 'undefined' ? HERO_DOLL_SCALE : (1 / 0.6)), 1, fakeState);
+      if (dollH > 0) drawn = dollH;
+    }
+    if (!drawn && heroCfg && typeof drawSprite === 'function' && typeof img === 'function') {
+      drawn = drawSprite(img(heroCfg.img), heroCfg.sz, p.x, playerY, 0.9, p.face < 0);
+    }
+    if (!drawn) {
+      // Dự phòng đồ họa nếu sprite chưa nạp xong
+      c.fillStyle = seriesCol;
+      c.beginPath();
+      c.arc(p.x, playerY - 20, 14, 0, 7);
+      c.fill();
+      drawn = 30;
+    }
+  } else {
+    drawn = 50;
   }
 
   // 5. Vẽ chi tiết phía trước của Chiến Mã cho người chơi khác

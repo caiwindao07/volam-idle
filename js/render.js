@@ -378,9 +378,32 @@ const enemyName = e => `${e.n} · Lv${e.L}`;
 function bar(x, y, w, h, f, col) { CX.fillStyle = '#000a'; CX.fillRect(x, y, w, h); CX.fillStyle = col; CX.fillRect(x, y, w * clamp(f, 0, 1), h); }
 
 /* ---------- HOẠT ẢNH & HIỂN THỊ CHIẾN MÃ (MOUNT RES) ---------- */
-function getHorseResId(tier) {
-  tier = tier || 1;
-  switch (tier) {
+function getHorseResId(mountData) {
+  let t = 1;
+  let name = '';
+  if (typeof mountData === 'number') {
+    t = mountData;
+  } else if (typeof mountData === 'string') {
+    name = mountData;
+  } else if (mountData && typeof mountData === 'object') {
+    t = mountData.tier || 1;
+    if (mountData.n) name = mountData.n;
+  }
+  if (!name && typeof S !== 'undefined' && S) {
+    if (S.eq && S.eq.horse && S.eq.horse.n) name = S.eq.horse.n;
+    else if (S.mount && S.mount.n) name = S.mount.n;
+    else if (S.mount && S.mount.tier) t = S.mount.tier;
+  }
+  if (name) {
+    const n = name.toLowerCase();
+    if (n.includes('túc sương') || n.includes('đích lô') || n.includes('chiếu dạ') || n.includes('bạch mã') || n.includes('ngọc sư tử')) return '009';
+    if (n.includes('tuyệt ảnh') || n.includes('ô vân')) return '010';
+    if (n.includes('bôn tiêu') || n.includes('bạch hổ') || n.includes('thần mã')) return '011';
+    if (n.includes('phiên vũ') || n.includes('siêu quang') || n.includes('du huy')) return '012';
+    if (n.includes('phi vân') || n.includes('tuyệt địa') || n.includes('đằng vụ')) return '013';
+    if (n.includes('xích thố') || n.includes('xích long') || n.includes('hãn huyết')) return '036';
+  }
+  switch (t) {
     case 1: return '009'; // Túc Sương (Bạch Mã)
     case 2: return '010'; // Tuyệt Ảnh
     case 3: return '010'; // Ô Vân Đạp Tuyết
@@ -474,8 +497,11 @@ function drawHorseMount(c, x, y, dir, act, actT, mountData) {
   }
 
   // 3. Lớp thân sau ngựa (Sprite Sheet JX1 - Layer 1 Back)
-  const horseId = getHorseResId(tier);
-  const backImg = img('img/horse/horse_' + horseId + '_back_' + actKey + '.png');
+  const horseId = getHorseResId(mountData);
+  let backImg = img('img/horse/horse_' + horseId + '_back_' + actKey + '.png');
+  if (!backImg || !backImg.complete || !backImg.naturalWidth) {
+    backImg = img('img/horse/horse_009_back_' + actKey + '.png');
+  }
   const sx = frameIdx * 128;
   const sy = dirIdx * 128;
   const sw = 128, sh = 128;
@@ -491,8 +517,7 @@ function drawHorseMount(c, x, y, dir, act, actT, mountData) {
 
 /* Vẽ các chi tiết phía trước của ngựa (Layer 3: Chân kỵ mã & Thân trước, đầu, cổ, yên, bàn đạp) phủ lên trước người cưỡi */
 function drawHorseForeground(c, x, y, dir, act, actT, mountData) {
-  const tier = (mountData && mountData.tier) || (typeof S !== 'undefined' && S && S.mount ? S.mount.tier : 1);
-  const horseId = getHorseResId(tier);
+  const horseId = getHorseResId(mountData);
   const isMoving = act === 'run';
   const actKey = isMoving ? 'run' : 'st';
   const fps = isMoving ? 12 : 6;
@@ -511,7 +536,10 @@ function drawHorseForeground(c, x, y, dir, act, actT, mountData) {
   }
 
   // 2. Lớp thân trước & đầu & yên ngựa (MA_HT + MA_HH)
-  const frontImg = img('img/horse/horse_' + horseId + '_front_' + actKey + '.png');
+  let frontImg = img('img/horse/horse_' + horseId + '_front_' + actKey + '.png');
+  if (!frontImg || !frontImg.complete || !frontImg.naturalWidth) {
+    frontImg = img('img/horse/horse_009_front_' + actKey + '.png');
+  }
   if (frontImg && frontImg.complete && frontImg.naturalWidth) {
     c.drawImage(frontImg, sx, sy, sw, sh, dx, dy, sw, sh);
   }
@@ -619,16 +647,15 @@ function draw(dt) {
 
       let heroY = H.y;
       let mountBob = 0;
+      const curMountData = (S && S.eq && S.eq.horse) || (S && S.mount);
       if (S && S.mounted) {
-        if (!R.jx && typeof drawHorseMount === 'function') {
-          mountBob = drawHorseMount(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, S.mount);
+        if (typeof drawHorseMount === 'function') {
+          mountBob = drawHorseMount(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, curMountData);
         }
         heroY = H.y - 14 + mountBob;
       } else {
         c.fillStyle = '#0007'; c.beginPath(); c.ellipse(H.x, H.y, 16, 6, 0, 0, 7); c.fill();
       }
-
-      // Rider body sprite cũ đã thay bằng paperdoll clip ở trên
 
       // Vẽ Phi Phong hào quang & cánh áo choàng phát sáng
       if (typeof CLOAK_SYSTEM !== 'undefined' && CLOAK_SYSTEM.drawCloak) {
@@ -657,40 +684,57 @@ function draw(dt) {
       if (typeof drawHeroStates === 'function') drawHeroStates(c, 'under', 0);
 
       let drawn = false;
-      let dollH = 0;
-      if (typeof drawDoll === 'function') {
-        const dollScale = (typeof HERO_DOLL_SCALE !== 'undefined') ? HERO_DOLL_SCALE : (1 / 0.6);
-        // Khi cưỡi ngựa: đẩy paperdoll lên để ngồi trên yên (y-20),
-        // thân trước ngựa (drawHorseForeground) vẽ sau sẽ tự che chân
-        const drawY = (S && S.mounted) ? (H.y - 20 + mountBob) : heroY;
-        dollH = drawDoll(c, H.x, drawY, H.act || 'st', H.dir || 0, H.actT || 0, dollScale, R.deadT > 0 ? 0.45 : 1, S);
-        if (dollH > 0) drawn = dollH;
-      }
-      if (!drawn && typeof drawHeroAnim === 'function') {
-        const jh = drawHeroAnim(H.animKey, H.act || 'st', H.dir || 0, H.actT || 0, H.x, H.y, HERO_SCALE, R.deadT > 0 ? 0.45 : 1);
-        if (jh > 0) {
-          drawn = jh;
-          dollH = jh;
+      if (S && S.mounted) {
+        // --- KHI CƯỠI NGỰA (MOUNTED) ---
+        // 1. Vẽ thân kỵ mã ngồi trên yên ngựa (Rider Body)
+        let riderDrawn = false;
+        if (typeof drawHorseRiderBody === 'function') {
+          riderDrawn = drawHorseRiderBody(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, S.sex, mountBob);
         }
-      }
-      const mountedDrawY = (S && S.mounted) ? (H.y - 20 + mountBob) : heroY;
-      if (!drawn && hw && hw.anim && typeof drawAnim === 'function') {
-        drawn = drawAnim(hw.anim, H.act || 'st', H.dir || 0, H.actT || 0, H.x, mountedDrawY, HERO_SCALE);
-      }
-      if (!drawn && hw && typeof drawSprite === 'function' && typeof img === 'function') {
-        drawn = drawSprite(img(hw.img), hw.sz, H.x, mountedDrawY, 0.9, H.face < 0, R.deadT > 0 ? 0.35 : 1);
-      }
-      if (!drawn) {
-        c.fillStyle = (typeof SERIES_COL !== 'undefined' && typeof heroSeries === 'function') ? SERIES_COL[heroSeries()] : '#ffd700';
-        c.beginPath();
-        c.arc(H.x, mountedDrawY - 20, 14, 0, 7);
-        c.fill();
-        drawn = 30;
-      }
+        if (riderDrawn) {
+          drawn = 55;
+        } else {
+          // Dự phòng nếu rider_body sprite chưa kịp nạp: dùng drawHeroAnim seated
+          if (typeof drawHeroAnim === 'function') {
+            const jh = drawHeroAnim(H.animKey, H.act || 'st', H.dir || 0, H.actT || 0, H.x, H.y - 18 + mountBob, HERO_SCALE * 0.9, R.deadT > 0 ? 0.45 : 1);
+            if (jh > 0) drawn = jh;
+          }
+        }
+        if (!drawn) drawn = 45;
 
-      // Vẽ các chi tiết phía trước của Chiến Mã (chỉ khi không dùng JX native sheet)
-      if (!R.jx && S && S.mounted && typeof drawHorseForeground === 'function') {
-        drawHorseForeground(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, S.mount);
+        // 2. Lớp thân trước & đầu & yên ngựa & chân kỵ mã (MA_HT + MA_HH + rider_legs)
+        if (typeof drawHorseForeground === 'function') {
+          drawHorseForeground(c, H.x, H.y, H.dir || 0, H.act || 'st', H.actT || 0, curMountData);
+        }
+      } else {
+        // --- KHI ĐI BỘ (ON FOOT) ---
+        // 1. Hoạt ảnh nhân vật môn phái chuẩn JX (đầy đủ màu trang bị & hào quang ngũ hành qua tintedFrame)
+        if (typeof drawHeroAnim === 'function') {
+          const jh = drawHeroAnim(H.animKey, H.act || 'st', H.dir || 0, H.actT || 0, H.x, H.y, HERO_SCALE, R.deadT > 0 ? 0.45 : 1);
+          if (jh > 0) drawn = jh;
+        }
+        // 2. Dự phòng Paperdoll nếu drawHeroAnim không khả dụng
+        if (!drawn && typeof drawDoll === 'function') {
+          const dollScale = (typeof HERO_DOLL_SCALE !== 'undefined') ? HERO_DOLL_SCALE : (1 / 0.6);
+          const dollH = drawDoll(c, H.x, heroY, H.act || 'st', H.dir || 0, H.actT || 0, dollScale, R.deadT > 0 ? 0.45 : 1, S);
+          if (dollH > 0) drawn = dollH;
+        }
+        // 3. Dự phòng drawAnim
+        if (!drawn && hw && hw.anim && typeof drawAnim === 'function') {
+          drawn = drawAnim(hw.anim, H.act || 'st', H.dir || 0, H.actT || 0, H.x, heroY, HERO_SCALE);
+        }
+        // 4. Dự phòng Sprite tĩnh
+        if (!drawn && hw && typeof drawSprite === 'function' && typeof img === 'function') {
+          drawn = drawSprite(img(hw.img), hw.sz, H.x, heroY, 0.9, H.face < 0, R.deadT > 0 ? 0.35 : 1);
+        }
+        // 5. Dự phòng vòng tròn ngũ hành
+        if (!drawn) {
+          c.fillStyle = (typeof SERIES_COL !== 'undefined' && typeof heroSeries === 'function') ? SERIES_COL[heroSeries()] : '#ffd700';
+          c.beginPath();
+          c.arc(H.x, heroY - 20, 14, 0, 7);
+          c.fill();
+          drawn = 30;
+        }
       }
       if (typeof drawLookFx === 'function') drawLookFx(c, dt);
       if (typeof drawHeroStates === 'function') drawHeroStates(c, 'over', drawn || 50);
