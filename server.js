@@ -24,7 +24,8 @@ const MIME_TYPES = {
   '.webp': 'image/webp',
   '.mp3': 'audio/mpeg',
   '.woff2': 'font/woff2',
-  '.svg': 'image/svg+xml'
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon'
 };
 
 const ROOT_DIR = __dirname;

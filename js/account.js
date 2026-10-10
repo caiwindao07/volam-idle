@@ -317,7 +317,8 @@ function showAuthModal(onSuccess) {
 
       updateAccountHeaderUI();
       if (typeof toast === 'function') {
-        toast(`⚔ Chào mừng hiệp khách ${res.user.heroName || res.user.username} gia nhập giang hồ!`);
+        const displayName = (res.user && (res.user.heroName || res.user.username)) || 'Đại Hiệp';
+        toast(`⚔ Chào mừng hiệp khách ${displayName} gia nhập giang hồ!`);
       }
       if (typeof sendProfile === 'function') sendProfile();
       if (onSuccess) onSuccess(true);
