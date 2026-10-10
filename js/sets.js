@@ -95,8 +95,8 @@ const SET_KEEP = ["Bộ chung", "Môn phái"],
   eqRemoved = (n) =>
     !!n && (n.r === 5 || n.plv != null || (n.set && (n.set.kind === "platina" || !SET_KEEP.includes(setFamily(n)))));
 function rollSetDrop(n) {
-  if (!n || n.L < 70) return null; // Quái dưới cấp 70 và map tân thủ Hoa Sơn (L <= 10) tuyệt đối không rơi đồ Hoàng Kim hay Bạch Kim
-  if (n.cls !== "boss" && !n.goldBoss && !n.worldBoss) return null; // Chỉ Boss cấp cao mới có tỉ lệ rơi đồ bộ
+  if (!n || n.L < 70) return null; // Quái dưới cấp 70 và map tân thủ Hoa Sơn tuyệt đối không rơi đồ Hoàng Kim hay Bạch Kim
+  if (!n.goldBoss && !n.worldBoss) return null; // Chỉ Boss Hoàng Kim và Boss Thế Giới mới có tỉ lệ rơi đồ bộ Hoàng Kim
   const t =
     (n.cls === "boss"
       ? 0.02 + zoneIdx(Math.min(S.stage, STAGES)) * 0.0015

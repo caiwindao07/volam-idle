@@ -2330,6 +2330,25 @@ function travelToZone(target) {
   R.banner = { t: 2.5, text: z.n, sub: z.id === 386 ? 'Chiến Trường Tống Kim Chu Tiên Trấn' : `Bản đồ luyện công (Cấp ${z.lo} - ${z.hi})` };
   log(`Dịch chuyển đến bản đồ <b>${esc(z.n)}</b>.`);
   toast(`Đã dịch chuyển đến ${z.n}!`);
+  if (typeof MP !== 'undefined' && MP.connected && MP.ws && MP.ws.readyState === 1) {
+    MP.lastZone = z.id;
+    MP.ws.send(JSON.stringify({
+      type: 'move',
+      zoneId: z.id,
+      stage: S.stage,
+      x: Math.round(H.x),
+      y: Math.round(H.y),
+      dir: H.dir || 0,
+      face: H.face || 1,
+      act: H.act || 'st',
+      lvl: S.lvl || 1,
+      force: true
+    }));
+    MP.ws.send(JSON.stringify({
+      type: 'get_zone_mobs',
+      zoneId: z.id
+    }));
+  }
   refresh();
 }
 

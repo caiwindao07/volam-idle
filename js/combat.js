@@ -701,8 +701,9 @@ function killCheck() {
 function onKill(e) {
   R.stall = 0; // Đang tiêu diệt quái thành công -> xóa bộ đếm stall
   R.kills++; S.totalKills = (S.totalKills || 0) + 1;
-  if (typeof checkWarMonsterKill === 'function') checkWarMonsterKill(e);
-  const monL = Math.max(1, Math.min(Math.floor(e.L) || 1, MAX_LEVEL));
+  const z = (typeof zoneOf === 'function' && typeof S !== 'undefined') ? zoneOf(S.stage) : null;
+  const maxZoneL = z ? (z.hi || MAX_LEVEL) : MAX_LEVEL;
+  const monL = Math.max(1, Math.min(Math.floor(e.L) || 1, maxZoneL, MAX_LEVEL));
   const playerL = (typeof S !== 'undefined' && S && S.lvl) ? S.lvl : monL;
   const lvDiff = monL - playerL;
   let mult = 1.0;

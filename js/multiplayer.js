@@ -622,8 +622,10 @@ function requestZoneMobs() {
   const now = Date.now();
   if (MP._lastReqMobs && now - MP._lastReqMobs < 1500) return; // Tránh spam gói tin liên tục
   MP._lastReqMobs = now;
+  const curZ = getCurZoneId();
   MP.ws.send(JSON.stringify({
-    type: 'get_zone_mobs'
+    type: 'get_zone_mobs',
+    zoneId: curZ
   }));
 }
 
@@ -733,8 +735,9 @@ function sendMove(dt) {
   const curMountTier = (S && S.mount ? S.mount.tier : 1);
   const curCloakTier = (S && S.cloak && S.cloak.tier) ? S.cloak.tier : 0;
   const curPkMode = (S && S.pkMode) || 'peace';
+  const myZone = getCurZoneId();
 
-  const changed = Math.abs(H.x - MP.lastX) > 0.5 || Math.abs(H.y - MP.lastY) > 0.5 || H.act !== MP.lastAct || H.dir !== MP.lastDir || curMounted !== MP.lastMounted || curCloakTier !== MP.lastCloakTier || curPkMode !== MP.lastPkMode;
+  const changed = Math.abs(H.x - MP.lastX) > 0.5 || Math.abs(H.y - MP.lastY) > 0.5 || H.act !== MP.lastAct || H.dir !== MP.lastDir || curMounted !== MP.lastMounted || curCloakTier !== MP.lastCloakTier || curPkMode !== MP.lastPkMode || myZone !== MP.lastZone;
   if (!changed && now - MP.lastForceT < 800) return;
   MP.lastForceT = now;
 
@@ -745,8 +748,7 @@ function sendMove(dt) {
   MP.lastMounted = curMounted;
   MP.lastCloakTier = curCloakTier;
   MP.lastPkMode = curPkMode;
-
-  const myZone = getCurZoneId();
+  MP.lastZone = myZone;
 
   MP.ws.send(JSON.stringify({
     type: 'move',
@@ -939,11 +941,6 @@ function drawSingleOtherPlayer(c, dt, p) {
     c.arc(p.x, playerY - 20, 14, 0, 7);
     c.fill();
     drawn = 30;
-  }
-
-  // 4. Vẽ Ngoại Trang & Res Trang Bị trực quan (Vũ khí, Giáp, Khôi, Hào quang Thần Binh)
-  if (typeof drawHeroEquipment === 'function' && p.eq) {
-    drawHeroEquipment(c, p.x, playerY, p.dir || 0, p.face || 1, p.act || 'st', p.actT || 0, p.eq, p.series || 0);
   }
 
   // 5. Vẽ chi tiết phía trước của Chiến Mã cho người chơi khác

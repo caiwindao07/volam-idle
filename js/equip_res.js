@@ -20,13 +20,10 @@
     return SERIES_AURA[idx];
   }
 
-  // Vẽ ngoại trang hiển thị (Equip Res) trên nhân vật
+  // Vẽ ngoại trang hiển thị (Equip Res) trên nhân vật - Đã chuyển hoàn toàn sang Paperdoll (JDOLL native)
   function drawHeroEquipment(ctx, x, y, dir, face, act, actT, eq, series) {
-    if (!eq || typeof eq !== 'object') return;
-    const facing = face >= 0 ? 1 : -1;
-    const now = Date.now();
-    const t = now / 1000;
-    const sCol = getSeriesColor(series);
+    return; // Đã vô hiệu hóa: Paperdoll (drawDoll) vẽ vũ khí, giáp, nón gốc chuẩn JX 100%
+  }
 
     // 1. CHIẾN BÀO / ÁO GIÁP (ARMOR RES)
     if (eq.armor) {

@@ -658,20 +658,20 @@ function draw(dt) {
 
       let drawn = false;
       let dollH = 0;
-      if (typeof drawHeroAnim === 'function') {
-        const jh = drawHeroAnim(H.animKey, H.act || 'st', H.dir || 0, H.actT || 0, H.x, H.y, HERO_SCALE, R.deadT > 0 ? 0.45 : 1);
-        if (jh > 0) {
-          drawn = jh;
-          dollH = jh;
-        }
-      }
-      if (!drawn && typeof drawDoll === 'function') {
+      if (typeof drawDoll === 'function') {
         const dollScale = (typeof HERO_DOLL_SCALE !== 'undefined') ? HERO_DOLL_SCALE : (1 / 0.6);
         // Khi cưỡi ngựa: đẩy paperdoll lên để ngồi trên yên (y-20),
         // thân trước ngựa (drawHorseForeground) vẽ sau sẽ tự che chân
         const drawY = (S && S.mounted) ? (H.y - 20 + mountBob) : heroY;
         dollH = drawDoll(c, H.x, drawY, H.act || 'st', H.dir || 0, H.actT || 0, dollScale, R.deadT > 0 ? 0.45 : 1, S);
         if (dollH > 0) drawn = dollH;
+      }
+      if (!drawn && typeof drawHeroAnim === 'function') {
+        const jh = drawHeroAnim(H.animKey, H.act || 'st', H.dir || 0, H.actT || 0, H.x, H.y, HERO_SCALE, R.deadT > 0 ? 0.45 : 1);
+        if (jh > 0) {
+          drawn = jh;
+          dollH = jh;
+        }
       }
       const mountedDrawY = (S && S.mounted) ? (H.y - 20 + mountBob) : heroY;
       if (!drawn && hw && hw.anim && typeof drawAnim === 'function') {
@@ -686,11 +686,6 @@ function draw(dt) {
         c.arc(H.x, mountedDrawY - 20, 14, 0, 7);
         c.fill();
         drawn = 30;
-      }
-
-      // Vẽ Ngoại Trang & Res Trang Bị trực quan (Vũ khí, Giáp, Khôi, Hào quang Thần Binh)
-      if (typeof drawHeroEquipment === 'function' && typeof S !== 'undefined' && S && S.eq) {
-        drawHeroEquipment(c, H.x, mountedDrawY, H.dir || 0, H.face || 1, H.act || 'st', H.actT || 0, S.eq, (typeof heroSeries === 'function' ? heroSeries() : 0));
       }
 
       // Vẽ các chi tiết phía trước của Chiến Mã (chỉ khi không dùng JX native sheet)

@@ -2425,7 +2425,9 @@ wss.on('connection', (ws, req) => {
           if (mob.hp <= 0) {
             map.delete(mobId);
             const curLvl = (p.uKey && db.users[p.uKey] && db.users[p.uKey].state) ? (Number(db.users[p.uKey].state.lvl) || p.lvl || 1) : (p.lvl || 1);
-            const monL = Math.max(1, Math.min(200, Number(mob.L) || 1));
+            const zoneDef = (JW && JW.zones) ? JW.zones.find(x => x.id === zoneId) : null;
+            const maxZoneL = zoneDef ? (zoneDef.hi || 200) : 200;
+            const monL = Math.max(1, Math.min(maxZoneL, Math.min(200, Number(mob.L) || 1)));
             const lvDiff = monL - curLvl;
             let mult = 1.0;
             if (lvDiff <= -25) mult = 0.02;
@@ -2619,7 +2621,13 @@ wss.on('connection', (ws, req) => {
           console.log(`[Multiplayer] Người chơi #${p.id} (${p.name}) đã chuyển sang môn phái ${fac}.`);
         }
       } else if (data.type === 'get_zone_mobs') {
-        const zoneId = p.zoneId || 2;
+        const reqZone = (data.zoneId != null) ? Number(data.zoneId) : (p.zoneId || 2);
+        if (p.jailUntil && p.jailUntil > Date.now()) {
+          p.zoneId = 37;
+        } else {
+          p.zoneId = reqZone;
+        }
+        const zoneId = p.zoneId;
         const mobs = ensureZoneMobs(zoneId, p.x, p.y);
         ws.send(JSON.stringify({
           type: 'zone_mobs_sync',
